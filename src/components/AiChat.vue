@@ -16,6 +16,8 @@ const messages = ref<Message[]>([]);
 const messagesContainer = ref<HTMLElement | null>(null);
 const isLoading = ref(false);
 const chatContainer = ref<HTMLElement | null>(null);
+const leadId = ref<string | null>(null);
+const conversationId = ref<string | null>(null);
 
 // Initial greeting message
 onMounted(() => {
@@ -71,16 +73,26 @@ const handleSend = async (messageText: string) => {
   isLoading.value = true;
   
   try {
-    // Call your API endpoint (will be created next)
+    // Call your API endpoint
     const response = await axios.post('/api/chat', {
       message: messageText,
-      conversationHistory: messages.value
+      conversationHistory: messages.value,
+      leadId: leadId.value,
+      conversationId: conversationId.value
     });
     
     await new Promise(resolve => setTimeout(resolve, 800)); // Simulate thinking
     
     if (response.data.reply) {
       addBotMessage(response.data.reply);
+    }
+
+    // Store IDs for future messages
+    if (response.data.leadId) {
+      leadId.value = response.data.leadId;
+    }
+    if (response.data.conversationId) {
+      conversationId.value = response.data.conversationId;
     }
   } catch (error) {
     console.error('Chat error:', error);

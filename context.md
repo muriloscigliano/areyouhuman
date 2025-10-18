@@ -41,7 +41,8 @@ src/
 
 ## 🧱 DATABASE SCHEMA (Supabase → Table: `leads`)
 
-```sql
+Stores core client information and source data.
+
 create table leads (
   id uuid primary key default gen_random_uuid(),
   created_at timestamp default now(),
@@ -50,17 +51,71 @@ create table leads (
   company text,
   role text,
   industry text,
-  problem_text text,
-  tools_used text[],
-  goal text,
-  budget_range text,
-  urgency text,
-  tech_familiarity text,
-  automation_area text,
-  complexity text,
-  interest_level int,
-  automation_idea text,
-  suggested_tools text[],
+  country text,
+  source text, -- e.g., 'chat', 'form', 'referral'
+  notes text
+);
+
+💬 TABLE: conversations
+
+Stores chat interactions (so you can train future RAG models or re-analyze lead intent).
+
+create table conversations (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid references leads (id) on delete cascade,
+  created_at timestamp default now(),
+  messages jsonb, -- [{role:'user', content:'...'},{role:'assistant', content:'...'}]
+  summary text,   -- short AI summary of the conversation
+  context_tags text[], -- e.g., ['automation', 'crm', 'gym']
+  model_used text, -- 'gpt-4o-mini', 'claude-3.5-sonnet'
+  status text default 'active' -- or 'archived'
+);
+
+📄 TABLE: quotes
+
+Each quote/proposal generated from a conversation.
+
+create table quotes (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid references leads (id) on delete cascade,
+  conversation_id uuid references conversations (id) on delete set null,
+  created_at timestamp default now(),
+  project_title text,
+  project_summary text,
+  proposed_solution jsonb,  -- [{feature:'Automation Workflow', desc:'Connect Typeform + Notion'}]
+  estimated_timeline text,
+  estimated_cost text,
   roi_estimate text,
-  next_step text
+  ai_model text, -- model that generated it
+  tone text, -- 'professional', 'friendly', etc.
+  status text default 'draft' -- 'sent', 'viewed', 'accepted', 'rejected'
+);
+
+📎 TABLE: quote_files
+
+Links each generated PDF file to its quote (and allows multiple versions).
+
+create table quote_files (
+  id uuid primary key default gen_random_uuid(),
+  quote_id uuid references quotes (id) on delete cascade,
+  created_at timestamp default now(),
+  file_url text,
+  file_name text,
+  sent_via text, -- 'email', 'manual', etc.
+  email_status text, -- 'sent', 'opened', 'clicked'
+);
+
+📬 TABLE: emails (optional, if you want full automation tracking)
+
+Useful for logging communications or follow-ups.
+
+create table emails (
+  id uuid primary key default gen_random_uuid(),
+  lead_id uuid references leads (id) on delete cascade,
+  quote_id uuid references quotes (id) on delete set null,
+  created_at timestamp default now(),
+  subject text,
+  body text,
+  status text default 'sent',
+  recipient_email text
 );

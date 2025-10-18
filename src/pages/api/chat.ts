@@ -3,13 +3,15 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 interface ChatRequest {
   message: string;
-  conversationHistory?: Array<{ text: string; isBot: boolean }>;
+  conversationHistory?: Array<{ text: string; isBot: boolean; timestamp?: Date }>;
   leadId?: string;
+  conversationId?: string;
 }
 
 interface ChatResponse {
   reply: string;
   leadId?: string;
+  conversationId?: string;
   error?: string;
 }
 
@@ -21,7 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const body: ChatRequest = await request.json();
-    const { message, conversationHistory = [], leadId } = body;
+    const { message, conversationHistory = [], leadId, conversationId } = body;
 
     // Simple conversation flow logic
     // In production, you would integrate with OpenAI, Claude, or your preferred LLM
@@ -81,51 +83,118 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Save or update lead in Supabase (only if configured)
     if (shouldSaveLead && Object.keys(leadData).length > 0 && isSupabaseConfigured()) {
-      // Collect all previous data from conversation
-      const fullLeadData = {
-        name: conversationHistory[0]?.text || leadData.name,
-        company: conversationHistory[2]?.text || leadData.company,
-        role: conversationHistory[4]?.text || leadData.role,
-        problem_text: conversationHistory[6]?.text || leadData.problem_text,
-        tools_used: conversationHistory[8]?.text?.split(',').map((t: string) => t.trim()) || leadData.tools_used,
-        urgency: conversationHistory[10]?.text || leadData.urgency,
-        budget_range: conversationHistory[12]?.text || leadData.budget_range,
-        email: leadData.email || null,
-        conversation_history: [...conversationHistory, { text: message, isBot: false, timestamp: new Date() }],
-        ...leadData
-      };
+      try {
+        let currentLeadId = leadId;
+        let currentConversationId = conversationId;
 
-      if (leadId) {
-        // Update existing lead
-        const { error } = await supabase
-          .from('leads')
-          .update(fullLeadData)
-          .eq('id', leadId);
+        // Collect all previous data from conversation
+        const fullLeadData = {
+          name: conversationHistory[0]?.text || leadData.name,
+          company: conversationHistory[2]?.text || leadData.company,
+          role: conversationHistory[4]?.text || leadData.role,
+          problem_text: conversationHistory[6]?.text || leadData.problem_text,
+          tools_used: conversationHistory[8]?.text?.split(',').map((t: string) => t.trim()) || leadData.tools_used,
+          urgency: conversationHistory[10]?.text || leadData.urgency,
+          budget_range: conversationHistory[12]?.text || leadData.budget_range,
+          email: leadData.email || null,
+          source: 'chat',
+          ...leadData
+        };
 
-        if (error) {
-          console.error('Error updating lead:', error);
+        // Create or update lead
+        if (currentLeadId) {
+          // Update existing lead
+          const { error } = await supabase
+            .from('leads')
+            .update(fullLeadData)
+            .eq('id', currentLeadId);
+
+          if (error) console.error('Error updating lead:', error);
+        } else {
+          // Create new lead
+          const { data, error } = await supabase
+            .from('leads')
+            .insert([fullLeadData])
+            .select('id')
+            .single();
+
+          if (error) {
+            console.error('Error creating lead:', error);
+          } else if (data) {
+            currentLeadId = data.id;
+          }
         }
-      } else {
-        // Create new lead
-        const { data, error } = await supabase
-          .from('leads')
-          .insert([fullLeadData])
-          .select('id')
-          .single();
 
-        if (error) {
-          console.error('Error creating lead:', error);
-        } else if (data) {
-          return new Response(
-            JSON.stringify({ reply, leadId: data.id }),
-            { status: 200, headers: { 'Content-Type': 'application/json' } }
-          );
+        // Save conversation to conversations table
+        if (currentLeadId) {
+          const conversationMessages = [
+            ...conversationHistory.map((msg: any) => ({
+              role: msg.isBot ? 'assistant' : 'user',
+              content: msg.text,
+              timestamp: msg.timestamp || new Date()
+            })),
+            {
+              role: 'user',
+              content: message,
+              timestamp: new Date()
+            },
+            {
+              role: 'assistant',
+              content: reply,
+              timestamp: new Date()
+            }
+          ];
+
+          if (currentConversationId) {
+            // Update existing conversation
+            const { error } = await supabase
+              .from('conversations')
+              .update({
+                messages: conversationMessages,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', currentConversationId);
+
+            if (error) console.error('Error updating conversation:', error);
+          } else {
+            // Create new conversation
+            const { data, error } = await supabase
+              .from('conversations')
+              .insert([{
+                lead_id: currentLeadId,
+                messages: conversationMessages,
+                model_used: 'rule-based',
+                status: 'active'
+              }])
+              .select('id')
+              .single();
+
+            if (error) {
+              console.error('Error creating conversation:', error);
+            } else if (data) {
+              currentConversationId = data.id;
+            }
+          }
         }
+
+        const response: ChatResponse = { 
+          reply,
+          leadId: currentLeadId,
+          conversationId: currentConversationId
+        };
+
+        return new Response(
+          JSON.stringify(response),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      } catch (err) {
+        console.error('Error saving to database:', err);
       }
     }
 
     const response: ChatResponse = { reply };
     if (leadId) response.leadId = leadId;
+    if (conversationId) response.conversationId = conversationId;
 
     return new Response(
       JSON.stringify(response),
