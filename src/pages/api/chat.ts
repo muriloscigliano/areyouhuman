@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../lib/openai';
 
 interface ChatRequest {
   message: string;
@@ -25,12 +26,53 @@ export const POST: APIRoute = async ({ request }) => {
     const body: ChatRequest = await request.json();
     const { message, conversationHistory = [], leadId, conversationId } = body;
 
-    // Simple conversation flow logic
-    // In production, you would integrate with OpenAI, Claude, or your preferred LLM
-    const messageCount = conversationHistory.length;
     let reply = '';
     let shouldSaveLead = false;
     const leadData: any = {};
+
+    // Use OpenAI if configured, otherwise fall back to rule-based
+    if (isOpenAIConfigured()) {
+      // ==================================================
+      // AI-POWERED CONVERSATION (OpenAI)
+      // ==================================================
+      try {
+        // Convert conversation history to OpenAI format
+        const messages = conversationHistory.map((msg: any) => ({
+          role: msg.isBot ? 'assistant' as const : 'user' as const,
+          content: msg.text
+        }));
+
+        // Add current message
+        messages.push({ role: 'user', content: message });
+
+        // Get AI response
+        reply = await getChatCompletion(messages);
+
+        // Extract structured lead info every few messages
+        if (conversationHistory.length >= 10 && conversationHistory.length % 4 === 0) {
+          const extractedInfo = await extractLeadInfo(messages);
+          if (extractedInfo) {
+            Object.assign(leadData, extractedInfo);
+            shouldSaveLead = true;
+          }
+        }
+
+        // Check if we should collect email (AI asks for it naturally)
+        if (reply.toLowerCase().includes('email')) {
+          shouldSaveLead = true;
+        }
+
+      } catch (error) {
+        console.error('OpenAI error, falling back to rule-based:', error);
+        // Fall through to rule-based system below
+      }
+    }
+
+    // ==================================================
+    // RULE-BASED FALLBACK (if OpenAI not configured or fails)
+    // ==================================================
+    if (!reply) {
+      const messageCount = conversationHistory.length;
 
     // Conversation flow based on message count
     if (messageCount === 0) {
@@ -79,6 +121,7 @@ export const POST: APIRoute = async ({ request }) => {
               `We're excited to help you automate and scale! Talk soon! 🚀`;
     } else {
       reply = `Thanks for the information! Could you tell me more about your automation needs?`;
+      }
     }
 
     // Save or update lead in Supabase (only if configured)
@@ -163,7 +206,7 @@ export const POST: APIRoute = async ({ request }) => {
               .insert([{
                 lead_id: currentLeadId,
                 messages: conversationMessages,
-                model_used: 'rule-based',
+                model_used: isOpenAIConfigured() ? 'gpt-4o-mini' : 'rule-based',
                 status: 'active'
               }])
               .select('id')
