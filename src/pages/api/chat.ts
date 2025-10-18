@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { supabase } from '../../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 interface ChatRequest {
   message: string;
@@ -15,6 +15,11 @@ interface ChatResponse {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Check if Supabase is configured
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured - running in demo mode');
+    }
+
     const body: ChatRequest = await request.json();
     const { message, conversationHistory = [], leadId } = body;
 
@@ -74,8 +79,8 @@ export const POST: APIRoute = async ({ request }) => {
       reply = `Thanks for the information! Could you tell me more about your automation needs?`;
     }
 
-    // Save or update lead in Supabase
-    if (shouldSaveLead && Object.keys(leadData).length > 0) {
+    // Save or update lead in Supabase (only if configured)
+    if (shouldSaveLead && Object.keys(leadData).length > 0 && isSupabaseConfigured()) {
       // Collect all previous data from conversation
       const fullLeadData = {
         name: conversationHistory[0]?.text || leadData.name,
