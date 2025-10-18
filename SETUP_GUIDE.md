@@ -56,10 +56,10 @@ git commit -m "Initial commit: Are You Human Copilot MVP"
 ```
 
 ### 2.2 Connect to GitHub
-Your repo already exists at: https://github.com/muriloscigliano/areyouhumanmandar
+Your repo already exists at: https://github.com/muriloscigliano/areyouhuman
 
 ```bash
-git remote add origin https://github.com/muriloscigliano/areyouhumanmandar.git
+git remote add origin https://github.com/muriloscigliano/areyouhuman.git
 git branch -M main
 git push -u origin main
 ```
@@ -80,7 +80,7 @@ If you need authentication:
 
 2. **Import Repository**
    - Click "Import Git Repository"
-   - Select `muriloscigliano/areyouhumanmandar`
+   - Select `muriloscigliano/areyouhuman`
    - Click "Import"
 
 3. **Configure Project**
@@ -151,7 +151,7 @@ vercel --prod
    - [ ] Check in Table Editor → leads → you see new rows
 
 3. **GitHub**
-   - [ ] Code pushed to https://github.com/muriloscigliano/areyouhumanmandar
+   - [ ] Code pushed to https://github.com/muriloscigliano/areyouhuman
    - [ ] All files visible in repository
    - [ ] `.env` is NOT in GitHub (it's in .gitignore)
 

@@ -88,7 +88,7 @@ fi
 if ! git remote | grep -q origin; then
     echo ""
     echo "Adding GitHub remote..."
-    git remote add origin https://github.com/muriloscigliano/areyouhumanmandar.git
+    git remote add origin https://github.com/muriloscigliano/areyouhuman.git
     echo "✅ GitHub remote added"
 else
     echo "✅ GitHub remote already configured"

@@ -67,7 +67,7 @@ Already initialized! Just run:
 ```bash
 git add .
 git commit -m "Initial commit: MVP ready"
-git remote add origin https://github.com/muriloscigliano/areyouhumanmandar.git
+git remote add origin https://github.com/muriloscigliano/areyouhuman.git
 git branch -M main
 git push -u origin main
 ```
@@ -81,7 +81,7 @@ Need auth? Use `gh auth login` or Personal Access Token
 ### Go to: https://vercel.com/dashboard
 
 1. **Click:** Add New → Project
-2. **Import:** muriloscigliano/areyouhumanmandar
+2. **Import:** muriloscigliano/areyouhuman
 3. **Framework:** Astro (auto-detected)
 4. **Environment Variables** (CRITICAL!):
    ```
@@ -99,7 +99,7 @@ Need auth? Use `gh auth login` or Personal Access Token
 
 - [ ] Local: http://localhost:4321 works
 - [ ] Chat saves to Supabase (check Table Editor)
-- [ ] GitHub: https://github.com/muriloscigliano/areyouhumanmandar has code
+- [ ] GitHub: https://github.com/muriloscigliano/areyouhuman has code
 - [ ] Vercel: Production site live
 - [ ] Production chat saves to Supabase
 
