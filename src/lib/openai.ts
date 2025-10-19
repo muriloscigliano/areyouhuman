@@ -125,21 +125,32 @@ export async function extractLeadInfo(conversationMessages: Message[]): Promise<
       messages: [
         {
           role: 'system',
-          content: `Extract lead information from this conversation. Return JSON with: 
-          {
-            "name": "string or null",
-            "email": "string or null", 
-            "company": "string or null",
-            "role": "string or null",
-            "industry": "string or null",
-            "problem_text": "string or null",
-            "budget_range": "string or null",
-            "urgency": "string or null",
-            "tools_used": ["array of tool names"],
-            "interest_level": number 1-10,
-            "automation_area": "string or null"
-          }
-          Only include fields mentioned in the conversation. Use null for unknown values.`
+          content: `Extract lead information from this conversation. 
+
+IMPORTANT: We use conversational questions, so recognize these patterns:
+- "Who should I make the proposal out to?" → Extract NAME from user's answer
+- "Where should I send your quote" / "teleport your quote" / "inbox" → Extract EMAIL
+- "What's the name of your company or brand?" / "business" → Extract COMPANY
+- "What's your challenge?" → Extract PROBLEM_TEXT
+- "What tools are you using?" → Extract TOOLS_USED
+
+Return JSON with: 
+{
+  "name": "string or null",
+  "email": "string or null", 
+  "company": "string or null",
+  "role": "string or null",
+  "industry": "string or null",
+  "problem_text": "string or null",
+  "budget_range": "string or null",
+  "urgency": "string or null",
+  "tools_used": ["array of tool names"],
+  "interest_level": number 1-10,
+  "automation_area": "string or null"
+}
+
+Only include fields found in the conversation. Use null for unknown values.
+Extract complete information even from short conversations.`
         },
         ...conversationMessages
       ],

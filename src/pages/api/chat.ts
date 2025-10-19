@@ -72,21 +72,34 @@ export const POST: APIRoute = async ({ request }) => {
         // Get AI response with token optimization
         reply = await getChatCompletion(messages, 'briefing', {}, conversationSummary);
 
-        // Extract structured lead info MORE FREQUENTLY (every 3 messages after message 6)
-        // Old: only at 10, 14, 18... New: at 6, 9, 12, 15...
-        if (conversationHistory.length >= 6 && conversationHistory.length % 3 === 0) {
-          console.log(`📊 Extracting lead info at message ${conversationHistory.length}...`);
+        // ⚠️ CRITICAL: Extract lead info DURING the 5-message sequence!
+        // Messages 3-5 collect Name, Email, Company - we need to extract IMMEDIATELY
+        const messageCount = conversationHistory.length;
+        
+        // AGGRESSIVE EXTRACTION during critical collection phase (messages 3-5)
+        if (messageCount >= 2 && messageCount <= 5) {
+          console.log(`🎯 CRITICAL PHASE: Extracting lead info at message ${messageCount}...`);
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
-            console.log('✅ Extracted data:', extractedInfo);
+            console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
+            Object.assign(leadData, extractedInfo);
+            shouldSaveLead = true;
+          }
+        }
+        // Continue regular extraction after message 6 (every 3 messages)
+        else if (messageCount >= 6 && messageCount % 3 === 0) {
+          console.log(`📊 Regular extraction at message ${messageCount}...`);
+          const extractedInfo = await extractLeadInfo(messages);
+          if (extractedInfo) {
+            console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
             Object.assign(leadData, extractedInfo);
             shouldSaveLead = true;
           }
         }
 
-        // ALSO save after any message where we have partial data
-        if (conversationHistory.length >= 4 && Object.keys(leadData).length > 0) {
-          console.log(`💾 Saving partial lead data (${Object.keys(leadData).length} fields)...`);
+        // ALWAYS save if we have any lead data
+        if (Object.keys(leadData).length > 0) {
+          console.log(`💾 Saving lead data (${Object.keys(leadData).length} fields)...`);
           shouldSaveLead = true;
         }
 
