@@ -19,7 +19,59 @@ const chatContainer = ref<HTMLElement | null>(null);
 const leadId = ref<string | null>(null);
 const conversationId = ref<string | null>(null);
 
-// Initial greeting message
+// Smart greeting system - dynamic Telos personality
+const getSmartGreeting = () => {
+  const hour = new Date().getHours();
+  const isReturningUser = localStorage.getItem('telos_visited') === 'true';
+  const lastProject = localStorage.getItem('telos_last_project');
+  
+  // Time-based context
+  let timeContext = '';
+  if (hour >= 5 && hour < 12) timeContext = 'morning';
+  else if (hour >= 12 && hour < 17) timeContext = 'afternoon';
+  else if (hour >= 17 && hour < 22) timeContext = 'evening';
+  else timeContext = 'night';
+  
+  // Device context (optional personalization)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+  // Different greetings for returning vs new users
+  const newUserGreetings = [
+    `Hey Human 👋 I'm Telos — your strategist from the folds of time.\nReady to build something that feels half magic, half machine?`,
+    
+    `Hey Human ⚡️\nI'm Telos, your AI strategist. Let's turn your idea into something real — what's on your mind?`,
+    
+    `Good ${timeContext}, Human 👋\nI'm Telos. I help founders and teams design AI systems that stay human.\nWhat brings you here today?`,
+    
+    `Hey Human 🌟\nTelos here — part strategist, part design assistant, fully curious about your vision.\nWhat would you like to build?`,
+    
+    `Hey Human 👋\nI came through the folds of time to help you reshape what's next.\nShall we start with your idea?`
+  ];
+  
+  const returningUserGreetings = [
+    `Welcome back, Human 👋\nTelos here — ready when you are. New project, or continuing something?`,
+    
+    `Hey Human ⚡️\nGood to see you again. What's the next challenge we're solving together?`,
+    
+    `Human! You're back 🌟\nLet's pick up where brilliance left off — or start something entirely new.`,
+    
+    `Hey Human 👋\nI remember you. Ready to turn another idea into reality?`,
+    
+    `Good ${timeContext}, Human ⚡️\nBack for more magic? Let's do this.`,
+    
+    lastProject 
+      ? `Welcome back, Human 👋\nI remember we were exploring ${lastProject}. Continue that, or start fresh?`
+      : `Human! The folds of time brought you back 🌟\nWhat's brewing in your mind today?`
+  ];
+  
+  // Choose greeting based on context
+  const greetings = isReturningUser ? returningUserGreetings : newUserGreetings;
+  const randomIndex = Math.floor(Math.random() * greetings.length);
+  
+  return greetings[randomIndex];
+};
+
+// Initial greeting message - now dynamic!
 onMounted(() => {
   if (chatContainer.value) {
     gsap.from(chatContainer.value, {
@@ -30,10 +82,11 @@ onMounted(() => {
     });
   }
   
+  // Mark user as visited for future sessions
+  localStorage.setItem('telos_visited', 'true');
+  
   setTimeout(() => {
-    addBotMessage(
-      "👋 Hi! I'm the Are You Human? Copilot. I help businesses identify automation opportunities. Let's start with your name?"
-    );
+    addBotMessage(getSmartGreeting());
   }, 500);
 });
 
