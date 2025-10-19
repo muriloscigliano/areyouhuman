@@ -69,10 +69,11 @@ export async function composePrompts(promptNames, variables = {}) {
  */
 export async function buildSystemPrompt(stage = 'briefing', context = {}) {
   const prompts = ['objective', 'context']; // Core identity files
-  
+
   // Add stage-specific prompts
   switch (stage) {
     case 'briefing':
+      prompts.push('lead-collection'); // ← CRITICAL: Load lead collection workflow FIRST
       prompts.push('briefing');
       break;
     case 'quote':
