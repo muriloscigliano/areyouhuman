@@ -1,12 +1,24 @@
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const apiKey = import.meta.env.OPENAI_API_KEY || '';
+// Get API key - works in both server and build contexts
+const getApiKey = () => {
+  // Try import.meta.env first (Astro context)
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env.OPENAI_API_KEY || '';
+  }
+  // Fallback to process.env (Node context)
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.OPENAI_API_KEY || '';
+  }
+  return '';
+};
+
+const apiKey = getApiKey();
 
 export const openai = apiKey ? new OpenAI({ apiKey }) : null;
 
 export const isOpenAIConfigured = () => {
-  return !!apiKey && apiKey !== '';
+  return !!apiKey && apiKey !== '' && !apiKey.includes('placeholder');
 };
 
 // System prompt for the automation consultant
