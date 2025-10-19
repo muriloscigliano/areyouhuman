@@ -49,13 +49,22 @@ export const POST: APIRoute = async ({ request }) => {
         // Get AI response
         reply = await getChatCompletion(messages);
 
-        // Extract structured lead info periodically
-        if (conversationHistory.length >= 10 && conversationHistory.length % 4 === 0) {
+        // Extract structured lead info MORE FREQUENTLY (every 3 messages after message 6)
+        // Old: only at 10, 14, 18... New: at 6, 9, 12, 15...
+        if (conversationHistory.length >= 6 && conversationHistory.length % 3 === 0) {
+          console.log(`📊 Extracting lead info at message ${conversationHistory.length}...`);
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
+            console.log('✅ Extracted data:', extractedInfo);
             Object.assign(leadData, extractedInfo);
             shouldSaveLead = true;
           }
+        }
+
+        // ALSO save after any message where we have partial data
+        if (conversationHistory.length >= 4 && Object.keys(leadData).length > 0) {
+          console.log(`💾 Saving partial lead data (${Object.keys(leadData).length} fields)...`);
+          shouldSaveLead = true;
         }
 
         // Check if we have all required data to trigger quote generation
