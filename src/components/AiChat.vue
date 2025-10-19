@@ -4,12 +4,27 @@ import { gsap } from 'gsap';
 import axios from 'axios';
 import AiMessage from './AiMessage.vue';
 import AiInput from './AiInput.vue';
+import greetingsData from '../data/context/greetings.json';
 
 interface Message {
   id: string;
   text: string;
   isBot: boolean;
   timestamp: Date;
+}
+
+interface GreetingCondition {
+  time?: string;
+  isReturning?: boolean;
+  intent?: string;
+  hasProject?: boolean;
+  isWeekend?: boolean;
+}
+
+interface Greeting {
+  id: string;
+  condition: GreetingCondition;
+  message: string;
 }
 
 const messages = ref<Message[]>([]);
@@ -19,56 +34,64 @@ const chatContainer = ref<HTMLElement | null>(null);
 const leadId = ref<string | null>(null);
 const conversationId = ref<string | null>(null);
 
-// Smart greeting system - dynamic Telos personality
+// Smart greeting system - loads from JSON with condition matching
 const getSmartGreeting = () => {
   const hour = new Date().getHours();
+  const day = new Date().getDay();
   const isReturningUser = localStorage.getItem('telos_visited') === 'true';
   const lastProject = localStorage.getItem('telos_last_project');
+  const lastIntent = localStorage.getItem('telos_last_intent');
   
-  // Time-based context
+  // Determine time context
   let timeContext = '';
   if (hour >= 5 && hour < 12) timeContext = 'morning';
   else if (hour >= 12 && hour < 17) timeContext = 'afternoon';
   else if (hour >= 17 && hour < 22) timeContext = 'evening';
   else timeContext = 'night';
   
-  // Device context (optional personalization)
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  // Check if weekend
+  const isWeekend = day === 0 || day === 6;
   
-  // Different greetings for returning vs new users
-  const newUserGreetings = [
-    `Hey Human 👋 I'm Telos — your strategist from the folds of time.\nReady to build something that feels half magic, half machine?`,
-    
-    `Hey Human ⚡️\nI'm Telos, your AI strategist. Let's turn your idea into something real — what's on your mind?`,
-    
-    `Good ${timeContext}, Human 👋\nI'm Telos. I help founders and teams design AI systems that stay human.\nWhat brings you here today?`,
-    
-    `Hey Human 🌟\nTelos here — part strategist, part design assistant, fully curious about your vision.\nWhat would you like to build?`,
-    
-    `Hey Human 👋\nI came through the folds of time to help you reshape what's next.\nShall we start with your idea?`
-  ];
+  // Build current context
+  const currentContext = {
+    time: timeContext,
+    isReturning: isReturningUser,
+    hasProject: !!lastProject,
+    intent: lastIntent || undefined,
+    isWeekend
+  };
   
-  const returningUserGreetings = [
-    `Welcome back, Human 👋\nTelos here — ready when you are. New project, or continuing something?`,
-    
-    `Hey Human ⚡️\nGood to see you again. What's the next challenge we're solving together?`,
-    
-    `Human! You're back 🌟\nLet's pick up where brilliance left off — or start something entirely new.`,
-    
-    `Hey Human 👋\nI remember you. Ready to turn another idea into reality?`,
-    
-    `Good ${timeContext}, Human ⚡️\nBack for more magic? Let's do this.`,
-    
-    lastProject 
-      ? `Welcome back, Human 👋\nI remember we were exploring ${lastProject}. Continue that, or start fresh?`
-      : `Human! The folds of time brought you back 🌟\nWhat's brewing in your mind today?`
-  ];
+  // Find matching greetings from JSON
+  const matchingGreetings = greetingsData.greetings.filter((greeting: Greeting) => {
+    return matchesCondition(greeting.condition, currentContext);
+  });
   
-  // Choose greeting based on context
-  const greetings = isReturningUser ? returningUserGreetings : newUserGreetings;
-  const randomIndex = Math.floor(Math.random() * greetings.length);
+  // Pick random from matching greetings, or use default
+  if (matchingGreetings.length > 0) {
+    const randomIndex = Math.floor(Math.random() * matchingGreetings.length);
+    let message = matchingGreetings[randomIndex].message;
+    
+    // Replace template variables
+    if (lastProject) {
+      message = message.replace('{{projectName}}', lastProject);
+    }
+    
+    return message;
+  }
   
-  return greetings[randomIndex];
+  // Fallback
+  return "Hey Human 👋 I'm Telos. Let's build something extraordinary together.";
+};
+
+// Condition matching logic
+const matchesCondition = (condition: GreetingCondition, context: any): boolean => {
+  // Check each condition property
+  for (const [key, value] of Object.entries(condition)) {
+    if (context[key] !== value) {
+      return false;
+    }
+  }
+  return true;
 };
 
 // Initial greeting message - now dynamic!

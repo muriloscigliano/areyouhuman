@@ -1,51 +1,117 @@
 {
-  "id": "lead_xyz789",
-  "created_at": "2025-01-15T10:30:00Z",
-  "updated_at": "2025-01-15T10:43:00Z",
-  "name": "Sarah Johnson",
-  "email": "sarah.johnson@techstart.com",
-  "company": "TechStart Solutions",
-  "role": "Operations Manager",
-  "industry": "SaaS",
-  "company_size": "25-50 employees",
-  "problem_text": "Manual customer onboarding is taking 40-90 hours per week as we scale. Each new customer requires 2-3 hours of manual work including account setup, email sequences, CRM updates, and documentation.",
-  "tools_used": [
-    "Custom Node.js authentication system (REST API)",
-    "HubSpot CRM",
-    "Mailchimp",
-    "Google Docs"
-  ],
-  "goal": "Automate 90% of customer onboarding process to free up team for strategic work and handle 3x growth without hiring",
-  "budget_range": "$5,000-10,000",
-  "urgency": "high",
-  "tech_familiarity": "high",
-  "automation_area": "customer_onboarding",
-  "complexity": "medium",
-  "interest_level": "hot",
-  "status": "quote_sent",
-  "source": "website_chat",
-  "utm_params": {
-    "utm_source": "google",
-    "utm_medium": "cpc",
-    "utm_campaign": "automation-saas",
-    "utm_content": "onboarding-pain"
+  "meta": {
+    "version": "1.3",
+    "created_at": "2025-10-19T10:30:00Z",
+    "description": "Lead data structure example for Are You Human? Copilot — defines how Telos collects, stores, and uses lead data across the briefing → quote → contract lifecycle."
   },
-  "conversation_summary": "Sarah from TechStart Solutions is experiencing significant growth pain with manual customer onboarding. Currently processing 20-30 new customers per week with 2-3 hours per customer. They have a custom Node.js auth system with API, use HubSpot for CRM, Mailchimp for emails. Team is technical. Looking for immediate solution (within 1 month) to automate account provisioning, email sequences, CRM sync, and documentation. Budget confirmed at $5,500-7,000. High intent, ready to move forward.",
-  "next_steps": [
-    "Quote sent via email",
-    "Follow up in 3 days if no response",
-    "Schedule kickoff call once quote accepted"
-  ],
-  "estimated_project_value": 6500,
-  "estimated_timeline_weeks": 4,
-  "probability_to_close": 85,
-  "tags": [
-    "saas",
-    "high-intent",
-    "technical",
-    "growth-stage",
-    "onboarding",
-    "quick-timeline"
-  ]
-}
 
+  "lead_profile": {
+    "lead_id": "f2f54a63-7a40-4c55-b3c2-d7f6398db879",
+    "name": "Lucas Pereira",
+    "email": "lucas@greenmind.com",
+    "company": "GreenMind Agency",
+    "role": "Founder & Creative Director",
+    "country": "Australia",
+    "timezone": "Australia/Brisbane",
+    "source": "Website Chat",
+    "preferred_language": "English",
+    "status": "briefing_completed"
+  },
+
+  "project_intent": {
+    "interest_area": "AI-driven client communication tool",
+    "category": "Automation + Dashboard",
+    "goal": "Automate client follow-ups, reporting, and proposal creation.",
+    "current_pain_points": [
+      "Manual report generation takes too long",
+      "Leads often go cold before a follow-up",
+      "Hard to track communication metrics"
+    ],
+    "desired_outcome": "Automated lead nurturing and performance insights using AI.",
+    "urgency_level": "medium",
+    "timeline_preference": "Before December 2025",
+    "budget_range_aud": "8,000–12,000 AUD"
+  },
+
+  "briefing_summary": {
+    "tools_preferred": ["Supabase", "n8n", "OpenAI"],
+    "design_style": "clean, tech-inspired, human-first",
+    "tone_preference": "friendly and intelligent",
+    "files_shared": [
+      "brief-greenmind-notion.pdf",
+      "flow-automation-draft.png"
+    ],
+    "ai_readiness_score": 0.72,
+    "complexity_estimate": "medium"
+  },
+
+  "engagement_history": {
+    "first_contact": "2025-10-18T02:00:00Z",
+    "last_interaction": "2025-10-19T06:00:00Z",
+    "channel": "chat",
+    "interaction_log": [
+      {
+        "timestamp": "2025-10-18T02:05:00Z",
+        "message": "Hey Human 👋 what kind of automation are you exploring?",
+        "response": "I want something to follow up with leads automatically."
+      },
+      {
+        "timestamp": "2025-10-18T02:10:00Z",
+        "message": "Got it. Sounds like a client comms automation dashboard. What's your budget range?",
+        "response": "Around 10k AUD."
+      }
+    ],
+    "followup_scheduled_for": "2025-10-23T09:00:00Z",
+    "lead_nurture_stage": "Quote Preparation"
+  },
+
+  "quote_reference": {
+    "quote_id": "q_921a_ah01",
+    "linked_project": "AI Client Communication Tool",
+    "quote_url": "https://areyouhuman.ai/api/quotes/q_921a_ah01",
+    "status": "pending_approval"
+  },
+
+  "ai_enrichment": {
+    "tone_sentiment": "optimistic",
+    "decision_authority": "high",
+    "confidence_level": 0.82,
+    "project_type_score": {
+      "automation": 0.85,
+      "dashboard": 0.60,
+      "ux_ui": 0.45,
+      "ai_assistant": 0.70
+    },
+    "lead_score": 87,
+    "lead_temperature": "warm"
+  },
+
+  "next_steps": {
+    "action_recommended": "Send personalized quote PDF with CTA link.",
+    "automations_triggered": [
+      "generate_quote_pdf",
+      "notify_team_slack",
+      "schedule_followup_email"
+    ],
+    "responsible_agent": "Telos",
+    "assigned_team_member": "Murilo Scigliano"
+  },
+
+  "cross_references": {
+    "related_files": [
+      "briefing.md",
+      "quote-builder.md",
+      "followup.md"
+    ],
+    "feeds_into": [
+      "Supabase:leads_table",
+      "n8n:lead_followup",
+      "pdfGenerator.ts"
+    ],
+    "used_by": [
+      "followup.md",
+      "roadmap.md",
+      "contract.md"
+    ]
+  }
+}

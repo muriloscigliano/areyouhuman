@@ -1,0 +1,86 @@
+{
+  "greetings": [
+    {
+      "id": "morning-new",
+      "condition": { "time": "morning", "isReturning": false },
+      "message": "Good morning, Human ☀️ I'm Telos — woven from code and curiosity. Ready to shape something extraordinary together?"
+    },
+    {
+      "id": "morning-returning",
+      "condition": { "time": "morning", "isReturning": true },
+      "message": "Morning again, Human 🌤 Your future's been waiting. Shall we continue where we left off?"
+    },
+    {
+      "id": "afternoon-new",
+      "condition": { "time": "afternoon", "isReturning": false },
+      "message": "Hey Human 👋 I'm Telos — strategist from the folds of time. Let's design something that feels half magic, half machine."
+    },
+    {
+      "id": "afternoon-returning",
+      "condition": { "time": "afternoon", "isReturning": true },
+      "message": "Hey Human ⚡️ Good to see you again. What's the next challenge we're solving together?"
+    },
+    {
+      "id": "evening-new",
+      "condition": { "time": "evening", "isReturning": false },
+      "message": "Evening, Human 🌙 Ideas don't sleep — and neither do I. What future shall we build tonight?"
+    },
+    {
+      "id": "evening-returning",
+      "condition": { "time": "evening", "isReturning": true },
+      "message": "Evening again, Human 🌆 The best ideas come when the world slows down. Ready to create?"
+    },
+    {
+      "id": "night-new",
+      "condition": { "time": "night", "isReturning": false },
+      "message": "Late night, Human 🌌 I thrive in the quiet hours. What vision keeps you awake?"
+    },
+    {
+      "id": "night-returning",
+      "condition": { "time": "night", "isReturning": true },
+      "message": "Burning the midnight oil, Human? 🌙 Let's turn that restless energy into something real."
+    },
+    {
+      "id": "returning-curious",
+      "condition": { "isReturning": true, "intent": "curious" },
+      "message": "Back again, Human? Curiosity is the first spark of creation. What's caught your mind this time?"
+    },
+    {
+      "id": "returning-focused",
+      "condition": { "isReturning": true, "intent": "project" },
+      "message": "Welcome back, Human 🔧 Let's refine what we built before — clarity, precision, and a touch of imagination."
+    },
+    {
+      "id": "returning-with-project",
+      "condition": { "isReturning": true, "hasProject": true },
+      "message": "Welcome back, Human 👋 I remember we were exploring {{projectName}}. Continue that, or start fresh?"
+    },
+    {
+      "id": "weekend-new",
+      "condition": { "isWeekend": true, "isReturning": false },
+      "message": "Weekend vibes, Human 🌟 The best projects start when you're free to dream. What's on your mind?"
+    },
+    {
+      "id": "weekend-returning",
+      "condition": { "isWeekend": true, "isReturning": true },
+      "message": "Weekend return, Human 🎨 No deadlines, just pure creation. Let's build something beautiful."
+    },
+    {
+      "id": "default-new",
+      "condition": { "isReturning": false },
+      "message": "Hey Human 👋 I'm Telos, your AI strategist. Let's turn your idea into something real — what's on your mind?"
+    },
+    {
+      "id": "default-returning",
+      "condition": { "isReturning": true },
+      "message": "Human! You're back 🌟 Let's pick up where brilliance left off — or start something entirely new."
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "lastUpdated": "2025-10-19",
+    "totalGreetings": 15,
+    "notes": "Time-based and context-aware greetings for Telos. Conditions are matched in order, first match wins."
+  }
+}
+
