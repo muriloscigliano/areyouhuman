@@ -1,24 +1,31 @@
 import OpenAI from 'openai';
 
-// Get API key - works in both server and build contexts
+// Get API key - lazy evaluation for proper Astro context
 const getApiKey = () => {
-  // Try import.meta.env first (Astro context)
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    return import.meta.env.OPENAI_API_KEY || '';
-  }
-  // Fallback to process.env (Node context)
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env.OPENAI_API_KEY || '';
+  // In Astro API routes, import.meta.env is available
+  if (import.meta.env?.OPENAI_API_KEY) {
+    return import.meta.env.OPENAI_API_KEY;
   }
   return '';
 };
 
-const apiKey = getApiKey();
+// Lazy OpenAI client initialization
+let _openaiClient: OpenAI | null = null;
+export const getOpenAIClient = () => {
+  if (!_openaiClient) {
+    const key = getApiKey();
+    if (key && !key.includes('placeholder')) {
+      _openaiClient = new OpenAI({ apiKey: key });
+    }
+  }
+  return _openaiClient;
+};
 
-export const openai = apiKey ? new OpenAI({ apiKey }) : null;
+export const openai = getOpenAIClient(); // For backwards compatibility
 
 export const isOpenAIConfigured = () => {
-  return !!apiKey && apiKey !== '' && !apiKey.includes('placeholder');
+  const key = getApiKey();
+  return !!key && key !== '' && !key.includes('placeholder');
 };
 
 // System prompt for the automation consultant
@@ -48,12 +55,13 @@ interface Message {
 }
 
 export async function getChatCompletion(messages: Message[]): Promise<string> {
-  if (!openai) {
+  const client = getOpenAIClient();
+  if (!client) {
     throw new Error('OpenAI is not configured. Please add OPENAI_API_KEY to environment variables.');
   }
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Fast and cost-effective
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -72,12 +80,13 @@ export async function getChatCompletion(messages: Message[]): Promise<string> {
 
 // Helper to extract structured data from conversation
 export async function extractLeadInfo(conversationMessages: Message[]): Promise<any> {
-  if (!openai) {
+  const client = getOpenAIClient();
+  if (!client) {
     return null;
   }
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
