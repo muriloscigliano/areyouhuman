@@ -1,0 +1,35 @@
+{
+  "client_name": "Sarah Johnson",
+  "client_email": "sarah.johnson@example.com",
+  "company_name": "TechStart Solutions",
+  "project_title": "Automated Customer Onboarding System",
+  "summary": "TechStart Solutions is currently onboarding 20-30 new customers per week, with each onboarding taking 2-3 hours of manual work including account setup, welcome emails, CRM updates, and documentation. We'll build an intelligent automation system that handles the entire onboarding process, reducing manual work by 90% while improving consistency and customer experience.",
+  "deliverables": [
+    {
+      "item": "Automated Account Provisioning",
+      "desc": "Instantly create user accounts with appropriate permissions based on customer tier (Basic, Pro, Enterprise). Connects to your authentication system and assigns resources automatically."
+    },
+    {
+      "item": "Smart Welcome Email Sequences",
+      "desc": "Personalized 7-day onboarding email series triggered by customer actions and milestones. Adapts based on product usage and engagement levels."
+    },
+    {
+      "item": "HubSpot CRM Integration",
+      "desc": "Seamless two-way sync between your onboarding system and HubSpot. Automatically creates deals, updates contact properties, and logs all onboarding activities."
+    },
+    {
+      "item": "Real-time Onboarding Dashboard",
+      "desc": "Visual dashboard showing onboarding pipeline, completion rates, bottlenecks, and time-to-value metrics. Updates in real-time as customers progress."
+    },
+    {
+      "item": "Automated Documentation Delivery",
+      "desc": "Generates and sends custom onboarding guides, training materials, and resource links based on customer industry and use case."
+    }
+  ],
+  "timeline": "3-4 weeks",
+  "budget": "AUD 5,500 - 7,000",
+  "quote_date": "2025-01-15",
+  "quote_id": "Q-20250115-001",
+  "additional_notes": "Includes 30 days of post-launch support, comprehensive documentation, and team training session. Optional ongoing maintenance available at $350/month."
+}
+

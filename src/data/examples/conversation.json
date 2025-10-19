@@ -1,0 +1,133 @@
+{
+  "conversation_id": "conv_abc123",
+  "lead_id": "lead_xyz789",
+  "started_at": "2025-01-15T10:30:00Z",
+  "completed_at": "2025-01-15T10:47:00Z",
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Hi! 👋 I'm your automation consultant. I help businesses eliminate repetitive tasks and scale efficiently. What brings you here today?",
+      "timestamp": "2025-01-15T10:30:00Z"
+    },
+    {
+      "role": "user",
+      "content": "We're spending way too much time onboarding new customers manually. It's taking over our team's schedule.",
+      "timestamp": "2025-01-15T10:31:15Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I totally get that - manual onboarding can be a huge time sink! How many customers are you onboarding per week, and what does your current process look like?",
+      "timestamp": "2025-01-15T10:31:30Z"
+    },
+    {
+      "role": "user",
+      "content": "About 20-30 per week. We have to create their accounts, set up permissions, send welcome emails, add them to HubSpot, create documentation... each one takes 2-3 hours.",
+      "timestamp": "2025-01-15T10:33:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "That's 40-90 hours per week! Definitely worth automating. What tools are you currently using for this process?",
+      "timestamp": "2025-01-15T10:33:20Z"
+    },
+    {
+      "role": "user",
+      "content": "We use our own authentication system for accounts, HubSpot for CRM, Mailchimp for emails, and Google Docs for documentation.",
+      "timestamp": "2025-01-15T10:34:30Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect - all of those have great APIs we can work with. Does your authentication system have an API we can use to create accounts programmatically?",
+      "timestamp": "2025-01-15T10:34:50Z"
+    },
+    {
+      "role": "user",
+      "content": "Yes, it's a custom system built on Node.js with a REST API.",
+      "timestamp": "2025-01-15T10:35:45Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Excellent! And do your customers fall into different tiers or plans that affect their setup?",
+      "timestamp": "2025-01-15T10:36:00Z"
+    },
+    {
+      "role": "user",
+      "content": "Yes, we have Basic, Pro, and Enterprise tiers. Each has different permissions and resources.",
+      "timestamp": "2025-01-15T10:36:50Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Got it. So we'd automate: account creation with tier-specific permissions, HubSpot updates, personalized welcome emails, and documentation delivery. That would reduce your manual work by about 90%. What's your timeline for getting this in place?",
+      "timestamp": "2025-01-15T10:37:15Z"
+    },
+    {
+      "role": "user",
+      "content": "ASAP! We're growing fast and can't keep hiring people just for onboarding. Ideally within a month?",
+      "timestamp": "2025-01-15T10:38:20Z"
+    },
+    {
+      "role": "assistant",
+      "content": "We can definitely do that - this would be about a 3-4 week project. For something like this with multiple integrations, custom logic, and a dashboard, we're typically looking at $5,500-7,000. Does that fit within your budget?",
+      "timestamp": "2025-01-15T10:38:45Z"
+    },
+    {
+      "role": "user",
+      "content": "Yes, that works. When we're saving 40-90 hours per week, the ROI is immediate.",
+      "timestamp": "2025-01-15T10:40:10Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Absolutely! That's about $2,000-4,500 per week in saved time at typical hourly rates. Let me put together a detailed quote for you. Can I get your name and email?",
+      "timestamp": "2025-01-15T10:40:30Z"
+    },
+    {
+      "role": "user",
+      "content": "Sarah Johnson, sarah.johnson@techstart.com",
+      "timestamp": "2025-01-15T10:41:20Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Perfect! And what's your company name?",
+      "timestamp": "2025-01-15T10:41:30Z"
+    },
+    {
+      "role": "user",
+      "content": "TechStart Solutions",
+      "timestamp": "2025-01-15T10:42:00Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Awesome, Sarah! I'm going to create a detailed quote for you that includes account provisioning, email sequences, HubSpot integration, a real-time dashboard, and automated documentation. You'll have it in your inbox within the next few minutes. Sound good?",
+      "timestamp": "2025-01-15T10:42:20Z"
+    },
+    {
+      "role": "user",
+      "content": "Perfect, thank you!",
+      "timestamp": "2025-01-15T10:42:45Z"
+    },
+    {
+      "role": "assistant",
+      "content": "You're welcome! Check your email shortly. I'm excited to help TechStart automate and scale! 🚀",
+      "timestamp": "2025-01-15T10:43:00Z"
+    }
+  ],
+  "extracted_data": {
+    "lead": {
+      "name": "Sarah Johnson",
+      "email": "sarah.johnson@techstart.com",
+      "company": "TechStart Solutions",
+      "role": "Not specified",
+      "industry": "SaaS/Technology"
+    },
+    "project": {
+      "problem": "Manual customer onboarding taking 2-3 hours per customer",
+      "volume": "20-30 customers per week",
+      "tools_used": ["Custom Node.js auth system", "HubSpot", "Mailchimp", "Google Docs"],
+      "desired_outcome": "90% reduction in manual onboarding work",
+      "urgency": "High - ASAP, ideally within a month",
+      "budget_range": "$5,500-7,000",
+      "tech_familiarity": "High - have custom built system with API"
+    },
+    "quote_ready": true
+  }
+}
+
