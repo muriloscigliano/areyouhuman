@@ -1,5 +1,12 @@
 import OpenAI from 'openai';
 import { buildSystemPrompt, PromptStages } from '../utils/parsePrompt.js';
+import { 
+  optimizeMessagePayload, 
+  limitMessageLength, 
+  needsSummarization,
+  getTokenStats,
+  countTokens
+} from '../utils/tokenManager.js';
 
 // Get API key - lazy evaluation for proper Astro context
 const getApiKey = () => {
@@ -68,7 +75,8 @@ interface Message {
 export async function getChatCompletion(
   messages: Message[], 
   stage: string = 'briefing',
-  context: any = {}
+  context: any = {},
+  conversationSummary?: string
 ): Promise<string> {
   const client = getOpenAIClient();
   if (!client) {
@@ -79,14 +87,22 @@ export async function getChatCompletion(
     // Load the appropriate system prompt for the conversation stage
     const systemPrompt = await getSystemPrompt(stage, context);
     
+    // TOKEN OPTIMIZATION: Trim conversation to fit budget
+    const optimizedMessages = optimizeMessagePayload(
+      systemPrompt,
+      messages,
+      conversationSummary
+    );
+    
+    // Log token stats for monitoring
+    const stats = getTokenStats(messages);
+    console.log(`📊 Token stats - Total: ${stats.totalTokens}, User: ${stats.userTokens}, Assistant: ${stats.assistantTokens}`);
+    
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Fast and cost-effective
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...messages
-      ],
+      messages: optimizedMessages,
       temperature: 0.7,
-      max_tokens: 500, // Increased for more detailed Telos responses
+      max_tokens: 500, // Keep responses concise
     });
 
     return completion.choices[0]?.message?.content || 'I apologize, but I encountered an issue. Could you please try again?';

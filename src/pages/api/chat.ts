@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../lib/openai';
+import { limitMessageLength, needsSummarization, createConversationSummary } from '../../utils/tokenManager';
 
 interface ChatRequest {
   message: string;
@@ -24,7 +25,13 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const body: ChatRequest = await request.json();
-    const { message, conversationHistory = [], leadId, conversationId } = body;
+    let { message, conversationHistory = [], leadId, conversationId } = body;
+
+    // LIMIT MESSAGE LENGTH to prevent abuse
+    message = limitMessageLength(message, 500);
+    if (message.length >= 500) {
+      console.log('⚠️ Message truncated to 500 characters');
+    }
 
     let reply = '';
     let shouldSaveLead = false;
@@ -46,8 +53,24 @@ export const POST: APIRoute = async ({ request }) => {
         // Add current message
         messages.push({ role: 'user', content: message });
 
-        // Get AI response
-        reply = await getChatCompletion(messages);
+        // CHECK IF CONVERSATION NEEDS SUMMARIZATION
+        let conversationSummary: string | undefined;
+        if (needsSummarization(messages)) {
+          console.log('📝 Generating conversation summary...');
+          conversationSummary = createConversationSummary(messages);
+          console.log(`✅ Summary: ${conversationSummary}`);
+          
+          // TODO: Store summary in Supabase for future use
+          if (conversationId && isSupabaseConfigured()) {
+            await supabase
+              .from('conversations')
+              .update({ summary: conversationSummary })
+              .eq('id', conversationId);
+          }
+        }
+
+        // Get AI response with token optimization
+        reply = await getChatCompletion(messages, 'briefing', {}, conversationSummary);
 
         // Extract structured lead info MORE FREQUENTLY (every 3 messages after message 6)
         // Old: only at 10, 14, 18... New: at 6, 9, 12, 15...
