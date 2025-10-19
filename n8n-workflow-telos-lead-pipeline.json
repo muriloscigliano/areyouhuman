@@ -1,0 +1,151 @@
+{
+  "name": "Telos — New Lead Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telos-new-lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "telos-new-lead"
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "insert",
+        "table": "leads",
+        "columns": "leadId,name,email,company,project_title,project_summary,tools,budget,timeline,source",
+        "options": {}
+      },
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "1",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "telos@areyouhuman.studio",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Your AI Solution Proposal — Are You Human?",
+        "text": "",
+        "html": "<h2>Hey {{ $json.name }},</h2>\n\n<p>Thanks for sharing your project with me — here's a quick summary before your quote PDF is generated:</p>\n\n<ul>\n  <li><strong>🧩 Project:</strong> {{ $json.project_title }}</li>\n  <li><strong>💬 Summary:</strong> {{ $json.project_summary }}</li>\n  <li><strong>💰 Budget Range:</strong> {{ $json.budget_range }}</li>\n  <li><strong>🕒 Timeline:</strong> {{ $json.timeline }}</li>\n</ul>\n\n<p>I'll follow up soon with the detailed proposal and next steps.</p>\n\n<p><strong>Stay Human. Stay Ahead.</strong><br>— Telos</p>",
+        "options": {}
+      },
+      "name": "Send Email to Lead",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [650, 200],
+      "credentials": {
+        "smtp": {
+          "id": "2",
+          "name": "SMTP Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "🎯 New qualified lead from Telos"
+            },
+            {
+              "name": "blocks",
+              "value": "=[\n  {\n    \"type\": \"section\",\n    \"text\": {\n      \"type\": \"mrkdwn\",\n      \"text\": \"*{{ $json.name }}* from *{{ $json.company }}*\\n{{ $json.project_summary }}\"\n    }\n  },\n  {\n    \"type\": \"context\",\n    \"elements\": [\n      {\n        \"type\": \"mrkdwn\",\n        \"text\": \"Budget: {{ $json.budget_range }} | Timeline: {{ $json.timeline }}\"\n      }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Notify Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 400],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Lead processed\", \"workflowId\": \"telos-new-lead\" } }}"
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Save to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Send Email to Lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notify Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email to Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Slack": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1",
+  "id": "telos-lead-pipeline",
+  "meta": {
+    "instanceId": "your-instance-id"
+  },
+  "tags": ["telos", "leads", "automation"]
+}
+

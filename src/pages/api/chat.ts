@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../lib/openai';
 import { limitMessageLength, needsSummarization, createConversationSummary } from '../../utils/tokenManager';
+import { triggerN8NWebhook, isN8NConfigured } from '../../lib/n8nTrigger';
 
 interface ChatRequest {
   message: string;
@@ -104,20 +105,45 @@ export const POST: APIRoute = async ({ request }) => {
           shouldSaveLead = true;
         }
 
-        // Check if we have all required data to trigger quote generation
+        // Check if we have all required data to trigger n8n automation
         const hasRequiredData = leadData.name && leadData.email && leadData.company && leadData.problem_text;
         
-        // If AI is confirming quote send, trigger the workflow
+        // If AI is confirming quote send, trigger n8n workflow
         if (hasRequiredData && 
             (reply.toLowerCase().includes('send') || 
              reply.toLowerCase().includes('email') || 
-             reply.toLowerCase().includes('inbox'))) {
+             reply.toLowerCase().includes('inbox') ||
+             reply.toLowerCase().includes('proposal'))) {
           
-          console.log('🎯 Triggering quote generation workflow...');
+          console.log('🎯 Lead qualified! Triggering n8n automation workflow...');
           
-          // Note: In production, this would call /api/generate-quote
-          // For now, we mark the lead as ready for quote
-          leadData.status = 'ready_for_quote';
+          // Trigger n8n webhook for automation (email, PDF, Slack, etc.)
+          if (isN8NConfigured()) {
+            const n8nResult = await triggerN8NWebhook({
+              leadId: currentLeadId || 'pending',
+              name: leadData.name,
+              email: leadData.email,
+              company: leadData.company,
+              project_title: leadData.automation_area ? `${leadData.automation_area} Automation` : 'AI Automation Project',
+              project_summary: leadData.problem_text,
+              tools_used: leadData.tools_used || [],
+              budget_range: leadData.budget_range,
+              timeline: leadData.urgency,
+              urgency: leadData.urgency,
+              automation_area: leadData.automation_area,
+              interest_level: leadData.interest_level,
+              source: 'Telos Chat',
+            });
+            
+            if (n8nResult.success) {
+              console.log('✅ n8n workflow triggered successfully!');
+            } else {
+              console.log('⚠️ n8n trigger failed:', n8nResult.message);
+            }
+          } else {
+            console.log('⚠️ n8n not configured, skipping automation');
+          }
+          
           shouldSaveLead = true;
         }
 
