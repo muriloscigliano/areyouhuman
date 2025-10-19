@@ -90,11 +90,11 @@ export async function buildSystemPrompt(stage = 'briefing', context = {}) {
       break;
   }
   
-  // Load context files (tone, knowledge, pricing, faq)
+  // Load context files (use mini versions for token efficiency)
   const [tone, knowledge, faq] = await Promise.all([
-    loadContext('tone'),
-    loadContext('knowledge'),
-    loadContext('faq')
+    loadContext('tone-mini'),
+    loadContext('knowledge-mini'),
+    loadContext('faq-mini')
   ]);
   
   // Compose everything

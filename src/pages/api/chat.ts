@@ -76,8 +76,9 @@ export const POST: APIRoute = async ({ request }) => {
         // Messages 3-5 collect Name, Email, Company - we need to extract IMMEDIATELY
         const messageCount = conversationHistory.length;
         
-        // AGGRESSIVE EXTRACTION during critical collection phase (messages 3-5)
-        if (messageCount >= 2 && messageCount <= 5) {
+        // AGGRESSIVE EXTRACTION during critical collection phase (messages 2-10)
+        // This covers all user responses during name/email/company collection
+        if (messageCount >= 2 && messageCount <= 10) {
           console.log(`🎯 CRITICAL PHASE: Extracting lead info at message ${messageCount}...`);
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
@@ -86,8 +87,8 @@ export const POST: APIRoute = async ({ request }) => {
             shouldSaveLead = true;
           }
         }
-        // Continue regular extraction after message 6 (every 3 messages)
-        else if (messageCount >= 6 && messageCount % 3 === 0) {
+        // Continue regular extraction after message 10 (every 3 messages)
+        else if (messageCount > 10 && messageCount % 3 === 0) {
           console.log(`📊 Regular extraction at message ${messageCount}...`);
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
