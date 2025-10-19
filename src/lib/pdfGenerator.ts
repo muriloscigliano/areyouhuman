@@ -1,18 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
+import htmlPdf from 'html-pdf-node';
 
 /**
  * PDF Generator
- * Converts HTML templates to PDF documents
- * 
- * TODO: Install PDF generation library
- * Options:
- * 1. html-pdf-node (lightweight, good for Vercel)
- * 2. puppeteer (more powerful but heavier)
- * 3. pdfkit (programmatic PDF creation)
- * 
- * For now using placeholder - install with:
- * npm install html-pdf-node
+ * Converts HTML templates to PDF documents using html-pdf-node
  */
 
 interface QuoteData {
@@ -43,18 +35,25 @@ export async function generatePDF(
     // Inject data into template
     const html = injectData(template, data);
     
-    // TODO: Convert HTML to PDF
-    // Example with html-pdf-node:
-    // const pdf = require('html-pdf-node');
-    // const file = { content: html };
-    // const options = { format: 'A4' };
-    // const pdfBuffer = await pdf.generatePdf(file, options);
-    // return pdfBuffer;
+    // Convert HTML to PDF
+    const file = { content: html };
+    const options = { 
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        bottom: '20mm',
+        left: '15mm',
+        right: '15mm'
+      }
+    };
     
-    // Placeholder: return HTML as buffer for now
-    console.log('⚠️ PDF generation not implemented yet. Returning HTML.');
-    return Buffer.from(html);
-  } catch (error) {
+    console.log('📄 Generating PDF...');
+    const pdfBuffer = await htmlPdf.generatePdf(file, options);
+    console.log('✅ PDF generated successfully');
+    
+    return pdfBuffer;
+  } catch (error: any) {
     console.error('Error generating PDF:', error);
     throw new Error(`Failed to generate PDF: ${error.message}`);
   }

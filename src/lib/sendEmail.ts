@@ -1,16 +1,15 @@
 /**
  * Email Service
- * Sends emails with quote PDFs attached
+ * Sends emails with quote PDFs attached using Resend
  * 
- * TODO: Set up email service
- * Options:
- * 1. Resend (https://resend.com) - modern, great DX
- * 2. SendGrid - established, reliable
- * 3. AWS SES - cost-effective at scale
- * 4. Postmark - transactional email specialist
- * 
- * Install with: npm install resend
+ * Setup:
+ * 1. Sign up at https://resend.com
+ * 2. Get API key from dashboard
+ * 3. Add RESEND_API_KEY to .env
+ * 4. Verify your domain (or use onboarding@resend.dev for testing)
  */
+
+import { Resend } from 'resend';
 
 interface EmailOptions {
   to: string;
@@ -30,32 +29,48 @@ interface QuoteEmailData {
   quoteUrl?: string;
 }
 
+// Initialize Resend (uses env variable)
+const getResendClient = () => {
+  const apiKey = import.meta.env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
+  if (!apiKey || apiKey.includes('your_') || apiKey.includes('placeholder')) {
+    console.warn('⚠️ Resend API key not configured');
+    return null;
+  }
+  return new Resend(apiKey);
+};
+
 /**
  * Send email with optional attachment
  * @param options - Email options
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    // TODO: Implement email sending
-    // Example with Resend:
-    // 
-    // import { Resend } from 'resend';
-    // const resend = new Resend(process.env.RESEND_API_KEY);
-    // 
-    // await resend.emails.send({
-    //   from: 'Are You Human? <quotes@areyouhuman.com>',
-    //   to: options.to,
-    //   subject: options.subject,
-    //   html: options.html,
-    //   attachments: options.attachments
-    // });
+    const resend = getResendClient();
     
-    console.log('📧 Email would be sent to:', options.to);
-    console.log('📋 Subject:', options.subject);
-    console.log('⚠️ Email sending not implemented yet.');
+    if (!resend) {
+      console.log('📧 [DEMO MODE] Email would be sent to:', options.to);
+      console.log('📋 Subject:', options.subject);
+      console.log('⚠️ Resend not configured. Add RESEND_API_KEY to .env');
+      return true; // Return success in demo mode
+    }
+
+    // Convert attachments to Resend format
+    const resendAttachments = options.attachments?.map(att => ({
+      filename: att.filename,
+      content: att.content instanceof Buffer ? att.content : Buffer.from(att.content),
+    }));
+
+    await resend.emails.send({
+      from: 'Are You Human? <onboarding@resend.dev>', // Change to your verified domain
+      to: options.to,
+      subject: options.subject,
+      html: options.html || options.text || '',
+      attachments: resendAttachments
+    });
     
+    console.log('✅ Email sent successfully to:', options.to);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending email:', error);
     throw new Error(`Failed to send email: ${error.message}`);
   }

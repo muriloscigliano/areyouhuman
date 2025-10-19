@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
         // Get AI response
         reply = await getChatCompletion(messages);
 
-        // Extract structured lead info every few messages
+        // Extract structured lead info periodically
         if (conversationHistory.length >= 10 && conversationHistory.length % 4 === 0) {
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
@@ -58,8 +58,20 @@ export const POST: APIRoute = async ({ request }) => {
           }
         }
 
-        // Check if we should collect email (AI asks for it naturally)
-        if (reply.toLowerCase().includes('email')) {
+        // Check if we have all required data to trigger quote generation
+        const hasRequiredData = leadData.name && leadData.email && leadData.company && leadData.problem_text;
+        
+        // If AI is confirming quote send, trigger the workflow
+        if (hasRequiredData && 
+            (reply.toLowerCase().includes('send') || 
+             reply.toLowerCase().includes('email') || 
+             reply.toLowerCase().includes('inbox'))) {
+          
+          console.log('🎯 Triggering quote generation workflow...');
+          
+          // Note: In production, this would call /api/generate-quote
+          // For now, we mark the lead as ready for quote
+          leadData.status = 'ready_for_quote';
           shouldSaveLead = true;
         }
 
