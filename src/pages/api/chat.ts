@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // Use OpenAI if configured, otherwise fall back to rule-based
     if (isOpenAIConfigured()) {
+      console.log('🤖 Using OpenAI GPT-4o-mini');
       // ==================================================
       // AI-POWERED CONVERSATION (OpenAI)
       // ==================================================
@@ -72,6 +73,7 @@ export const POST: APIRoute = async ({ request }) => {
     // RULE-BASED FALLBACK (if OpenAI not configured or fails)
     // ==================================================
     if (!reply) {
+      console.log('📋 Using rule-based responses');
       const messageCount = conversationHistory.length;
 
     // Conversation flow based on message count
