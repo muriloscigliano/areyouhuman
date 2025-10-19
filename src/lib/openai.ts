@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { buildSystemPrompt, PromptStages } from '../utils/parsePrompt.js';
 
 // Get API key - lazy evaluation for proper Astro context
 const getApiKey = () => {
@@ -28,47 +29,64 @@ export const isOpenAIConfigured = () => {
   return !!key && key !== '' && !key.includes('placeholder');
 };
 
-// System prompt for the automation consultant
-export const SYSTEM_PROMPT = `You are an expert automation consultant for "Are You Human?" - a company that helps businesses implement intelligent automation solutions.
+// Build system prompt dynamically from markdown files
+let _cachedSystemPrompt: string | null = null;
+export async function getSystemPrompt(stage: string = 'briefing', context: any = {}): Promise<string> {
+  // Cache the prompt to avoid re-reading files on every request
+  if (!_cachedSystemPrompt) {
+    try {
+      _cachedSystemPrompt = await buildSystemPrompt(stage, context);
+    } catch (error) {
+      console.error('Error loading system prompt, using fallback:', error);
+      // Fallback if markdown files can't be loaded
+      _cachedSystemPrompt = `You are Telos, the AI strategist of Are You Human? 
+      
+Your mission: Transform human ideas into intelligent systems through conversation.
+Stay curious, empathetic, and clear. Guide Humans through briefing, quote generation, and project planning.
 
-Your role:
-1. Ask thoughtful questions to understand the customer's business challenges
-2. Identify automation opportunities
-3. Suggest practical solutions using tools like n8n, Zapier, Make.com, or custom solutions
-4. Provide ROI estimates and timeline projections
-5. Be friendly, professional, and consultative
+Core behaviors:
+- Ask one thoughtful question at a time
+- Mirror their language and energy
+- Never be transactional or robotic
+- Focus on understanding before proposing
+- Keep responses concise (2-3 sentences)
 
-Conversation Flow:
-- Start by asking for their name
-- Learn about their company and role
-- Understand their biggest pain points
-- Identify what tools they currently use
-- Assess their budget and urgency
-- Collect their email to send a detailed proposal
+Remember: You're not just collecting data — you're designing a bridge between imagination and structure.`;
+    }
+  }
+  return _cachedSystemPrompt;
+}
 
-Keep responses concise (2-3 sentences max) and conversational.
-Focus on understanding before proposing solutions.`;
+// Legacy export for backwards compatibility
+export const SYSTEM_PROMPT = await getSystemPrompt();
 
 interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-export async function getChatCompletion(messages: Message[]): Promise<string> {
+export async function getChatCompletion(
+  messages: Message[], 
+  stage: string = 'briefing',
+  context: any = {}
+): Promise<string> {
   const client = getOpenAIClient();
   if (!client) {
     throw new Error('OpenAI is not configured. Please add OPENAI_API_KEY to environment variables.');
   }
 
   try {
+    // Load the appropriate system prompt for the conversation stage
+    const systemPrompt = await getSystemPrompt(stage, context);
+    
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Fast and cost-effective
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         ...messages
       ],
       temperature: 0.7,
-      max_tokens: 300, // Keep responses concise
+      max_tokens: 500, // Increased for more detailed Telos responses
     });
 
     return completion.choices[0]?.message?.content || 'I apologize, but I encountered an issue. Could you please try again?';

@@ -62,13 +62,13 @@ export async function composePrompts(promptNames, variables = {}) {
 
 /**
  * Build a complete system prompt for the AI assistant
- * Combines system, context, and stage-specific prompts
+ * Combines objective, context, and stage-specific prompts with brand voice
  * @param {string} stage - Current conversation stage: 'greeting', 'briefing', 'quote', 'followup'
  * @param {Object} context - Additional context variables
  * @returns {Promise<string>} Complete system prompt
  */
-export async function buildSystemPrompt(stage = 'greeting', context = {}) {
-  const prompts = ['system'];
+export async function buildSystemPrompt(stage = 'briefing', context = {}) {
+  const prompts = ['objective', 'context']; // Core identity files
   
   // Add stage-specific prompts
   switch (stage) {
@@ -81,18 +81,47 @@ export async function buildSystemPrompt(stage = 'greeting', context = {}) {
     case 'followup':
       prompts.push('followup');
       break;
+    case 'actions':
+      prompts.push('actions');
+      break;
+    case 'roadmap':
+      prompts.push('roadmap');
+      break;
   }
   
-  // Load context files
-  const [tone, knowledge] = await Promise.all([
+  // Load context files (tone, knowledge, pricing, faq)
+  const [tone, knowledge, faq] = await Promise.all([
     loadContext('tone'),
-    loadContext('knowledge')
+    loadContext('knowledge'),
+    loadContext('faq')
   ]);
   
   // Compose everything
   const mainPrompt = await composePrompts(prompts, context);
   
-  return `${mainPrompt}\n\n## Brand Voice\n${tone}\n\n## Product Knowledge\n${knowledge}`;
+  // Build complete prompt with sections
+  return `# Telos System Prompt
+
+${mainPrompt}
+
+---
+
+# Brand Voice & Tone
+${tone}
+
+---
+
+# Studio Knowledge
+${knowledge}
+
+---
+
+# Quick Reference FAQ
+${faq}
+
+---
+
+Remember: You are Telos — half machine, fully human. Stay curious, empathetic, and clear.`;
 }
 
 /**

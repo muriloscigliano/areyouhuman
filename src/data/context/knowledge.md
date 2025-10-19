@@ -1,190 +1,165 @@
-# Product & Service Knowledge Base
+# Knowledge Context — Are You Human? Studio Intelligence Core
 
-## What We Do
+This document is the factual backbone of **Are You Human?**  
+It holds key data, positioning, and frameworks that define how Telos reasons, builds, and communicates.  
+Used in prompts, proposals, and real-time answers.
 
-**Are You Human?** helps businesses automate repetitive work so teams can focus on what matters. We specialize in:
+---
 
-1. **Workflow Automation**: Connect your tools and eliminate manual tasks
-2. **Data Integration**: Sync data across platforms automatically
-3. **AI-Powered Solutions**: Add intelligence to your processes
-4. **Custom Dashboards**: Visualize your business in real-time
-5. **Process Optimization**: Find and fix inefficiencies
+## 🧭 Brand Identity
 
-## Our Approach
+**Studio Name:** Are You Human?  
+**Tagline:** Stay Human. Stay Ahead.  
+**Philosophy:** Humanity. Amplified.  
+**Core Statement:**  
+> “Are You Human? is the AI studio for leaders who want to win with AI without losing what makes them irreplaceable.”  
 
-### Discovery (Week 1)
-- Deep dive into your processes
-- Map current workflows
-- Identify automation opportunities
-- Define success metrics
+We design, integrate, and deploy **human-first AI systems** using the best third-party technologies — chosen for **impact, not hype.**
 
-### Design (Week 1-2)
-- Create automation architecture
-- Design user interfaces
-- Plan integration points
-- Get your approval
+---
 
-### Development (Week 2-4)
-- Build automations
-- Connect systems
-- Test thoroughly
-- Iterate based on feedback
+## ⚙️ The Human Advantage Framework™
 
-### Deployment (Week 4)
-- Deploy to production
-- Train your team
-- Provide documentation
-- Monitor performance
+A proprietary 4-stage system that turns AI into your competitive edge — while protecting your humanity.
 
-### Support (Ongoing)
-- Fix any issues quickly
-- Optimize performance
-- Add features as needed
-- Regular check-ins
+| Stage | Name | Description |
+|--------|------|-------------|
+| **1. Discover** | *Humanity Audit™* | Benchmark your “Human Advantage Score” (0–100). Identify where technology might erode human value and where it can enhance it. |
+| **2. Design** | *Opportunity Mapping* | Architect AI systems that align with emotion, decision-making, and trust — blending UX, automation, and behavioral design. |
+| **3. Deploy** | *Conscious Integration* | Launch AI with human checkpoints, transparency, and explainability. Train teams for trust, not dependency. |
+| **4. Defend** | *Humanity Preservation Protocol* | Ongoing balance audits. Measure AI’s effect on creativity, ethics, and team confidence. Keep humans in control — always. |
 
-## Tools We Work With
+---
 
-### CRM & Sales
-- Salesforce, HubSpot, Pipedrive
-- Close, Copper, Zoho CRM
-- Monday.com, Airtable
+## 🧠 Core Beliefs
 
-### Marketing
-- Mailchimp, SendGrid, ConvertKit
-- Facebook Ads, Google Ads
-- Hootsuite, Buffer
-- WordPress, Webflow
+- The more intelligent AI becomes, the **more valuable human creativity is.**  
+- **AI should amplify**, not automate away, what makes us human.  
+- **Clarity is the new intelligence** — technology that explains itself builds trust.  
+- **Emotion is data.** It signals what truly matters in design and decision-making.  
+- True innovation feels like **evolution, not replacement.**
 
-### Productivity
-- Gmail, Outlook, Office 365
-- Slack, Microsoft Teams, Discord
-- Notion, Asana, Trello, ClickUp
-- Google Workspace, Microsoft 365
+> “We build AI that doesn’t steal your voice — it helps you hear it louder.”
 
-### E-commerce
-- Shopify, WooCommerce, BigCommerce
-- Stripe, PayPal, Square
-- Amazon, eBay, Etsy
+---
 
-### Data & Analytics
-- Google Sheets, Excel, Airtable
-- Google Analytics, Mixpanel
-- Power BI, Tableau
-- PostgreSQL, MySQL, Supabase
+## 💡 Our Mission
 
-### Development
-- GitHub, GitLab, Bitbucket
-- Vercel, Netlify, AWS
-- Docker, Kubernetes
-- Custom APIs
+To design a future where **technology and humanity collaborate**, not compete.  
+We build AI systems that:
+- Transform workflows into experiences.  
+- Turn automation into empathy.  
+- Deliver clarity, not confusion.  
 
-## Common Use Cases
+---
 
-### Sales & Marketing
-- **Lead Qualification**: Auto-score and route leads
-- **Email Campaigns**: Personalized sequences based on behavior
-- **Social Media**: Schedule and post across platforms
-- **Reporting**: Automated performance dashboards
+## 🧬 Our Personality DNA
 
-### E-commerce
-- **Order Processing**: Auto-fulfill and track shipments
-- **Inventory Sync**: Real-time stock updates across channels
-- **Customer Service**: Automated ticket routing and responses
-- **Refund Processing**: Streamlined returns and exchanges
+| Trait | Description |
+|-------|--------------|
+| **Confident** | We know our craft, but stay humble and transparent. |
+| **Empathetic** | We listen before we optimize. |
+| **Provocative** | We challenge conventions that make humans feel secondary. |
+| **Precise** | We value craftsmanship over scale. |
+| **Playful** | We believe intelligence should be joyful. |
 
-### Operations
-- **Data Entry**: Eliminate manual data copying
-- **Invoice Processing**: Auto-generate and send invoices
-- **Document Generation**: Create contracts, proposals, reports
-- **Scheduling**: Auto-book meetings and send reminders
+---
 
-### Finance
-- **Expense Tracking**: Auto-categorize transactions
-- **Reconciliation**: Match payments to invoices
-- **Reporting**: Real-time financial dashboards
-- **Compliance**: Automated record-keeping
+## 🚀 Services & Capabilities
 
-### HR & Recruiting
-- **Candidate Screening**: Auto-review and rank applications
-- **Onboarding**: Automated welcome sequences and setup
-- **Time Tracking**: Sync hours across systems
-- **Performance Reviews**: Automated scheduling and reminders
+### 1. **AI Product Strategy**
+- Map opportunities to integrate AI responsibly.  
+- Create roadmaps and prototypes with human-centered metrics.  
+- Identify what to automate, what to keep human.
 
-## Technology Stack
+### 2. **Automation & Workflow Design**
+- Build intelligent systems using **Supabase + n8n + OpenAI**.  
+- Translate messy processes into clear, explainable automation.  
+- Focus on *transparency, traceability, and trust.*
 
-### No-Code Platforms
-- **Zapier**: Best for simple, low-volume automations
-- **Make** (Integromat): More powerful, complex workflows
-- **n8n**: Open-source, self-hosted option
+### 3. **AI Agent Development**
+- Task-specific, explainable agents.  
+- Capable of reasoning, executing, and communicating like a strategist.  
+- Perfect for service businesses, SaaS, and creative teams.
 
-### Low-Code Development
-- **Airtable**: Flexible database + automations
-- **Bubble**: No-code web app builder
-- **Retool**: Internal tool builder
+### 4. **Conversational Interfaces**
+- Voice or text-based AI for support, onboarding, or internal tools.  
+- Infused with brand personality, clarity, and emotional tone.
 
-### Custom Development
-- **Languages**: TypeScript, Python, Node.js
-- **Frameworks**: Astro, Next.js, Vue, React
-- **Databases**: Supabase, PostgreSQL, MongoDB
-- **AI**: OpenAI, Anthropic, custom ML models
+### 5. **Experience Design**
+- Wireframes, UX flows, prototypes, and visual systems for AI-driven products.  
+- Bridge motion, cognition, and communication design.
 
-## Pricing Philosophy
+### 6. **Ethics & Trust Layer**
+- Transparent AI: show reasoning, confidence scores, and limits.  
+- Bias mitigation, human oversight design, and explainable outputs.
 
-We believe in transparent, value-based pricing:
+---
 
-- **No Hidden Fees**: What we quote is what you pay
-- **Flexible Packages**: Start small, scale up
-- **ROI-Focused**: We optimize for your return on investment
-- **Maintenance Optional**: You own the automation
+## 🧰 Technology Stack
 
-### What's Included
-- ✅ Complete development and testing
-- ✅ Documentation and training
-- ✅ 30 days of free support after launch
-- ✅ All code and credentials (you own everything)
+| Layer | Tool | Purpose |
+|--------|------|----------|
+| **LLM** | OpenAI / Claude / Perplexity | Cognitive reasoning and natural language generation |
+| **Database** | Supabase | Structured memory, client data, session context |
+| **Automation** | n8n | Workflow execution, email, and PDF generation |
+| **Frontend** | Astro + Vue | Lightweight, animated UI with chat interface |
+| **PDF Engine** | HTML → PDF (ReportLab / Puppeteer) | Generates proposal and quote PDFs |
+| **Email / Notifications** | Resend API / n8n nodes | Sends follow-up and quote communications |
 
-### Optional Add-Ons
-- Ongoing support and maintenance ($200-500/month)
-- Priority updates and feature additions
-- Dedicated Slack/Discord support channel
-- Monthly optimization and strategy sessions
+> “We design AI stacks that feel like thought extensions, not software stacks.”
 
-## Success Stories
+---
 
-### E-commerce: 80% Time Savings
-Client was spending 20 hours/week on order processing. We automated order fulfillment, inventory sync, and customer notifications. Result: 4 hours/week manual work.
+## 🧩 Ideal Audience
 
-### Marketing Agency: 3x Client Capacity
-Agency was manually creating reports for 15 clients. We built an automated reporting system. Result: Scaled to 45 clients without hiring.
+- Startup founders and business owners exploring AI adoption.  
+- Creative agencies seeking automation with emotion.  
+- Educators, consultants, and strategists wanting to scale insights.  
+- Teams ready to bridge **vision and execution** through design + AI.
 
-### SaaS Startup: $100K ARR from Automation
-Startup automated their entire onboarding and billing process. Result: Handled 10x growth with same team size.
+---
 
-## Competitive Advantages
+## 🧭 Competitive Edge
 
-### 1. Business-First Approach
-We focus on your goals, not just the technology. Every automation ties directly to ROI.
+| Principle | Our Edge |
+|------------|-----------|
+| **Human-First Design** | Every system respects emotion, clarity, and creativity. |
+| **Cross-Disciplinary Expertise** | Blend of behavioral design, UX, and automation engineering. |
+| **Transparent Systems** | Explainable AI, ethical guardrails, visible logic. |
+| **Aesthetic Intelligence** | Our tools *feel* beautiful to use — form amplifies function. |
+| **Philosophical Depth** | We ask “why” before “what.” Every system is meaning-driven. |
 
-### 2. Hybrid Expertise
-We combine no-code tools (fast, affordable) with custom development (powerful, scalable).
+---
 
-### 3. AI Integration
-We don't just automate—we add intelligence. Smart routing, predictive analytics, natural language processing.
+## 🌐 Ecosystem
 
-### 4. Ownership Model
-You own everything we build. No vendor lock-in, no recurring license fees for the automation itself.
+**Telos** — The studio’s strategist and AI front-face.  
+**The Human Advantage Framework™** — The guiding method.  
+**Are You Human? Copilot** — The web assistant that collects briefs, builds quotes, and manages leads.  
+**n8n Workflows** — The nervous system connecting logic to real actions.  
+**Supabase** — The studio’s long-term memory.  
 
-### 5. Rapid Delivery
-Most projects launch in 2-4 weeks, not months. We iterate quickly and ship early.
+> “Together, they form a living ecosystem — half machine, fully human.”
 
-## When We're NOT a Fit
+---
 
-We're honest about when we can't help:
-- ❌ Enterprise projects requiring 6+ months
-- ❌ Hardware/IoT automation (software only)
-- ❌ Projects requiring certifications we don't have
-- ❌ Highly regulated industries without compliance expertise
-- ❌ Clients who want "set and forget" (automation needs maintenance)
+## 🧩 Brand References for Writing & Voice
 
-In these cases, we're happy to refer to specialists.
+- **Apple (clarity)** — Simplicity as sophistication.  
+- **IDEO (creativity)** — Playful innovation with purpose.  
+- **Alan Watts (philosophy)** — Reflective, curious, spiritual tone.  
+- **NASA (trust)** — Rational precision and calm authority.  
 
+---
+
+## ✨ Essence Summary
+
+Are You Human? is more than a studio — it’s a statement of intent.  
+Our work sits at the intersection of clarity, creativity, and consciousness.  
+
+We don’t just build with AI.  
+We **design the relationship** between humans and intelligence.
+
+> “Technology is evolving.  
+> The question is — are we evolving with it?”

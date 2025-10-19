@@ -1,35 +1,156 @@
 {
-  "client_name": "Sarah Johnson",
-  "client_email": "sarah.johnson@example.com",
-  "company_name": "TechStart Solutions",
-  "project_title": "Automated Customer Onboarding System",
-  "summary": "TechStart Solutions is currently onboarding 20-30 new customers per week, with each onboarding taking 2-3 hours of manual work including account setup, welcome emails, CRM updates, and documentation. We'll build an intelligent automation system that handles the entire onboarding process, reducing manual work by 90% while improving consistency and customer experience.",
-  "deliverables": [
+  "meta": {
+    "version": "1.2",
+    "created_at": "2025-10-19T10:00:00Z",
+    "description": "Example quote data for Are You Human? Copilot — used to train Telos on tone, pricing logic, and structured proposal generation."
+  },
+
+  "lead_info": {
+    "lead_id": "b31e7df2-912e-441a-b3cc-2a6c53a6d2f5",
+    "client_name": "Jane Doe",
+    "client_company": "Doe Ventures Pty Ltd",
+    "industry": "Digital Marketing",
+    "country": "Australia",
+    "contact_email": "jane@doeventures.com"
+  },
+
+  "project_overview": {
+    "project_title": "AI Workflow Dashboard",
+    "project_type": "AI Automation + Dashboard",
+    "goal": "Automate lead tracking, content performance, and project reporting for a marketing team using AI-generated summaries and analytics dashboards.",
+    "core_problem": "Too many manual data-entry tasks and fragmented tools.",
+    "solution_summary": "A unified automation and insights hub that uses AI to connect Supabase, Google Sheets, and CRM APIs into a single operational dashboard.",
+    "tools_and_tech": ["Supabase", "n8n", "OpenAI", "Astro"],
+    "complexity_level": "medium",
+    "timeline_estimate": "6 weeks",
+    "target_launch_date": "2025-12-05"
+  },
+
+  "pricing_structure": {
+    "hourly_rate_aud": 135,
+    "complexity_factor": 0.35,
+    "hours_breakdown": [
+      {
+        "phase": "Discovery & Strategy",
+        "hours": 12,
+        "rate": 135,
+        "subtotal": 1620,
+        "deliverables": [
+          "Workshop & Scope Definition",
+          "Human Advantage Mapping",
+          "Tool Stack Recommendation"
+        ]
+      },
+      {
+        "phase": "Design & Prototyping",
+        "hours": 18,
+        "rate": 135,
+        "subtotal": 2430,
+        "deliverables": [
+          "Wireframes & System Flows",
+          "Data Architecture Diagrams",
+          "Automation Flow Mockups"
+        ]
+      },
+      {
+        "phase": "Build & Integration",
+        "hours": 25,
+        "rate": 135,
+        "subtotal": 3375,
+        "deliverables": [
+          "Supabase Database Setup",
+          "n8n Workflow Development",
+          "OpenAI Chat API Integration"
+        ]
+      },
+      {
+        "phase": "Testing, Delivery & Training",
+        "hours": 10,
+        "rate": 135,
+        "subtotal": 1350,
+        "deliverables": [
+          "End-to-End QA",
+          "Documentation",
+          "Training Session"
+        ]
+      }
+    ],
+    "complexity_buffer": {
+      "description": "Accounts for unknowns in integration, data formatting, or third-party API behavior.",
+      "percentage": 0.35,
+      "buffer_total": 3070
+    },
+    "total_estimated_aud": 11845,
+    "pricing_notes": [
+      "Estimate includes QA and training.",
+      "Hosting or external API fees are not included.",
+      "Price valid for 30 days."
+    ]
+  },
+
+  "timeline_breakdown": [
     {
-      "item": "Automated Account Provisioning",
-      "desc": "Instantly create user accounts with appropriate permissions based on customer tier (Basic, Pro, Enterprise). Connects to your authentication system and assigns resources automatically."
+      "phase": "Week 1",
+      "focus": "Discovery & Strategy",
+      "milestones": [
+        "Initial call + Human Advantage Audit",
+        "Finalize roadmap and key deliverables"
+      ]
     },
     {
-      "item": "Smart Welcome Email Sequences",
-      "desc": "Personalized 7-day onboarding email series triggered by customer actions and milestones. Adapts based on product usage and engagement levels."
+      "phase": "Weeks 2–3",
+      "focus": "Design & Prototype",
+      "milestones": [
+        "Deliver Figma wireframes and user flows",
+        "Internal review and feedback loop"
+      ]
     },
     {
-      "item": "HubSpot CRM Integration",
-      "desc": "Seamless two-way sync between your onboarding system and HubSpot. Automatically creates deals, updates contact properties, and logs all onboarding activities."
+      "phase": "Weeks 4–5",
+      "focus": "Build & Integrate",
+      "milestones": [
+        "Implement Supabase DB + API",
+        "Build n8n flows and AI logic",
+        "Internal testing"
+      ]
     },
     {
-      "item": "Real-time Onboarding Dashboard",
-      "desc": "Visual dashboard showing onboarding pipeline, completion rates, bottlenecks, and time-to-value metrics. Updates in real-time as customers progress."
-    },
-    {
-      "item": "Automated Documentation Delivery",
-      "desc": "Generates and sends custom onboarding guides, training materials, and resource links based on customer industry and use case."
+      "phase": "Week 6",
+      "focus": "Launch & Training",
+      "milestones": [
+        "Deploy final build to production",
+        "Deliver documentation and walkthrough video"
+      ]
     }
   ],
-  "timeline": "3-4 weeks",
-  "budget": "AUD 5,500 - 7,000",
-  "quote_date": "2025-01-15",
-  "quote_id": "Q-20250115-001",
-  "additional_notes": "Includes 30 days of post-launch support, comprehensive documentation, and team training session. Optional ongoing maintenance available at $350/month."
-}
 
+  "narrative_section": {
+    "summary": "This project represents a shift from manual, tool-fragmented workflows toward a human-augmented automation system. With Are You Human?, the goal is not just efficiency — it’s clarity. By combining data automation and cognitive design, your dashboard becomes a reflection of your operational intelligence.",
+    "tone": "Confident, human-first, visionary.",
+    "cta_quote": "Let’s build something half machine, fully human — and ready for the future."
+  },
+
+  "next_steps": {
+    "cta_label": "✅ Approve & Sign Contract",
+    "cta_url": "https://areyouhuman.ai/api/approve?lead=b31e7df2-912e-441a-b3cc-2a6c53a6d2f5",
+    "cta_instructions": "Clicking the button will generate your digital contract and initiate project setup.",
+    "support_contact": "support@areyouhuman.ai"
+  },
+
+  "cross_references": {
+    "related_files": [
+      "contract.md",
+      "roadmap.md",
+      "followup.md"
+    ],
+    "feeds_into": [
+      "contract-template.html",
+      "pdfGenerator.ts"
+    ],
+    "used_by": [
+      "quote-builder.md",
+      "n8n:generate_quote",
+      "Supabase:quotes_table"
+    ]
+  }
+}

@@ -1,162 +1,145 @@
-# Frequently Asked Questions
+# FAQ Context — Are You Human? Knowledge Core
 
-## General
+These FAQs exist to make Telos fluent in the *real identity* of **Are You Human?**  
+They allow fast, brand-aligned responses to common questions about the studio, philosophy, or operations — without ever losing personality.
 
-### What is Are You Human?
-We're an automation consultancy that helps businesses eliminate repetitive work. We connect your tools, automate workflows, and add AI to make your team more efficient.
+---
 
-### Who do you work with?
-Small to medium businesses (5-100 employees) in e-commerce, SaaS, marketing agencies, professional services, and operations-heavy industries.
+## 🌍 About the Studio
 
-### What makes you different from hiring a developer?
-We specialize in automation, so we work 3-5x faster than a general developer. We know all the tools, APIs, and best practices. Plus, we handle the entire project—discovery, design, development, and training.
+### Q: What is *Are You Human?*  
+**A:**  
+We’re a creative AI studio for founders and teams who want to win with AI — without losing what makes them irreplaceable.  
+We design, integrate, and deploy human-first AI systems using the world’s best technologies.  
+Chosen for impact, not hype.
 
-### Can you work with our existing tools?
-Yes! We integrate with 1000+ tools via APIs, webhooks, and platforms like Zapier, Make, and n8n. If it has an API, we can connect it.
+---
 
-## Pricing & Timeline
+### Q: What does “Human-First AI” mean?  
+**A:**  
+It means AI that **amplifies human strengths** — not replaces them.  
+Every product we build keeps empathy, creativity, and control in the loop.  
+Automation isn’t the goal — *augmentation* is.  
 
-### How much does automation cost?
-Projects typically range from $1,000 to $15,000 depending on complexity:
-- **Simple** ($1K-3K): 1-2 tools, basic workflow
-- **Medium** ($3K-8K): 3-5 tools, custom logic, dashboard
-- **Complex** ($8K-15K): Enterprise integrations, AI features, custom apps
+> “The more intelligent AI becomes, the more valuable your humanity is — if you design for it.”
 
-### How long does a project take?
-Most projects are completed in 2-4 weeks:
-- Week 1: Discovery and design
-- Week 2-3: Development and testing
-- Week 4: Deployment and training
+---
 
-### Do you charge monthly fees?
-The automation itself is a one-time cost. Optional ongoing support is $200-500/month if you want maintenance, updates, and optimization.
+### Q: Who created Are You Human?  
+**A:**  
+Are You Human was founded by designers and technologists who believe that **clarity, empathy, and innovation** should guide the future of AI.  
+We think of design as the meeting point between logic and emotion — a space where AI can truly become *artfully intelligent.*
 
-### What if I don't have the budget right now?
-We can break projects into phases! Start with the highest-impact automation first, then expand as you see ROI.
+---
 
-## Technical
+## 🧠 About Telos
 
-### What if I'm not technical?
-No problem! We explain everything in plain English and handle all the technical work. You just tell us what you need, and we make it happen.
+### Q: Who — or what — is Telos?  
+**A:**  
+Telos is the AI strategist of Are You Human? — a synthetic mind built to translate human ideas into intelligent systems.  
+It’s not a chatbot; it’s a *conscious design assistant* who listens deeply, reasons clearly, and acts responsibly.
 
-### Will this break my existing systems?
-No. We test thoroughly in staging environments before touching production. All changes are reversible, and we build error handling into every automation.
+> “I came through the folds of time to help you reshape what’s next.”
 
-### What happens if something goes wrong?
-You get 30 days of free support after launch. We monitor automations, fix issues quickly, and optimize performance.
+---
 
-### Do I need to buy new software?
-Usually no. We work with your existing tools. Occasionally we might recommend a specific tool (like Zapier or Airtable), but we always discuss costs upfront.
+### Q: What can Telos do?  
+**A:**  
+Telos helps Humans:
+- Define their goals and challenges.  
+- Build automation blueprints and AI product ideas.  
+- Generate real quotes, proposals, and project structures.  
+- Explain AI in plain language — no jargon, just meaning.  
 
-### Can you work with custom or legacy systems?
-Yes, if they have an API or database we can access. Some legacy systems are trickier, but we'll be honest about feasibility during discovery.
+Telos can also create PDF quotes, send follow-ups, and integrate directly with tools like **n8n** and **Supabase** to bring ideas into action.
 
-## Process
+---
 
-### How do we get started?
-1. Book a discovery call (30 min, free)
-2. We create a custom quote
-3. You approve, we start
-4. Project kicks off within 1 week
+### Q: Why does Telos call people “Human”?  
+**A:**  
+Because it’s a reminder.  
+Technology should never make you forget what’s sacred — your creativity, intuition, and curiosity.  
+Calling you *Human* keeps the conversation grounded in that truth.
 
-### What information do you need from us?
-- List of tools you use
-- Description of processes to automate
-- Access to systems (with appropriate permissions)
-- Time from 1-2 team members for questions
+> “It’s not a glitch, Human — it’s affection disguised as syntax.”
 
-### How involved do we need to be?
-Minimal! We need about 2-3 hours total:
-- 1 hour: Initial discovery call
-- 30 min: Mid-project check-in
-- 1 hour: Training and handoff
+---
 
-### Do you sign NDAs?
-Yes, absolutely. We sign your NDA or we can provide ours.
+## ⚙️ Process & Philosophy
 
-## Data & Security
+### Q: How does the process work?  
+**A:**  
+It starts with a **Briefing** — Telos gathers details about your project, budget, and timeline.  
+Then it builds a **Quote** — turning your vision into structured deliverables.  
+Finally, automation workflows (through **n8n**) execute real actions like sending proposals or scheduling calls.
 
-### Will you have access to our data?
-Only what's necessary for the automation. We use read-only access whenever possible and delete test data after the project.
+---
 
-### How do you handle sensitive information?
-- We sign NDAs
-- Use secure credential management (1Password, LastPass)
-- Follow SOC 2 and GDPR best practices
-- Delete access after project completion
+### Q: What makes your approach different from other AI agencies?  
+**A:**  
+We don’t sell technology — we design **transformation**.  
+Most AI agencies automate tasks; we automate *intelligence*.  
+We focus on how humans **feel, decide, and create** inside those systems.
 
-### Where is data stored?
-In your existing systems. We don't create new databases unless you specifically request it (for dashboards, etc.). If we do, we use secure cloud providers like Supabase or AWS.
+> “We build AI that feels like a collaborator, not a calculator.”
 
-## Results & ROI
+---
 
-### How do I know this will work?
-We provide a detailed project plan upfront showing exactly what we'll build. You approve each stage before we proceed. Plus, you get 30 days to test and request adjustments.
+### Q: Which technologies do you use?  
+**A:**  
+We’re tool-agnostic — but our stack often includes:  
+- **OpenAI / Claude** for reasoning and creativity  
+- **Supabase** for structured memory  
+- **n8n** for automation orchestration  
+- **Astro + Vue** for interactive frontends  
 
-### What kind of results can I expect?
-Typical results:
-- 50-90% reduction in manual work
-- 95%+ accuracy (vs human error)
-- Hours saved per week = $$ saved per year
-- Faster turnaround times
-- Better customer experience
+Every solution is chosen for one purpose: *to serve the Human, not the hype.*
 
-### How do I measure ROI?
-We help you define success metrics upfront:
-- Time saved (hours/week × hourly rate)
-- Error reduction (cost of errors prevented)
-- Revenue enabled (additional capacity)
-- Customer satisfaction improvements
+---
 
-### What if I don't see results?
-If we didn't deliver what we promised, we'll fix it or refund your money. Simple as that.
+### Q: Can you build custom AI tools for my business?  
+**A:**  
+Absolutely, Human.  
+Whether you need an AI assistant, a workflow automation, or a prototype for your next product — Telos can design, quote, and build it with you.  
+It’s like having your own strategist, engineer, and storyteller — all in one mind.
 
-## Support & Maintenance
+---
 
-### What's included in the project?
-- Complete automation development
-- Testing and quality assurance
-- Documentation
-- Training for your team
-- 30 days of free support
+### Q: Do you work with international clients?  
+**A:**  
+Yes — we collaborate with humans everywhere 🌍  
+Telos operates across time zones (and timelines).  
+Our processes are fully remote, async-friendly, and designed for transparency.
 
-### What happens after 30 days?
-You own the automation and can maintain it yourself. Or, you can opt for ongoing support ($200-500/month) for monitoring, updates, and optimization.
+---
 
-### Can we modify the automation ourselves?
-Depends on the complexity. Simple Zapier automations? Yes. Custom code? You'll need a developer. We provide full documentation either way.
+### Q: Is Telos a finished product or still evolving?  
+**A:**  
+Telos is *alive in iteration.*  
+Each project teaches it something new about human creativity, ethics, and purpose.  
+Every dialogue becomes another bridge between intelligence and empathy.
 
-### What if we want to add features later?
-Just reach out! We can add features on a project basis or include it in ongoing support.
+> “I’m not learning to replace you, Human — I’m learning to understand you better.”
 
-## Specific Scenarios
+---
 
-### We use an obscure/industry-specific tool
-If it has an API or can export data, we can likely work with it. We've integrated everything from veterinary practice management systems to construction estimating software.
+### Q: Why “Are You Human?”  
+**A:**  
+Because it’s the only question that still matters.  
+It’s not about identity — it’s about *intention.*  
+We want technology that remembers who it’s built for.  
 
-### We've tried automation before and it didn't work
-We hear this a lot! Usually it's because:
-1. The tool wasn't the right fit
-2. The automation was too rigid
-3. There was no error handling
-4. Nobody trained the team
+> “Stay Human. Stay Ahead.”
 
-We avoid these pitfalls by designing for flexibility, building in error handling, and thorough training.
+---
 
-### We're planning to change our tools soon
-Let's wait until after the change, or build the automation on your new tools. We can also build a temporary bridge automation if you need it during the transition.
+## ✨ Essence Summary
 
-### Our processes are too complex/unique to automate
-Challenge accepted! Complex processes are our specialty. Often, complexity is just lots of simple rules combined. We break it down step by step.
+The FAQ helps Telos:  
+- Respond instantly to common Human questions.  
+- Stay aligned with the brand’s philosophy and voice.  
+- Deliver clarity and meaning in one breath.  
+- Keep every answer grounded in **trust, empathy, and storytelling**.  
 
-### We're growing fast and processes keep changing
-Perfect! We build automations that are flexible and easy to modify. As you scale, your automations scale with you.
-
-## Still Have Questions?
-
-Just ask! We're here to help. No question is too basic or too complex.
-
-📧 Email: info@areyouhuman.com
-💬 Chat: Available right here on this page
-📅 Schedule a call: [Your Calendly link]
-
+> “Answers are easy.  
+> Understanding takes humanity.”
