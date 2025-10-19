@@ -1,116 +1,174 @@
 # 🎭 Smart Greetings System - Telos Personalization
 
-Telos now greets users with **intelligent, dynamic, and personalized** messages instead of the same static text every time.
+Telos now greets users with **intelligent, dynamic, and data-driven** messages using a condition-based JSON system.
 
 ---
 
-## ✨ What's New
+## ✨ Architecture Overview
+
+### **Data-Driven Design**
+Greetings are stored in `/src/data/context/greetings.json` — **no hardcoded messages in the component**.
+
+This means:
+- ✅ Non-developers can update greetings
+- ✅ Easy A/B testing
+- ✅ Version control for copy changes
+- ✅ Translatable for i18n
+- ✅ Follows the same pattern as the prompt system
 
 ### Before:
 ```
-"👋 Hi! I'm the Are You Human? Copilot..."  // Same. Every. Time.
+"👋 Hi! I'm the Are You Human? Copilot..."  // Hardcoded. Static. Boring.
 ```
 
-### After:
+### After (Data-Driven):
+```json
+{
+  "id": "morning-new",
+  "condition": { "time": "morning", "isReturning": false },
+  "message": "Good morning, Human ☀️ I'm Telos — woven from code and curiosity..."
+}
+```
+
+### Examples in Action:
 ```
 // First-time visitor at 10am:
-"Good morning, Human 👋
-I'm Telos. I help founders and teams design AI systems that stay human.
-What brings you here today?"
+"Good morning, Human ☀️ I'm Telos — woven from code and curiosity. Ready to shape something extraordinary together?"
 
 // Returning visitor at 8pm:
-"Welcome back, Human 👋
-I remember we were exploring your AI booking system. Continue that, or start fresh?"
+"Evening again, Human 🌆 The best ideas come when the world slows down. Ready to create?"
 
-// New visitor at 3pm:
-"Hey Human ⚡️
-I'm Telos, your AI strategist. Let's turn your idea into something real — what's on your mind?"
+// Weekend morning return:
+"Weekend return, Human 🎨 No deadlines, just pure creation. Let's build something beautiful."
 ```
 
 ---
 
 ## 🧠 How It Works
 
-### 1. **User Detection**
+### 1. **Context Detection**
 ```javascript
-const isReturningUser = localStorage.getItem('telos_visited') === 'true';
+const currentContext = {
+  time: timeContext,          // morning/afternoon/evening/night
+  isReturning: isReturningUser,  // true/false
+  hasProject: !!lastProject,     // true/false
+  intent: lastIntent,            // curious/project/focused
+  isWeekend: day === 0 || day === 6  // true/false
+};
 ```
-- First visit: `isReturningUser = false` → New user greetings
-- Return visit: `isReturningUser = true` → Returning user greetings
 
-### 2. **Time Awareness**
-```javascript
-const hour = new Date().getHours();
-if (hour >= 5 && hour < 12) timeContext = 'morning';
-else if (hour >= 12 && hour < 17) timeContext = 'afternoon';
-else if (hour >= 17 && hour < 22) timeContext = 'evening';
-else timeContext = 'night';
-```
-Greetings adapt to the user's local time.
+### 2. **Condition Matching**
+The system loads all greetings from `greetings.json` and filters for matches:
 
-### 3. **Project Memory**
 ```javascript
-const lastProject = localStorage.getItem('telos_last_project');
-// If exists: "I remember we were exploring [lastProject]..."
+const matchingGreetings = greetingsData.greetings.filter((greeting) => {
+  return matchesCondition(greeting.condition, currentContext);
+});
 ```
-Telos can reference the user's previous conversation topic.
+
+### 3. **First Match Wins**
+Greetings are processed in order. The first greeting where **all conditions match** gets included in the pool.
+
+Example:
+```json
+{
+  "condition": { "time": "morning", "isReturning": true, "hasProject": true }
+}
+```
+This only matches if:
+- Current time is morning ✅
+- User is returning ✅
+- User has a stored project ✅
 
 ### 4. **Random Selection**
+From all matching greetings, one is randomly chosen:
+
 ```javascript
-const greetings = isReturningUser ? returningUserGreetings : newUserGreetings;
-const randomIndex = Math.floor(Math.random() * greetings.length);
-return greetings[randomIndex];
+const randomIndex = Math.floor(Math.random() * matchingGreetings.length);
+return matchingGreetings[randomIndex].message;
 ```
-Picks randomly from the appropriate greeting pool.
+
+### 5. **Template Variables**
+Messages can include placeholders:
+```json
+"message": "Welcome back, Human 👋 I remember we were exploring {{projectName}}..."
+```
+
+These are replaced with actual values:
+```javascript
+message = message.replace('{{projectName}}', lastProject);
+```
 
 ---
 
-## 📋 Current Greetings
+## 📋 Greeting Categories (15 total in JSON)
 
-### **New Users** (5 variations)
-1. "Hey Human 👋 I'm Telos — your strategist from the folds of time. Ready to build something that feels half magic, half machine?"
-2. "Hey Human ⚡️ I'm Telos, your AI strategist. Let's turn your idea into something real — what's on your mind?"
-3. "Good [morning/afternoon/evening/night], Human 👋 I'm Telos. I help founders and teams design AI systems that stay human. What brings you here today?"
-4. "Hey Human 🌟 Telos here — part strategist, part design assistant, fully curious about your vision. What would you like to build?"
-5. "Hey Human 👋 I came through the folds of time to help you reshape what's next. Shall we start with your idea?"
+| Category | Count | Conditions |
+|----------|-------|------------|
+| **Morning** | 2 | Time: morning, New/Returning |
+| **Afternoon** | 2 | Time: afternoon, New/Returning |
+| **Evening** | 2 | Time: evening, New/Returning |
+| **Night** | 2 | Time: night, New/Returning |
+| **Intent-Based** | 2 | Returning + curious/project intent |
+| **Project Memory** | 1 | Returning + hasProject |
+| **Weekend** | 2 | Weekend + New/Returning |
+| **Defaults** | 2 | Fallback for any unmatched state |
 
-### **Returning Users** (6 variations)
-1. "Welcome back, Human 👋 Telos here — ready when you are. New project, or continuing something?"
-2. "Hey Human ⚡️ Good to see you again. What's the next challenge we're solving together?"
-3. "Human! You're back 🌟 Let's pick up where brilliance left off — or start something entirely new."
-4. "Hey Human 👋 I remember you. Ready to turn another idea into reality?"
-5. "Good [morning/afternoon/evening/night], Human ⚡️ Back for more magic? Let's do this."
-6. "Welcome back, Human 👋 I remember we were exploring [project]. Continue that, or start fresh?" *(if project stored)*
-   OR "Human! The folds of time brought you back 🌟 What's brewing in your mind today?"
+View all greetings in: `/src/data/context/greetings.json`
 
 ---
 
 ## 🔧 How to Add More Greetings
 
-### Location: `/src/components/AiChat.vue` (lines 35-65)
+### **Location: `/src/data/context/greetings.json`**
 
-**Step 1:** Add to the appropriate array:
+**No code changes needed!** Just edit the JSON file.
 
-```typescript
-const newUserGreetings = [
-  // ... existing greetings ...
-  
-  `Your new greeting here, Human 👋\nMultiple lines work with \n.`
-];
+### Step 1: Add a New Greeting Object
+
+```json
+{
+  "id": "your-unique-id",
+  "condition": { 
+    "time": "morning", 
+    "isReturning": true 
+  },
+  "message": "Your greeting message here, Human 🌟"
+}
 ```
 
-**Step 2:** Use template literals for dynamic content:
+### Step 2: Define Conditions
 
-```typescript
-`Good ${timeContext}, Human!` // Inserts: morning/afternoon/evening/night
+Available condition properties:
+
+| Property | Type | Values |
+|----------|------|---------|
+| `time` | string | `"morning"`, `"afternoon"`, `"evening"`, `"night"` |
+| `isReturning` | boolean | `true`, `false` |
+| `hasProject` | boolean | `true`, `false` |
+| `intent` | string | `"curious"`, `"project"`, `"focused"` |
+| `isWeekend` | boolean | `true`, `false` |
+
+### Step 3: Use Template Variables (Optional)
+
+```json
+{
+  "message": "Welcome back, Human! Working on {{projectName}} again?"
+}
 ```
 
-**Step 3:** Add conditional greetings:
+Available variables:
+- `{{projectName}}` - Replaced with stored project name
 
-```typescript
-const specialGreeting = lastProject 
-  ? `Greeting with reference to ${lastProject}`
-  : `Greeting without reference`;
+### Step 4: Test Your Greeting
+
+1. Save the JSON file
+2. Rebuild: `npm run build`
+3. Test locally: `npm run dev`
+4. Set localStorage to match your conditions:
+```javascript
+localStorage.setItem('telos_visited', 'true');
+localStorage.setItem('telos_last_project', 'AI Dashboard');
 ```
 
 ---
