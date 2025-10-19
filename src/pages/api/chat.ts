@@ -63,8 +63,9 @@ export const POST: APIRoute = async ({ request }) => {
           shouldSaveLead = true;
         }
 
-      } catch (error) {
-        console.error('OpenAI error, falling back to rule-based:', error);
+      } catch (error: any) {
+        console.error('OpenAI error, falling back to rule-based:', error.message || error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         // Fall through to rule-based system below
       }
     }
@@ -246,12 +247,15 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat API error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process message',
-        reply: 'Sorry, I encountered an error. Please try again.'
+        reply: 'Sorry, I encountered an error. Please try again.',
+        debug: error.message
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
