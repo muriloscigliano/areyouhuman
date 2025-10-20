@@ -4,6 +4,7 @@ import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../li
 import { limitMessageLength, needsSummarization, createConversationSummary } from '../../utils/tokenManager';
 import { triggerN8NWebhook, isN8NConfigured } from '../../lib/n8nTrigger';
 import { validateAndCleanEmail, getEmailErrorMessage } from '../../utils/emailValidator';
+import { validateProjectQuality, hasEnoughDetail } from '../../utils/projectValidator';
 
 interface ChatRequest {
   message: string;
@@ -134,8 +135,28 @@ export const POST: APIRoute = async ({ request }) => {
           shouldSaveLead = true;
         }
 
-        // Check if we have all required data to trigger n8n automation
-        const hasRequiredData = leadData.name && leadData.email && leadData.company && leadData.problem_text;
+        // ✅ VALIDATE PROJECT DATA QUALITY (not just presence!)
+        const projectValidation = validateProjectQuality({
+          problem_text: leadData.problem_text,
+          automation_area: leadData.automation_area,
+          tools_used: leadData.tools_used,
+          budget_range: leadData.budget_range,
+          timeline: leadData.timeline
+        });
+
+        // Check if we have all required data WITH enough quality to trigger n8n automation
+        const hasRequiredData = leadData.name && 
+                                leadData.email && 
+                                leadData.company && 
+                                projectValidation.isValid; // ← NEW: Check quality, not just presence!
+        
+        if (!projectValidation.isValid && leadData.problem_text) {
+          console.log('⚠️ Project data exists but lacks quality:', {
+            missingFields: projectValidation.missingFields,
+            lowQualityFields: projectValidation.lowQualityFields,
+            suggestions: projectValidation.suggestions
+          });
+        }
         
         // If AI is confirming quote send, trigger n8n workflow
         if (hasRequiredData && 
