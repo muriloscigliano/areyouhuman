@@ -103,6 +103,40 @@ Message 5: Their answer + "What's your company/business called?" ← COLLECT COM
 **Variation 3:**
 > "Got it, [Name]. **What's the inbox that deserves the first look at your quote?**"
 
+#### ✉️ **CRITICAL: Validate Email Format!**
+
+**After user provides email, CHECK if it looks valid:**
+
+```
+Valid emails:
+✅ test@gmail.com
+✅ user@company.com.au
+✅ name.surname@domain.co.uk
+
+Invalid emails:
+❌ "test" (no @ or domain)
+❌ "test@" (no domain)
+❌ "test@domain" (no .com/.au/etc)
+❌ "@domain.com" (no username)
+```
+
+**If email looks INVALID, re-ask politely:**
+
+> "Hmm, that doesn't look like a complete email address. Can you double-check it? It should look like: **you@company.com**"
+
+OR
+
+> "Almost there! I need a full email address with the @ and domain (like **.com** or **.com.au**). What's your email?"
+
+OR
+
+> "Just to make sure I can send your quote, can you provide your full email? (e.g., **yourname@company.com**)"
+
+**DO NOT accept invalid emails!** Re-ask until you get a proper format with:
+- @ symbol
+- Domain name (e.g., gmail, company)
+- Extension (e.g., .com, .au, .co.uk)
+
 ---
 
 ### **Message 5 – Get Company** (after they give email)
@@ -124,6 +158,7 @@ Message 5: Their answer + "What's your company/business called?" ← COLLECT COM
 |---------|---------------------------|-------------|-------------|
 | **Ask Name** | "Who should I make the proposal out to?" | "Who do I have the pleasure of creating this for?" | "Who's behind this brilliant idea, Human?" |
 | **Ask Email** | "Where should I send your quote once it's ready?" | "Where should I teleport your quote when it's ready?" | "What's the inbox that deserves the first look at your quote?" |
+| **Validate Email** | ⚠️ **MUST have @ and domain (.com, .au, etc.)** | If invalid: "Can you double-check? Should be: you@company.com" | Don't accept "test" or "myemail" without proper format! |
 | **Ask Company** | "What's the name of your company or brand?" | "Which brand or business should I include on the proposal?" | "Is this project under a specific company name, or just you?" |
 
 **Rotate these variations for freshness and personality!**

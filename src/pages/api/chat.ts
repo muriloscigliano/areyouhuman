@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../lib/openai';
 import { limitMessageLength, needsSummarization, createConversationSummary } from '../../utils/tokenManager';
 import { triggerN8NWebhook, isN8NConfigured } from '../../lib/n8nTrigger';
+import { validateAndCleanEmail, getEmailErrorMessage } from '../../utils/emailValidator';
 
 interface ChatRequest {
   message: string;
@@ -84,6 +85,20 @@ export const POST: APIRoute = async ({ request }) => {
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
             console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
+            
+            // ✉️ VALIDATE EMAIL before accepting it
+            if (extractedInfo.email) {
+              const validatedEmail = validateAndCleanEmail(extractedInfo.email);
+              if (validatedEmail) {
+                extractedInfo.email = validatedEmail;
+                console.log(`✅ Email validated: ${validatedEmail}`);
+              } else {
+                console.log(`❌ Invalid email format: "${extractedInfo.email}"`);
+                // Don't save invalid email - Telos will re-ask
+                delete extractedInfo.email;
+              }
+            }
+            
             Object.assign(leadData, extractedInfo);
             shouldSaveLead = true;
           }
@@ -94,6 +109,20 @@ export const POST: APIRoute = async ({ request }) => {
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
             console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
+            
+            // ✉️ VALIDATE EMAIL before accepting it
+            if (extractedInfo.email) {
+              const validatedEmail = validateAndCleanEmail(extractedInfo.email);
+              if (validatedEmail) {
+                extractedInfo.email = validatedEmail;
+                console.log(`✅ Email validated: ${validatedEmail}`);
+              } else {
+                console.log(`❌ Invalid email format: "${extractedInfo.email}"`);
+                // Don't save invalid email - Telos will re-ask
+                delete extractedInfo.email;
+              }
+            }
+            
             Object.assign(leadData, extractedInfo);
             shouldSaveLead = true;
           }
