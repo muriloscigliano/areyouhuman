@@ -74,7 +74,10 @@ import Draggable from 'gsap/Draggable';
 import WebGLPortalTransition from './WebGLPortalTransition.vue';
 // import AnimatedGradientBackground from './AnimatedGradientBackground.vue';
 
-gsap.registerPlugin(Draggable);
+// Only register plugin on client-side
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(Draggable);
+}
 
 const emit = defineEmits(['complete']);
 

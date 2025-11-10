@@ -5,6 +5,7 @@ import { limitMessageLength, needsSummarization, createConversationSummary } fro
 import { triggerN8NWebhook, isN8NConfigured } from '../../lib/n8nTrigger';
 import { validateAndCleanEmail, getEmailErrorMessage } from '../../utils/emailValidator';
 import { validateProjectQuality, hasEnoughDetail } from '../../utils/projectValidator';
+import { validateResponse, truncateToWordLimit, countWords } from '../../utils/responseGuardrails';
 
 interface ChatRequest {
   message: string;
@@ -74,6 +75,20 @@ export const POST: APIRoute = async ({ request }) => {
 
         // Get AI response with token optimization
         reply = await getChatCompletion(messages, 'briefing', {}, conversationSummary);
+        
+        // Final guardrail check (double-check in case something slipped through)
+        const finalValidation = validateResponse(reply);
+        if (!finalValidation.isValid) {
+          if (finalValidation.isOffTopic && finalValidation.redirectMessage) {
+            console.log('⚠️ Final check: Response off-topic, using redirect');
+            reply = finalValidation.redirectMessage;
+          } else if (finalValidation.wordCount > finalValidation.maxWords) {
+            console.log(`⚠️ Final check: Response too long (${finalValidation.wordCount} words), truncating`);
+            reply = truncateToWordLimit(reply, finalValidation.maxWords);
+          }
+        }
+        
+        console.log(`✅ Response validated: ${finalValidation.wordCount} words, on-topic: ${!finalValidation.isOffTopic}`);
 
         // ⚠️ CRITICAL: Extract lead info DURING the 5-message sequence!
         // Messages 3-5 collect Name, Email, Company - we need to extract IMMEDIATELY

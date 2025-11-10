@@ -7,6 +7,11 @@ import {
   getTokenStats,
   countTokens
 } from '../utils/tokenManager.js';
+import { 
+  validateResponse, 
+  truncateToWordLimit, 
+  countWords 
+} from '../utils/responseGuardrails.js';
 
 // Get API key - lazy evaluation for proper Astro context
 const getApiKey = () => {
@@ -102,10 +107,29 @@ export async function getChatCompletion(
       model: 'gpt-4o-mini', // Fast and cost-effective
       messages: optimizedMessages,
       temperature: 0.7,
-      max_tokens: 500, // Keep responses concise
+      max_tokens: 300, // Reduced to encourage shorter responses (200 words ≈ 250-300 tokens)
     });
 
-    return completion.choices[0]?.message?.content || 'I apologize, but I encountered an issue. Could you please try again?';
+    let response = completion.choices[0]?.message?.content || 'I apologize, but I encountered an issue. Could you please try again?';
+    
+    // Apply guardrails: check topic relevance and word limit
+    const validation = validateResponse(response);
+    
+    if (!validation.isValid) {
+      if (validation.isOffTopic && validation.redirectMessage) {
+        // If off-topic, return redirect message instead
+        console.log('⚠️ Response off-topic, redirecting:', { wordCount: validation.wordCount });
+        return validation.redirectMessage;
+      }
+      
+      if (validation.wordCount > validation.maxWords) {
+        // If too long, truncate to word limit
+        console.log(`⚠️ Response too long (${validation.wordCount} words), truncating to ${validation.maxWords}`);
+        response = truncateToWordLimit(response, validation.maxWords);
+      }
+    }
+    
+    return response;
   } catch (error) {
     console.error('OpenAI API error:', error);
     throw error;
