@@ -2,7 +2,7 @@
 import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
 import vue from '@astrojs/vue';
-import vercel from '@astrojs/vercel/serverless';
+import vercel from '@astrojs/vercel';
 
 const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
 
