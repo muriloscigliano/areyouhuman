@@ -98,15 +98,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { gsap } from 'gsap';
-import { CustomEase } from 'gsap/CustomEase';
 import { useContactModal } from '../composables/useContactModal';
 import AiChat from './AiChat.vue';
-
-// Register GSAP plugins
-gsap.registerPlugin(CustomEase);
-
-// Create custom ease for Telos
-CustomEase.create("telos-ease", "0.4, 0.0, 0.2, 1");
 
 const { isOpen, close } = useContactModal();
 
@@ -165,8 +158,8 @@ function initModal() {
     .set(modalWrap, { display: 'block' })
     .set(sidebar, { display: 'flex' })
     .set(sidebar, { x: isMobileLandscape ? 0 : window.innerWidth - 18, y: isMobileLandscape ? window.innerHeight - 18 : 0 })
-    .fromTo(bg, { opacity: 0 }, { opacity: 0.5, duration: 0.5, ease: 'telos-ease' })
-    .to(sidebar, { x: 0, y: 0, duration: 0.8, ease: 'telos-ease' }, '<');
+    .fromTo(bg, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' })
+    .to(sidebar, { x: 0, y: 0, duration: 0.8, ease: 'power2.out' }, '<');
 
   closeTimeline = gsap.timeline({
     paused: true,
@@ -176,12 +169,12 @@ function initModal() {
       isChatting.value = false; // Reset chat state on close
     },
   })
-    .to(bg, { opacity: 0, duration: 0.5, ease: 'telos-ease' })
+    .to(bg, { opacity: 0, duration: 0.5, ease: 'power2.in' })
     .to(sidebar, { 
       x: isMobileLandscape ? 0 : window.innerWidth - 18, 
       y: isMobileLandscape ? window.innerHeight - 18 : 0,
       duration: 0.8,
-      ease: 'telos-ease'
+      ease: 'power2.in'
     }, '<+=0.2')
     .set(modalWrap, { display: 'none' });
 }
@@ -239,9 +232,11 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000;
-  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
+  opacity: 0;
 }
 
 /* Sidebar Container */
