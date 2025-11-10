@@ -2,6 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "astro",
-  "devCommand": "npm run dev"
+  "devCommand": "npm run dev",
+  "installCommand": "rm -rf node_modules && npm install"
 }
 
