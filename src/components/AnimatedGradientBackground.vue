@@ -185,6 +185,9 @@ const fragmentShader = `
 `;
 
 function createGradientTexture(c1, c2, c3, c4, c5) {
+  // Guard against SSR - only run on client
+  if (typeof document === 'undefined') return null;
+
   const canvas = document.createElement('canvas');
   canvas.width = 512;
   canvas.height = 1;
@@ -238,6 +241,9 @@ function init() {
     color4.value,
     color5.value
   );
+
+  // Guard against SSR - exit if texture creation failed
+  if (!gradientTexture) return;
 
   // Shader material with uniforms - start with 0 values for entrance animation
   material = new THREE.ShaderMaterial({
@@ -365,7 +371,10 @@ watch([color1, color2, color3, color4, color5], () => {
       color5.value
     );
 
-    material.uniforms.u_gradient.value = newTexture;
+    // Only update if texture was created successfully
+    if (newTexture) {
+      material.uniforms.u_gradient.value = newTexture;
+    }
   }
 });
 
