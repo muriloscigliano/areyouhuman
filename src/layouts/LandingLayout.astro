@@ -1,12 +1,13 @@
 ---
 import ContactModal from '../components/ContactModal.vue';
+import LenisInit from '../components/LenisInit.vue';
 
 interface Props {
   title?: string;
   description?: string;
 }
 
-const { 
+const {
   title = "Are You Human? | AI-Powered Automation Consulting",
   description = "Transform your business with intelligent automation. We help companies identify and implement automation opportunities that actually work."
 } = Astro.props;
@@ -67,25 +68,9 @@ const {
   </head>
   <body>
     <slot />
-    
+
     <ContactModal client:load />
-
-    <script is:inline>
-      // Wait for client-side hydration before initializing Lenis
-      if (typeof window !== 'undefined') {
-        import('../composables/useLenis.js').then(({ useLenis }) => {
-          const { initLenis, destroyLenis } = useLenis();
-
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initLenis);
-          } else {
-            initLenis();
-          }
-
-          window.addEventListener('beforeunload', destroyLenis);
-        });
-      }
-    </script>
+    <LenisInit client:only="vue" />
   </body>
 </html>
 
