@@ -306,6 +306,11 @@ async function captureLandingPage() {
 }
 
 function createFallbackCanvas(color = '#0a0a0f') {
+  // Guard against SSR
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return Promise.resolve(null);
+  }
+
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     canvas.width = window.innerWidth;
@@ -318,6 +323,11 @@ function createFallbackCanvas(color = '#0a0a0f') {
 }
 
 async function initThree() {
+  // Guard against SSR
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   if (!canvasRef.value) {
     console.error('Canvas ref not available');
     return;
