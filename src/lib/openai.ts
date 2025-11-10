@@ -12,6 +12,10 @@ import {
   truncateToWordLimit, 
   countWords 
 } from '../utils/responseGuardrails.js';
+import { 
+  validateExtractedData,
+  getHallucinationPreventionPrompt 
+} from '../utils/dataValidator.js';
 
 // Get API key - lazy evaluation for proper Astro context
 const getApiKey = () => {
@@ -103,10 +107,14 @@ export async function getChatCompletion(
     const stats = getTokenStats(messages);
     console.log(`📊 Token stats - Total: ${stats.totalTokens}, User: ${stats.userTokens}, Assistant: ${stats.assistantTokens}`);
     
+    // Higher temperature for first message to get more varied greetings
+    const isFirstMessage = messages.length === 1 && messages[0]?.role === 'user';
+    const temperature = isFirstMessage ? 0.9 : 0.7; // More creative for greetings
+    
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini', // Fast and cost-effective
       messages: optimizedMessages,
-      temperature: 0.7,
+      temperature: temperature,
       max_tokens: 300, // Reduced to encourage shorter responses (200 words ≈ 250-300 tokens)
     });
 
@@ -144,12 +152,19 @@ export async function extractLeadInfo(conversationMessages: Message[]): Promise<
   }
 
   try {
+    // Load anti-hallucination prompt
+    const antiHallucinationPrompt = getHallucinationPreventionPrompt();
+    
     const completion = await client.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `Extract lead information from this conversation. 
+          content: `${antiHallucinationPrompt}
+
+---
+
+Extract lead information from this conversation. 
 
 IMPORTANT: We use conversational questions, so recognize these patterns:
 - "Who should I make the proposal out to?" → Extract NAME from user's answer
@@ -173,17 +188,51 @@ Return JSON with:
   "automation_area": "string or null"
 }
 
+⚠️ CRITICAL RULES:
+1. ONLY extract data that is EXPLICITLY stated in the conversation
+2. If data is missing, return null - DO NOT guess or infer
+3. Never use placeholder values (example@email.com, N/A, etc.)
+4. Verify data exists in conversation before extracting
+5. When in doubt, return null
+
 Only include fields found in the conversation. Use null for unknown values.
 Extract complete information even from short conversations.`
         },
         ...conversationMessages
       ],
       response_format: { type: 'json_object' },
-      temperature: 0.3,
+      temperature: 0.2, // Lower temperature for more accurate extraction
     });
 
     const result = completion.choices[0]?.message?.content;
-    return result ? JSON.parse(result) : null;
+    const extractedData = result ? JSON.parse(result) : null;
+    
+    // Validate extracted data to prevent hallucinations
+    if (extractedData) {
+      const validation = validateExtractedData(extractedData, conversationMessages);
+      
+      if (validation.isHallucinated || validation.confidence < 0.5) {
+        console.warn('⚠️ Potential hallucination detected:', {
+          suspiciousFields: validation.suspiciousFields,
+          warnings: validation.warnings,
+          confidence: validation.confidence
+        });
+        
+        // Remove suspicious fields
+        validation.suspiciousFields.forEach(field => {
+          console.log(`🗑️ Removing suspicious field: ${field}`);
+          extractedData[field] = null;
+        });
+      }
+      
+      if (validation.warnings.length > 0) {
+        console.log('⚠️ Validation warnings:', validation.warnings);
+      }
+      
+      console.log(`✅ Data validation: confidence=${validation.confidence.toFixed(2)}, valid=${validation.isValid}`);
+    }
+    
+    return extractedData;
   } catch (error) {
     console.error('Error extracting lead info:', error);
     return null;

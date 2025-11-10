@@ -1,15 +1,106 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { gsap } from 'gsap';
 
 interface Props {
   message: string;
   isBot: boolean;
   timestamp?: Date;
+  showThinking?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  showThinking: false
+});
+
 const messageEl = ref<HTMLElement | null>(null);
+
+// Enhanced message formatting to match Figma patterns
+// Supports: **bold**, line breaks, important questions, bullet lists, italic examples
+const formattedMessage = computed(() => {
+  if (!props.isBot) return props.message;
+  
+  let formatted = props.message.trim();
+  
+  // Step 1: Handle bullet lists (lines starting with * or -)
+  // Convert bullet lists to HTML <ul> and <li> tags
+  const lines = formatted.split('\n');
+  const processedLines: Array<string> = [];
+  let inList = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    // Detect bullet: starts with *, -, or • followed by space (but not *(text)* pattern)
+    const isBullet = /^[\*\-\•]\s+/.test(line) && !/^\*\(/.test(line);
+    const nextIsBullet = i < lines.length - 1 && /^[\*\-\•]\s+/.test(lines[i + 1]?.trim()) && !/^\*\(/.test(lines[i + 1]?.trim());
+    
+    if (isBullet) {
+      if (!inList) {
+        processedLines.push('<ul class="message__list">');
+        inList = true;
+      }
+      // Remove bullet marker and wrap in <li>
+      const listItem = line.replace(/^[\*\-\•]\s+/, '');
+      processedLines.push(`<li>${listItem}</li>`);
+      
+      // Close list if next line is not a bullet
+      if (!nextIsBullet) {
+        processedLines.push('</ul>');
+        inList = false;
+      }
+    } else {
+      if (inList) {
+        processedLines.push('</ul>');
+        inList = false;
+      }
+      processedLines.push(line);
+    }
+  }
+  
+  // Close list if still open
+  if (inList) {
+    processedLines.push('</ul>');
+  }
+  
+  formatted = processedLines.join('\n');
+  
+  // Step 2: Handle italic examples like *(e.g., ...)*
+  formatted = formatted.replace(/\*\(([^)]+)\)\*/g, '<em class="message__example">($1)</em>');
+  
+  // Step 3: Handle important questions - bold questions ending with ? should be on their own line
+  formatted = formatted.replace(/([^\n<])\s*\*\*([^*]+\?)\*\*/g, '$1<br /><strong>$2</strong>');
+  
+  // Step 4: Handle explicit line breaks before questions
+  formatted = formatted.replace(/\n\s*\*\*([^*]+\?)\*\*/g, '<br /><strong>$1</strong>');
+  
+  // Step 5: Convert remaining **bold** to <strong> tags (non-greedy)
+  formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  
+  // Step 6: Handle paragraph breaks and line breaks
+  const hasParagraphBreaks = /\n\n+/.test(formatted);
+  
+  if (hasParagraphBreaks) {
+    // Split by double+ newlines and wrap each in <p> tags
+    const paragraphs = formatted.split(/\n\n+/).filter(p => p.trim());
+    formatted = paragraphs.map(p => {
+      // Ensure bold questions are on their own line within paragraphs
+      p = p.replace(/([^<])\s*<strong>([^<]+\?)<\/strong>/g, '$1<br /><strong>$2</strong>');
+      // Convert single newlines to <br /> but preserve lists
+      p = p.replace(/\n(?!<[ul])/g, '<br />');
+      return `<p>${p}</p>`;
+    }).join('');
+  } else {
+    // Single newlines become <br />, but preserve list structure
+    formatted = formatted.replace(/\n(?!<[ul])/g, '<br />');
+    
+    // Final pass: ensure any bold questions are on their own line
+    formatted = formatted.replace(/([^<])\s*<strong>([^<]+\?)<\/strong>/g, '$1<br /><strong>$2</strong>');
+    
+    formatted = `<p>${formatted}</p>`;
+  }
+  
+  return formatted;
+});
 
 onMounted(() => {
   if (messageEl.value) {
@@ -28,14 +119,15 @@ onMounted(() => {
     ref="messageEl"
     :class="['message', { 'message--bot': isBot, 'message--user': !isBot }]"
   >
-    <div class="message__avatar">
-      <span v-if="isBot">🤖</span>
-      <span v-else>👤</span>
+    <div v-if="isBot" class="message__content">
+      <div class="message__bubble message__bubble--bot">
+        <div class="message__text" v-html="formattedMessage"></div>
+      </div>
+      <p v-if="showThinking" class="message__thinking">Thinking...</p>
     </div>
-    <div class="message__content">
-      <div class="message__text">{{ message }}</div>
-      <div v-if="timestamp" class="message__time">
-        {{ timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+    <div v-else class="message__content">
+      <div class="message__bubble message__bubble--user">
+        <p class="message__text">{{ message }}</p>
       </div>
     </div>
   </div>
@@ -44,84 +136,175 @@ onMounted(() => {
 <style scoped>
 .message {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
 }
 
 .message--user {
-  flex-direction: row-reverse;
+  align-items: flex-end;
 }
 
-.message__avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #fb6400;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.message--user .message__avatar {
-  background: #333;
+.message--bot {
+  align-items: flex-start;
 }
 
 .message__content {
-  max-width: 75%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Gap between message bubble and thinking indicator */
+.message__bubble + .message__thinking {
+  margin-top: 0;
+}
+
+.message__bubble {
+  border-radius: 18px;
+  padding: 12px 16px;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+.message__bubble--user {
+  background: #1f1f1f;
+  align-self: flex-end;
+}
+
+.message__bubble--bot {
+  background: #171717;
+  border: 1px solid #424242;
+  padding: 24px 18px;
+  align-self: flex-start;
 }
 
 .message__text {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  padding: 12px 16px;
-  border-radius: 12px;
+  margin: 0;
+  padding: 0;
   color: #fff;
-  line-height: 1.5;
-  word-wrap: break-word;
-  font-family: 'PP Supply Mono', monospace;
-  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0.48px;
 }
 
-.message--bot .message__text {
-  border-bottom-left-radius: 4px;
+.message__bubble--user .message__text {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  text-transform: capitalize;
+  letter-spacing: 0.48px;
+  white-space: pre-wrap;
+  line-height: 1.4;
 }
 
-.message--user .message__text {
-  background: #212121;
-  border-color: #424242;
-  border-bottom-right-radius: 4px;
+.message__bubble--bot .message__text {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 0.48px;
+  line-height: 1.4;
 }
 
-.message__time {
-  font-size: 11px;
-  color: #666;
-  padding: 0 8px;
-  font-family: 'PP Supply Mono', monospace;
+.message__bubble--bot .message__text p {
+  margin: 0;
+  padding: 0;
+  line-height: 1.4;
 }
 
-.message--user .message__time {
-  text-align: right;
+.message__bubble--bot .message__text p + p {
+  margin-top: 1em;
+}
+
+/* Bullet list styling - matches Figma */
+.message__bubble--bot .message__text .message__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5em 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25em;
+}
+
+.message__bubble--bot .message__text .message__list li {
+  position: relative;
+  padding-left: 1em;
+  line-height: 1.4;
+  color: inherit;
+}
+
+.message__bubble--bot .message__text .message__list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #868797;
+  font-weight: 400;
+}
+
+/* Italic examples styling */
+.message__bubble--bot .message__text .message__example {
+  font-style: italic;
+  color: #868797;
+  font-size: 0.95em;
+}
+
+.message__bubble--bot .message__text strong {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 700;
+  color: inherit;
+}
+
+.message__bubble--bot .message__text br {
+  display: block;
+  content: "";
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Bold text styling - matches Figma */
+.message__bubble--bot .message__text strong {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 700;
+  color: inherit;
+  display: inline;
+}
+
+/* Ensure bold questions on their own line (no extra spacing) */
+.message__bubble--bot .message__text br + strong {
+  display: block;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.message__thinking {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  color: #868797;
+  letter-spacing: 0.48px;
+  margin: 0;
+  padding: 0;
 }
 
 @media (max-width: 768px) {
-  .message__content {
-    max-width: 80%;
+  .message__bubble {
+    max-width: 85%;
   }
   
-  .message__avatar {
-    width: 28px;
-    height: 28px;
+  .message__bubble--bot {
+    padding: 18px 14px;
+  }
+  
+  .message__bubble--user {
+    padding: 10px 14px;
+  }
+  
+  .message__bubble--bot .message__text {
     font-size: 14px;
   }
-
-  .message__text {
-    font-size: 13px;
-    padding: 10px 14px;
+  
+  .message__bubble--user .message__text {
+    font-size: 14px;
   }
 }
 </style>

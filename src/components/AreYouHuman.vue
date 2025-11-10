@@ -68,10 +68,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue';
 import { gsap } from 'gsap';
 import Draggable from 'gsap/Draggable';
-import WebGLPortalTransition from './WebGLPortalTransition.vue';
+
+// Lazy load WebGL transition component (contains Three.js)
+const WebGLPortalTransition = defineAsyncComponent(() =>
+  import('./WebGLPortalTransition.vue')
+);
 // import AnimatedGradientBackground from './AnimatedGradientBackground.vue';
 
 // Only register plugin on client-side

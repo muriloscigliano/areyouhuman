@@ -10,8 +10,49 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import * as THREE from 'three';
+import {
+  Scene,
+  OrthographicCamera,
+  WebGLRenderer,
+  PlaneGeometry,
+  ShaderMaterial,
+  Mesh,
+  Vector2,
+  CanvasTexture,
+  DataTexture,
+  LinearFilter,
+  RGBAFormat
+} from 'three';
 import { gsap } from 'gsap';
+
+// Lazy load html2canvas only when needed
+let html2canvasLoaded = false;
+let html2canvasPromise = null;
+
+function loadHtml2Canvas() {
+  if (html2canvasLoaded && window.html2canvas) {
+    return Promise.resolve(window.html2canvas);
+  }
+
+  if (html2canvasPromise) {
+    return html2canvasPromise;
+  }
+
+  html2canvasPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = () => {
+      html2canvasLoaded = true;
+      resolve(window.html2canvas);
+    };
+    script.onerror = () => {
+      reject(new Error('Failed to load html2canvas'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return html2canvasPromise;
+}
 
 const props = defineProps({
   progress: {
@@ -159,9 +200,11 @@ async function captureIntroScreen() {
     canvas.height = height;
     const ctx = canvas.getContext('2d');
 
-    const html2canvas = window.html2canvas;
-    if (html2canvas && typeof html2canvas === 'function') {
-      try {
+    try {
+      // Lazy load html2canvas
+      const html2canvas = await loadHtml2Canvas();
+
+      if (html2canvas && typeof html2canvas === 'function') {
         const capturedCanvas = await html2canvas(introSection, {
           width: width,
           height: height,
@@ -186,15 +229,16 @@ async function captureIntroScreen() {
 
         // Restore scroll position
         window.scrollTo(scrollX, scrollY);
-      } catch (e) {
-        console.warn('html2canvas failed for intro, using fallback:', e);
+      } else {
+        // Fallback if html2canvas didn't load
         ctx.fillStyle = '#ffefe5';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        window.scrollTo(scrollX, scrollY);
       }
-    } else {
+    } catch (e) {
+      console.warn('html2canvas failed for intro, using fallback:', e);
       ctx.fillStyle = '#ffefe5';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      window.scrollTo(scrollX, scrollY);
     }
 
     return canvas;
@@ -343,10 +387,10 @@ async function initThree() {
 
   try {
     console.log('Initializing WebGL scene...');
-    scene = new THREE.Scene();
-    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    scene = new Scene();
+    camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    renderer = new THREE.WebGLRenderer({
+    renderer = new WebGLRenderer({
       canvas: canvasRef.value,
       antialias: true,
       alpha: false,
@@ -368,16 +412,16 @@ async function initThree() {
 
     // Create intro screen texture (what we're transitioning FROM)
     let introTexture = null;
-    let texture1Size = new THREE.Vector2(1, 1);
+    let texture1Size = new Vector2(1, 1);
 
     try {
       const introCanvas = await captureIntroScreen();
       if (introCanvas) {
-        introTexture = new THREE.CanvasTexture(introCanvas);
+        introTexture = new CanvasTexture(introCanvas);
         introTexture.needsUpdate = true;
-        introTexture.minFilter = THREE.LinearFilter;
-        introTexture.magFilter = THREE.LinearFilter;
-        texture1Size = new THREE.Vector2(
+        introTexture.minFilter = LinearFilter;
+        introTexture.magFilter = LinearFilter;
+        texture1Size = new Vector2(
           introCanvas.width,
           introCanvas.height
         );
@@ -390,29 +434,29 @@ async function initThree() {
     // Fallback to peach color if intro capture failed
     if (!introTexture) {
       const peachData = new Uint8Array([255, 239, 229, 255]);
-      introTexture = new THREE.DataTexture(
+      introTexture = new DataTexture(
         peachData,
         1,
         1,
-        THREE.RGBAFormat
+        RGBAFormat
       );
       introTexture.needsUpdate = true;
-      introTexture.minFilter = THREE.LinearFilter;
-      introTexture.magFilter = THREE.LinearFilter;
+      introTexture.minFilter = LinearFilter;
+      introTexture.magFilter = LinearFilter;
     }
 
     // Create landing page texture (what we're transitioning TO)
     let landingPageTexture = null;
-    let texture2Size = new THREE.Vector2(1, 1);
+    let texture2Size = new Vector2(1, 1);
 
     try {
       const landingPageCanvas = await captureLandingPage();
       if (landingPageCanvas) {
-        landingPageTexture = new THREE.CanvasTexture(landingPageCanvas);
+        landingPageTexture = new CanvasTexture(landingPageCanvas);
         landingPageTexture.needsUpdate = true;
-        landingPageTexture.minFilter = THREE.LinearFilter;
-        landingPageTexture.magFilter = THREE.LinearFilter;
-        texture2Size = new THREE.Vector2(
+        landingPageTexture.minFilter = LinearFilter;
+        landingPageTexture.magFilter = LinearFilter;
+        texture2Size = new Vector2(
           landingPageCanvas.width,
           landingPageCanvas.height
         );
@@ -425,23 +469,23 @@ async function initThree() {
     // Fallback to dark color if landing capture failed
     if (!landingPageTexture) {
       const darkData = new Uint8Array([10, 10, 15, 255]);
-      landingPageTexture = new THREE.DataTexture(
+      landingPageTexture = new DataTexture(
         darkData,
         1,
         1,
-        THREE.RGBAFormat
+        RGBAFormat
       );
       landingPageTexture.needsUpdate = true;
-      landingPageTexture.minFilter = THREE.LinearFilter;
-      landingPageTexture.magFilter = THREE.LinearFilter;
+      landingPageTexture.minFilter = LinearFilter;
+      landingPageTexture.magFilter = LinearFilter;
     }
     
-    material = new THREE.ShaderMaterial({
+    material = new ShaderMaterial({
       uniforms: {
         uTexture1: { value: introTexture },
         uTexture2: { value: landingPageTexture },
         uProgress: { value: 0.0 },
-        uResolution: { value: new THREE.Vector2(width, height) },
+        uResolution: { value: new Vector2(width, height) },
         uTexture1Size: { value: texture1Size },
         uTexture2Size: { value: texture2Size }
       },
@@ -458,8 +502,8 @@ async function initThree() {
       resolution: material.uniforms.uResolution.value
     });
 
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    mesh = new THREE.Mesh(geometry, material);
+    const geometry = new PlaneGeometry(2, 2);
+    mesh = new Mesh(geometry, material);
     scene.add(mesh);
 
     console.log('Initial render...');
@@ -527,10 +571,10 @@ async function start() {
       const introCanvas = await captureIntroScreen();
       if (introCanvas && material) {
         console.log('Intro screen captured, creating texture...');
-        const introTexture = new THREE.CanvasTexture(introCanvas);
+        const introTexture = new CanvasTexture(introCanvas);
         introTexture.needsUpdate = true;
-        introTexture.minFilter = THREE.LinearFilter;
-        introTexture.magFilter = THREE.LinearFilter;
+        introTexture.minFilter = LinearFilter;
+        introTexture.magFilter = LinearFilter;
 
         material.uniforms.uTexture1.value = introTexture;
         material.uniforms.uTexture1Size.value.set(
@@ -545,10 +589,10 @@ async function start() {
       const landingPageCanvas = await captureLandingPage();
       if (landingPageCanvas && material) {
         console.log('Landing page captured, creating texture...');
-        const landingPageTexture = new THREE.CanvasTexture(landingPageCanvas);
+        const landingPageTexture = new CanvasTexture(landingPageCanvas);
         landingPageTexture.needsUpdate = true;
-        landingPageTexture.minFilter = THREE.LinearFilter;
-        landingPageTexture.magFilter = THREE.LinearFilter;
+        landingPageTexture.minFilter = LinearFilter;
+        landingPageTexture.magFilter = LinearFilter;
 
         material.uniforms.uTexture2.value = landingPageTexture;
         material.uniforms.uTexture2Size.value.set(

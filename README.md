@@ -431,6 +431,17 @@ async function generateSummary(messages) {
 - ✅ **Follow-up automation** (drip campaigns, reminders)
 - ✅ **Human handoff triggers** (escalation rules)
 
+### 🚀 Performance Optimizations
+- ✅ **Three.js tree-shaking** (~380 KB saved, 65% reduction)
+- ✅ **html2canvas lazy loading** (~500 KB saved for returning visitors)
+- ✅ **Font-display: swap** (eliminates FOIT - Flash of Invisible Text)
+- ✅ **Unused font cleanup** (~1.3 MB removed from bundle)
+- ✅ **WOFF2 font conversion** (~172 KB saved, 52% font size reduction)
+
+**Total bundle reduction**: ~2.4 MB (83% smaller)
+
+See [Performance Optimization Guide](./docs/PERFORMANCE_OPTIMIZATION_COMPLETE.md) for details.
+
 ---
 
 ## 🤖 n8n Intelligent Routing System
@@ -812,11 +823,12 @@ AI Strategist & Founder, Are You Human?
 ## 📚 Additional Resources
 
 ### Documentation
-- [Complete Setup Guide](SETUP_GUIDE.md)
-- [Prompt Engineering Deep Dive](DEEP_DISCOVERY_FRAMEWORK.md)
-- [AI Integration Guide](AI_INTEGRATION.md)
-- [Database Testing Guide](DATABASE_TESTING_GUIDE.md)
-- [Token Optimization](TOKEN_OPTIMIZATION_COMPLETE.md)
+- [📚 Complete Documentation Index](./docs/README.md)
+- [Quick Start Guide](./docs/setup/quick-start.md)
+- [Setup Guide](./docs/setup/setup-guide.md)
+- [Features Documentation](./docs/features/)
+- [Integration Guides](./docs/integration/)
+- [Database Guide](./docs/database/)
 
 ### Useful Links
 - [Astro Documentation](https://docs.astro.build)

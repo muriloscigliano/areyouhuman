@@ -13,7 +13,9 @@
       "Bash(vercel --version:*)",
       "Bash(vercel whoami:*)",
       "Bash(cat:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(sort:*)"
     ],
     "deny": [],
     "ask": []

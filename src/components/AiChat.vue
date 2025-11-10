@@ -95,7 +95,7 @@ const matchesCondition = (condition: GreetingCondition, context: any): boolean =
   return true;
 };
 
-// Initial greeting message - now dynamic!
+// Initial greeting - only if no initial message is being sent
 onMounted(() => {
   if (chatContainer.value) {
     gsap.from(chatContainer.value, {
@@ -109,9 +109,8 @@ onMounted(() => {
   // Mark user as visited for future sessions
   localStorage.setItem('telos_visited', 'true');
   
-  setTimeout(() => {
-    addBotMessage(getSmartGreeting());
-  }, 500);
+  // Don't auto-send greeting - let the API handle it based on conversation state
+  // This prevents double introductions
 });
 
 const addMessage = (text: string, isBot: boolean) => {
@@ -214,20 +213,17 @@ const handleSend = async (messageText: string) => {
   <div ref="chatContainer" class="ai-chat">
     <!-- Messages Container -->
     <div ref="messagesContainer" class="ai-chat__messages">
-      <AiMessage
-        v-for="message in messages"
-        :key="message.id"
-        :message="message.text"
-        :is-bot="message.isBot"
-        :timestamp="message.timestamp"
-      />
+      <template v-for="(message, index) in messages" :key="message.id">
+        <AiMessage
+          :message="message.text"
+          :is-bot="message.isBot"
+          :timestamp="message.timestamp"
+          :show-thinking="isLoading && message.isBot && index === messages.length - 1"
+        />
+      </template>
       
-      <div v-if="isLoading" class="ai-chat__typing">
-        <div class="typing-indicator">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
+      <div v-if="isLoading && messages.length > 0 && messages[messages.length - 1].isBot === false" class="ai-chat__thinking">
+        <p class="thinking-text">Thinking...</p>
       </div>
     </div>
     
@@ -289,7 +285,7 @@ const handleSend = async (messageText: string) => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   padding-right: 8px;
 }
 
@@ -310,46 +306,20 @@ const handleSend = async (messageText: string) => {
   background: #444;
 }
 
-.ai-chat__typing {
+.ai-chat__thinking {
   display: flex;
-  gap: 12px;
   align-items: flex-start;
+  width: 100%;
 }
 
-.typing-indicator {
-  display: flex;
-  gap: 6px;
-  padding: 12px 16px;
-  background: #1a1a1a;
-  border-radius: 12px;
-  border: 1px solid #333;
-}
-
-.typing-indicator span {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #666;
-  animation: typing 1.4s infinite;
-}
-
-.typing-indicator span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typing {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-  30% {
-    transform: translateY(-6px);
-    opacity: 1;
-  }
+.thinking-text {
+  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  color: #868797;
+  letter-spacing: 0.48px;
+  margin: 0;
+  padding: 0;
 }
 
 /* Input Wrapper */
@@ -362,6 +332,7 @@ const handleSend = async (messageText: string) => {
   border: 1px solid #7f7f7f;
   border-radius: 24px;
   padding: 6px;
+  min-height: 200px;
 }
 
 .input-content {
@@ -370,21 +341,23 @@ const handleSend = async (messageText: string) => {
   padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 120px;
+  justify-content: space-between;
+  min-height: 188px;
+  height: 100%;
 }
 
 .message-input {
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
+  color: #bababa;
   font-family: 'PP Supply Mono', monospace;
   font-size: 16px;
   letter-spacing: 0.48px;
   width: 100%;
   flex: 1;
   resize: none;
+  margin-bottom: auto;
 }
 
 .message-input::placeholder {
@@ -396,6 +369,7 @@ const handleSend = async (messageText: string) => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 12px;
 }
 
 .action-icons {
@@ -405,6 +379,7 @@ const handleSend = async (messageText: string) => {
   border: 1px solid #333333;
   border-radius: 500px;
   padding: 2px;
+  height: 40px;
 }
 
 .icon-button {
@@ -425,6 +400,10 @@ const handleSend = async (messageText: string) => {
   background: #171717;
   border: 1px solid #333333;
   color: #fff;
+}
+
+.icon-button:not(.active) {
+  background: transparent;
 }
 
 .icon-button:hover:not(.active) {

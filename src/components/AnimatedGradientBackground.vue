@@ -6,7 +6,16 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import * as THREE from 'three';
+import {
+  Scene,
+  OrthographicCamera,
+  WebGLRenderer,
+  PlaneGeometry,
+  ShaderMaterial,
+  Mesh,
+  Vector2,
+  CanvasTexture
+} from 'three';
 import { gsap } from 'gsap';
 
 const canvasRef = ref(null);
@@ -204,7 +213,7 @@ function createGradientTexture(c1, c2, c3, c4, c5) {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 512, 1);
 
-  const texture = new THREE.CanvasTexture(canvas);
+  const texture = new CanvasTexture(canvas);
   texture.needsUpdate = true;
 
   return texture;
@@ -214,15 +223,15 @@ function init() {
   if (!canvasRef.value) return;
 
   // Scene setup
-  scene = new THREE.Scene();
+  scene = new Scene();
 
   // Camera setup - orthographic for flat 2D gradient
   const aspect = window.innerWidth / window.innerHeight;
-  camera = new THREE.OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 10);
+  camera = new OrthographicCamera(-aspect, aspect, 1, -1, 0.1, 10);
   camera.position.z = 1;
 
   // Renderer setup
-  renderer = new THREE.WebGLRenderer({
+  renderer = new WebGLRenderer({
     canvas: canvasRef.value,
     antialias: true,
     alpha: true
@@ -231,7 +240,7 @@ function init() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
   // Create a simple plane geometry (no subdivisions needed)
-  const geometry = new THREE.PlaneGeometry(2 * aspect, 2);
+  const geometry = new PlaneGeometry(2 * aspect, 2);
 
   // Create gradient texture
   const gradientTexture = createGradientTexture(
@@ -246,10 +255,10 @@ function init() {
   if (!gradientTexture) return;
 
   // Shader material with uniforms - start with 0 values for entrance animation
-  material = new THREE.ShaderMaterial({
+  material = new ShaderMaterial({
     uniforms: {
       u_time: { value: 0.0 },
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_resolution: { value: new Vector2(window.innerWidth, window.innerHeight) },
       u_gradient: { value: gradientTexture },
       u_frequency: { value: 0 }, // Start at 0
       u_amount: { value: 0 }, // Start at 0
@@ -263,7 +272,7 @@ function init() {
   });
 
   // Create mesh
-  mesh = new THREE.Mesh(geometry, material);
+  mesh = new Mesh(geometry, material);
   scene.add(mesh);
 
   // Start animation
@@ -337,7 +346,7 @@ function handleResize() {
 
   // Update plane geometry to match new aspect ratio
   mesh.geometry.dispose();
-  mesh.geometry = new THREE.PlaneGeometry(2 * aspect, 2);
+  mesh.geometry = new PlaneGeometry(2 * aspect, 2);
 
   // Update resolution uniform
   material.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);

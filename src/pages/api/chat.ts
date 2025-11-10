@@ -6,6 +6,7 @@ import { triggerN8NWebhook, isN8NConfigured } from '../../lib/n8nTrigger';
 import { validateAndCleanEmail, getEmailErrorMessage } from '../../utils/emailValidator';
 import { validateProjectQuality, hasEnoughDetail } from '../../utils/projectValidator';
 import { validateResponse, truncateToWordLimit, countWords } from '../../utils/responseGuardrails';
+import { validateExtractedData, verifyDataCollection } from '../../utils/dataValidator';
 
 interface ChatRequest {
   message: string;
@@ -74,7 +75,31 @@ export const POST: APIRoute = async ({ request }) => {
         }
 
         // Get AI response with token optimization
-        reply = await getChatCompletion(messages, 'briefing', {}, conversationSummary);
+        // Pass context to indicate if we need to collect contact info first
+        const messageCount = conversationHistory.length;
+        const needsContactInfo = !leadData.name || !leadData.email || !leadData.company;
+        
+        // Get current time for context-aware greetings
+        const hour = new Date().getHours();
+        let timeContext = '';
+        if (hour >= 5 && hour < 12) timeContext = 'morning';
+        else if (hour >= 12 && hour < 17) timeContext = 'afternoon';
+        else if (hour >= 17 && hour < 22) timeContext = 'evening';
+        else timeContext = 'night';
+        
+        const day = new Date().getDay();
+        const isWeekend = day === 0 || day === 6;
+        
+        const context = {
+          isFirstMessage: messageCount === 0,
+          needsContactInfo: needsContactInfo && messageCount < 5,
+          messageCount: messageCount,
+          shouldNotAskProject: needsContactInfo, // Don't ask about project until we have contact info
+          timeOfDay: timeContext, // For varied greetings
+          isWeekend: isWeekend // For varied greetings
+        };
+        
+        reply = await getChatCompletion(messages, 'briefing', context, conversationSummary);
         
         // Final guardrail check (double-check in case something slipped through)
         const finalValidation = validateResponse(reply);
@@ -90,17 +115,31 @@ export const POST: APIRoute = async ({ request }) => {
         
         console.log(`✅ Response validated: ${finalValidation.wordCount} words, on-topic: ${!finalValidation.isOffTopic}`);
 
-        // ⚠️ CRITICAL: Extract lead info DURING the 5-message sequence!
-        // Messages 3-5 collect Name, Email, Company - we need to extract IMMEDIATELY
-        const messageCount = conversationHistory.length;
-        
-        // AGGRESSIVE EXTRACTION during critical collection phase (messages 2-10)
-        // This covers all user responses during name/email/company collection
-        if (messageCount >= 2 && messageCount <= 10) {
+        // ⚠️ CRITICAL: Extract lead info IMMEDIATELY after greeting!
+        // Messages 1-4 collect Name, Email, Company - we need to extract IMMEDIATELY
+        // Start extracting from message 1 (after greeting)
+        if (messageCount >= 1 && messageCount <= 5) {
           console.log(`🎯 CRITICAL PHASE: Extracting lead info at message ${messageCount}...`);
           const extractedInfo = await extractLeadInfo(messages);
           if (extractedInfo) {
             console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
+            
+            // 🛡️ VALIDATE EXTRACTED DATA (prevent hallucinations)
+            const dataValidation = validateExtractedData(extractedInfo, messages);
+            
+            if (dataValidation.isHallucinated) {
+              console.warn('⚠️ HALLUCINATION DETECTED:', {
+                suspiciousFields: dataValidation.suspiciousFields,
+                warnings: dataValidation.warnings,
+                confidence: dataValidation.confidence
+              });
+              
+              // Remove hallucinated fields
+              dataValidation.suspiciousFields.forEach(field => {
+                console.log(`🗑️ Removing hallucinated field: ${field}`);
+                delete extractedInfo[field];
+              });
+            }
             
             // ✉️ VALIDATE EMAIL before accepting it
             if (extractedInfo.email) {
@@ -113,6 +152,23 @@ export const POST: APIRoute = async ({ request }) => {
                 // Don't save invalid email - Telos will re-ask
                 delete extractedInfo.email;
               }
+            }
+            
+            // 🔍 VERIFY DATA COLLECTION (double-check what Telos actually collected)
+            const verification = verifyDataCollection(messages, ['name', 'email', 'company']);
+            console.log(`🔍 Data collection verification:`, {
+              collected: verification.collected,
+              missing: verification.missing,
+              needsFollowUp: verification.needsFollowUp
+            });
+            
+            // If Telos claims to have data but verification says it's missing, flag it
+            if (verification.needsFollowUp) {
+              verification.missing.forEach(field => {
+                if (extractedInfo[field]) {
+                  console.warn(`⚠️ Telos claims ${field}="${extractedInfo[field]}" but verification didn't find it in conversation`);
+                }
+              });
             }
             
             Object.assign(leadData, extractedInfo);
@@ -159,12 +215,12 @@ export const POST: APIRoute = async ({ request }) => {
           timeline: leadData.timeline
         });
 
-        // Check if we have all required data WITH enough quality to trigger n8n automation
-        const hasRequiredData = leadData.name && 
-                                leadData.email && 
-                                leadData.company && 
-                                projectValidation.isValid; // ← NEW: Check quality, not just presence!
-        
+        // Check if we have all required data WITH enough quality
+        const hasRequiredData = leadData.name &&
+                                leadData.email &&
+                                leadData.company &&
+                                projectValidation.isValid;
+
         if (!projectValidation.isValid && leadData.problem_text) {
           console.log('⚠️ Project data exists but lacks quality:', {
             missingFields: projectValidation.missingFields,
@@ -172,43 +228,16 @@ export const POST: APIRoute = async ({ request }) => {
             suggestions: projectValidation.suggestions
           });
         }
-        
-        // If AI is confirming quote send, trigger n8n workflow
-        if (hasRequiredData && 
-            (reply.toLowerCase().includes('send') || 
-             reply.toLowerCase().includes('email') || 
+
+        // Mark lead as ready to save if we have complete data
+        // Note: n8n webhook will be triggered automatically by Supabase database trigger
+        if (hasRequiredData &&
+            (reply.toLowerCase().includes('send') ||
+             reply.toLowerCase().includes('email') ||
              reply.toLowerCase().includes('inbox') ||
              reply.toLowerCase().includes('proposal'))) {
-          
-          console.log('🎯 Lead qualified! Triggering n8n automation workflow...');
-          
-          // Trigger n8n webhook for automation (email, PDF, Slack, etc.)
-          if (isN8NConfigured()) {
-            const n8nResult = await triggerN8NWebhook({
-              leadId: currentLeadId || 'pending',
-              name: leadData.name,
-              email: leadData.email,
-              company: leadData.company,
-              project_title: leadData.automation_area ? `${leadData.automation_area} Automation` : 'AI Automation Project',
-              project_summary: leadData.problem_text,
-              tools_used: leadData.tools_used || [],
-              budget_range: leadData.budget_range,
-              timeline: leadData.urgency,
-              urgency: leadData.urgency,
-              automation_area: leadData.automation_area,
-              interest_level: leadData.interest_level,
-              source: 'Telos Chat',
-            });
-            
-            if (n8nResult.success) {
-              console.log('✅ n8n workflow triggered successfully!');
-            } else {
-              console.log('⚠️ n8n trigger failed:', n8nResult.message);
-            }
-          } else {
-            console.log('⚠️ n8n not configured, skipping automation');
-          }
-          
+
+          console.log('🎯 Lead qualified! Will be saved to Supabase (n8n trigger will fire automatically)');
           shouldSaveLead = true;
         }
 

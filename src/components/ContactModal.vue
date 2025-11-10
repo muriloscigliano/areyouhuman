@@ -179,26 +179,31 @@ function initModal() {
   const bg = modalWrap.querySelector('.modal-bg') as HTMLElement;
 
   const isMobileLandscape = window.innerWidth < window.innerHeight && window.innerWidth < 768;
+  const startX = isMobileLandscape ? 0 : window.innerWidth - 18;
+  const startY = isMobileLandscape ? window.innerHeight - 18 : 0;
+
+  // Set initial states immediately
+  gsap.set(modalWrap, { display: 'none' });
+  gsap.set(bg, { opacity: 0 });
+  gsap.set(sidebar, { x: startX, y: startY });
 
   openTimeline = gsap.timeline({ paused: true })
     .set(modalWrap, { display: 'block' })
-    .set(sidebar, { display: 'flex' })
-    .set(sidebar, { x: isMobileLandscape ? 0 : window.innerWidth - 18, y: isMobileLandscape ? window.innerHeight - 18 : 0 })
-    .fromTo(bg, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: telosEase })
+    .to(bg, { opacity: 1, duration: 0.5, ease: telosEase })
     .to(sidebar, { x: 0, y: 0, duration: 0.8, ease: telosEase }, '<');
 
   closeTimeline = gsap.timeline({
     paused: true,
     onStart: () => { isAnimating = true; },
-    onComplete: () => { 
+    onComplete: () => {
       isAnimating = false;
       isChatting.value = false; // Reset chat state on close
     },
   })
     .to(bg, { opacity: 0, duration: 0.5, ease: telosEase })
-    .to(sidebar, { 
-      x: isMobileLandscape ? 0 : window.innerWidth - 18, 
-      y: isMobileLandscape ? window.innerHeight - 18 : 0,
+    .to(sidebar, {
+      x: startX,
+      y: startY,
       duration: 0.8,
       ease: telosEase
     }, '<+=0.2')
@@ -208,19 +213,18 @@ function initModal() {
 watch(isOpen, (newValue) => {
   if (newValue) {
     if (!isAnimating && openTimeline) {
-      openTimeline.play(0);
+      openTimeline.restart();
     }
   } else {
     if (!isAnimating && closeTimeline) {
-      closeTimeline.play(0);
+      closeTimeline.restart();
     }
   }
 });
 
 onMounted(() => {
-  setTimeout(() => {
-    initModal();
-  }, 100);
+  // Initialize immediately - no setTimeout needed
+  initModal();
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isOpen.value) {
@@ -275,12 +279,12 @@ onUnmounted(() => {
   height: calc(100% - 36px);
   background: #111111;
   border: 1px solid #333333;
-  display: none;
+  display: flex;
   flex-direction: column;
   overflow: hidden;
   border-radius: 36px;
   box-shadow: 0 0 20px 20px rgba(0, 0, 0, 0.8);
-  transition: all 0.3s ease;
+  /* GSAP will handle all animations - no CSS transitions */
 }
 
 /* Close Button */

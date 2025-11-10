@@ -128,21 +128,18 @@ Now, what's the main challenge you're trying to solve?"
 
 ## 🔄 Conversation Flow with Extraction
 
-### **Ideal Flow (6-9 messages):**
+### **Ideal Flow (5-8 messages):**
 
 ```
-Message 1: Telos greets (NO project question)
-Message 2: User responds
-Message 3: Telos asks for NAME (FIRST THING)
+Message 1: Telos asks ONE project question with examples
+Message 2: User answers (extract problem_text, automation_area if specific enough)
+Message 3: Telos asks for NAME
 Message 4: User gives name → Telos asks for EMAIL
 Message 5: User gives email → Telos asks for COMPANY
-Message 6: User gives company → NOW Telos asks about project
-Message 7: User answers project question
-Message 8: Telos validates project details
-Message 9: Telos confirms and says "I'll send your quote to [email]"
+Message 6: User gives company → Telos validates project details
+Message 7: If project details are vague → Telos asks for specifics
+Message 8: Telos confirms and says "I'll send your quote to [email]"
 ```
-
-**CRITICAL: Name, Email, Company MUST be collected BEFORE asking about the project!**
 
 ### **If User Tries to Skip:**
 

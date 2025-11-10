@@ -75,6 +75,7 @@ export async function buildSystemPrompt(stage = 'briefing', context = {}) {
     case 'briefing':
       prompts.push('lead-collection'); // ← CRITICAL: Load lead collection workflow FIRST
       prompts.push('early-extraction'); // ← CRITICAL: Aggressive extraction before conversation ends
+      prompts.push('anti-hallucination'); // ← CRITICAL: Prevent AI from making up data
       prompts.push('briefing');
       break;
     case 'quote':
