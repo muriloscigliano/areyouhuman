@@ -23,7 +23,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useGsap } from '../composables/useGsap.js';
 
-const { gsap, ScrollTrigger } = useGsap();
+const { gsap, loadScrollTrigger } = useGsap();
 
 const sectionRef = ref(null);
 
@@ -35,9 +35,12 @@ const words = [
 let scrollTriggerAnimation = null;
 let observer = null;
 
-const createAnimation = () => {
+const createAnimation = async () => {
   if (scrollTriggerAnimation) return;
-  
+
+  // Lazy load ScrollTrigger when needed
+  await loadScrollTrigger();
+
   scrollTriggerAnimation = gsap.to('.statement-section .letter', {
     yPercent: 100,
     ease: 'power1.inOut',

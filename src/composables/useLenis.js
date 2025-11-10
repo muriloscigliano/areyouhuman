@@ -1,22 +1,31 @@
-import Lenis from 'lenis';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
 
 let lenis = null;
 let isInitialized = false;
+let Lenis = null;
+let ScrollTrigger = null;
 
 export function useLenis() {
-  const initLenis = () => {
+  const initLenis = async () => {
     if (typeof window === 'undefined' || isInitialized) return;
-    
+
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-    
+
     if (isMobile) {
       console.log('Lenis disabled on mobile');
       isInitialized = true;
       return;
+    }
+
+    // Lazy load Lenis and ScrollTrigger
+    if (!Lenis) {
+      const [lenisModule, scrollTriggerModule] = await Promise.all([
+        import('lenis'),
+        import('gsap/ScrollTrigger')
+      ]);
+      Lenis = lenisModule.default;
+      ScrollTrigger = scrollTriggerModule.default;
+      gsap.registerPlugin(ScrollTrigger);
     }
 
     lenis = new Lenis({

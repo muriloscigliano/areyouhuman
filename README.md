@@ -432,13 +432,16 @@ async function generateSummary(messages) {
 - ✅ **Human handoff triggers** (escalation rules)
 
 ### 🚀 Performance Optimizations
-- ✅ **Three.js tree-shaking** (~380 KB saved, 65% reduction)
+- ✅ **Three.js tree-shaking + lazy loading** (~1.1 MB saved, 70% reduction)
 - ✅ **html2canvas lazy loading** (~500 KB saved for returning visitors)
+- ✅ **GSAP ScrollTrigger lazy loading** (~44 KB saved from initial bundle)
+- ✅ **Lenis smooth scroll lazy loading** (~18 KB saved from initial bundle)
 - ✅ **Font-display: swap** (eliminates FOIT - Flash of Invisible Text)
 - ✅ **Unused font cleanup** (~1.3 MB removed from bundle)
 - ✅ **WOFF2 font conversion** (~172 KB saved, 52% font size reduction)
 
-**Total bundle reduction**: ~2.4 MB (83% smaller)
+**Total bundle reduction**: ~3.1 MB (87% smaller)
+**Initial page load**: Only ~238 KB (vs 7.3 MB before)
 
 See [Performance Optimization Guide](./docs/PERFORMANCE_OPTIMIZATION_COMPLETE.md) for details.
 
