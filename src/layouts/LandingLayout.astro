@@ -1,4 +1,6 @@
 ---
+import ContactModal from '../components/ContactModal.vue';
+
 interface Props {
   title?: string;
   description?: string;
@@ -26,13 +28,61 @@ const {
     
     <title>{title}</title>
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Custom Fonts -->
+    <style>
+      @font-face {
+        font-family: 'PP Neue Machina';
+        src: url('/fonts/PPNeueMachina-PlainRegular.otf') format('opentype');
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'PP Neue Machina';
+        src: url('/fonts/PPNeueMachina-PlainUltrabold.otf') format('opentype');
+        font-weight: 800;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'PP Supply Mono';
+        src: url('/fonts/PPSupplyMono-Regular.otf') format('opentype');
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'PP Supply Mono';
+        src: url('/fonts/PPSupplyMono-Ultralight.otf') format('opentype');
+        font-weight: 200;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'PP Supply Sans';
+        src: url('/fonts/PPSupplySans-Regular.otf') format('opentype');
+        font-weight: 400;
+        font-style: normal;
+      }
+    </style>
+
+    <!-- html2canvas for WebGL transitions -->
+    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   </head>
   <body>
     <slot />
+    
+    <ContactModal client:load />
+    
+    <script>
+      import { useLenis } from '../composables/useLenis.js';
+      
+      const { initLenis, destroyLenis } = useLenis();
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLenis);
+      } else {
+        initLenis();
+      }
+      
+      window.addEventListener('beforeunload', destroyLenis);
+    </script>
   </body>
 </html>
 

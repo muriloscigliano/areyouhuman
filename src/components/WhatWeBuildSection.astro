@@ -1,0 +1,176 @@
+---
+const items = [
+  {
+    title: 'AI Product Strategy',
+    description: 'Define your roadmap with human-first guardrails.'
+  },
+  {
+    title: 'Prototyping & Experience Design',
+    description: 'From wireframe to working model in days.'
+  },
+  {
+    title: 'AI Agent Development',
+    description: 'From wireframe to working model in days.'
+  },
+  {
+    title: 'Voice & Conversational Interfaces',
+    description: 'Natural, brand-aligned interaction.'
+  },
+  {
+    title: 'Third-Party AI Integration',
+    description: 'Vendor-agnostic, seamless deployment.'
+  }
+];
+---
+
+<section class="what-we-build-section" data-name="What we build">
+  <div class="what-we-build-header">
+    <p class="section-label">What We Build</p>
+    <h2 class="section-title">
+      From strategy to integration — built for human advantage.
+    </h2>
+  </div>
+  
+  <div class="what-we-build-list">
+    {items.map((item) => (
+      <div class="build-item">
+        <div class="divider"></div>
+        <div class="build-item-content">
+          <h3 class="build-item-title">{item.title}</h3>
+          <p class="build-item-description">{item.description}</p>
+        </div>
+        <div class="divider"></div>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+.what-we-build-section {
+  background: #000;
+  min-height: 1525px;
+  padding: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.what-we-build-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  color: #fff;
+}
+
+.section-label {
+  font-family: 'PP Neue Machina', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.section-title {
+  font-family: 'PP Neue Machina', sans-serif;
+  font-weight: 800;
+  font-size: 64px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  width: 907px;
+  margin: 0;
+}
+
+.what-we-build-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.build-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: #fff;
+  opacity: 0.1;
+}
+
+.build-item-content {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.build-item-title {
+  font-family: 'PP Neue Machina', sans-serif;
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 0.9;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.build-item-description {
+  font-family: 'PP Supply Mono', monospace;
+  font-weight: 200;
+  font-size: 28px;
+  line-height: 1.2;
+  text-align: right;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .what-we-build-section {
+    padding: 48px 24px;
+    min-height: auto;
+    gap: 48px;
+  }
+  
+  .what-we-build-header {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .section-title {
+    font-size: 36px;
+    width: 100%;
+  }
+  
+  .build-item {
+    gap: 32px;
+  }
+  
+  .build-item-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0;
+  }
+  
+  .build-item-title {
+    font-size: 24px;
+  }
+  
+  .build-item-description {
+    font-size: 18px;
+    text-align: left;
+  }
+}
+</style>
+

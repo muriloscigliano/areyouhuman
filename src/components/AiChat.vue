@@ -3,7 +3,6 @@ import { ref, nextTick, onMounted } from 'vue';
 import { gsap } from 'gsap';
 import axios from 'axios';
 import AiMessage from './AiMessage.vue';
-import AiInput from './AiInput.vue';
 import greetingsData from '../data/context/greetings.json';
 
 interface Message {
@@ -33,6 +32,8 @@ const isLoading = ref(false);
 const chatContainer = ref<HTMLElement | null>(null);
 const leadId = ref<string | null>(null);
 const conversationId = ref<string | null>(null);
+const currentMessage = ref('');
+const inputRef = ref<HTMLInputElement | null>(null);
 
 // Smart greeting system - loads from JSON with condition matching
 const getSmartGreeting = () => {
@@ -143,6 +144,24 @@ const scrollToBottom = async () => {
   }
 };
 
+const handleSendMessage = () => {
+  if (!currentMessage.value.trim()) return;
+  handleSend(currentMessage.value);
+  currentMessage.value = '';
+};
+
+// Method to send initial message from parent (ContactModal)
+const sendInitialMessage = (message: string) => {
+  if (message && message.trim()) {
+    handleSend(message);
+  }
+};
+
+// Expose method to parent component
+defineExpose({
+  sendInitialMessage
+});
+
 const handleSend = async (messageText: string) => {
   addUserMessage(messageText);
   
@@ -193,19 +212,7 @@ const handleSend = async (messageText: string) => {
 
 <template>
   <div ref="chatContainer" class="ai-chat">
-    <div class="ai-chat__header">
-      <div class="ai-chat__title">
-        <span class="ai-chat__icon">🤖</span>
-        <div>
-          <h3>Are You Human? Copilot</h3>
-          <p class="ai-chat__status">
-            <span class="ai-chat__status-dot"></span>
-            Online
-          </p>
-        </div>
-      </div>
-    </div>
-    
+    <!-- Messages Container -->
     <div ref="messagesContainer" class="ai-chat__messages">
       <AiMessage
         v-for="message in messages"
@@ -224,7 +231,47 @@ const handleSend = async (messageText: string) => {
       </div>
     </div>
     
-    <AiInput @send="handleSend" />
+    <!-- Input Area -->
+    <div class="ai-chat__input-wrapper">
+      <div class="input-container">
+        <div class="input-content">
+          <input 
+            ref="inputRef"
+            v-model="currentMessage"
+            @keydown.enter="handleSendMessage"
+            type="text"
+            placeholder="Ask anything here"
+            class="message-input"
+          />
+          <div class="input-actions">
+            <div class="action-icons">
+              <button class="icon-button active" aria-label="Search">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M11.5 11.5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button class="icon-button" aria-label="Globe">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M1 8h14M8 1c-2 2-2 6 0 14M8 1c2 2 2 6 0 14" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+            </div>
+            <button 
+              @click="handleSendMessage"
+              :disabled="!currentMessage.trim()"
+              class="send-button"
+              aria-label="Send message"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2L8 14M8 2L3 7M8 2L13 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -232,111 +279,57 @@ const handleSend = async (messageText: string) => {
 .ai-chat {
   display: flex;
   flex-direction: column;
-  height: 600px;
-  max-width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 1.5rem;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-}
-
-.ai-chat__header {
-  padding: 1.25rem 1.5rem;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.ai-chat__title {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-}
-
-.ai-chat__icon {
-  font-size: 2rem;
-}
-
-.ai-chat__title h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: white;
-}
-
-.ai-chat__status {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0.25rem 0 0;
-  font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.ai-chat__status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  height: 100%;
+  width: 100%;
+  gap: 24px;
 }
 
 .ai-chat__messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  padding-right: 8px;
 }
 
 .ai-chat__messages::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .ai-chat__messages::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
 }
 
 .ai-chat__messages::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+  background: #333;
+  border-radius: 2px;
 }
 
 .ai-chat__messages::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #444;
 }
 
 .ai-chat__typing {
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 12px;
   align-items: flex-start;
 }
 
 .typing-indicator {
   display: flex;
-  gap: 0.25rem;
-  padding: 0.875rem 1.125rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  border-bottom-left-radius: 0.25rem;
+  gap: 6px;
+  padding: 12px 16px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 1px solid #333;
 }
 
 .typing-indicator span {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
+  background: #666;
   animation: typing 1.4s infinite;
 }
 
@@ -351,26 +344,125 @@ const handleSend = async (messageText: string) => {
 @keyframes typing {
   0%, 60%, 100% {
     transform: translateY(0);
-    opacity: 0.6;
+    opacity: 0.5;
   }
   30% {
-    transform: translateY(-10px);
+    transform: translateY(-6px);
     opacity: 1;
   }
 }
 
+/* Input Wrapper */
+.ai-chat__input-wrapper {
+  width: 100%;
+}
+
+.input-container {
+  background: #121212;
+  border: 1px solid #7f7f7f;
+  border-radius: 24px;
+  padding: 6px;
+}
+
+.input-content {
+  background: #171717;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 120px;
+}
+
+.message-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'PP Supply Mono', monospace;
+  font-size: 16px;
+  letter-spacing: 0.48px;
+  width: 100%;
+  flex: 1;
+  resize: none;
+}
+
+.message-input::placeholder {
+  color: #bababa;
+}
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-icons {
+  display: flex;
+  gap: 2px;
+  background: #000;
+  border: 1px solid #333333;
+  border-radius: 500px;
+  padding: 2px;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 500px;
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-button.active {
+  background: #171717;
+  border: 1px solid #333333;
+  color: #fff;
+}
+
+.icon-button:hover:not(.active) {
+  color: #999;
+}
+
+.send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fb6400;
+  border: none;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #ff7a1a;
+  transform: scale(1.05);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
-  .ai-chat {
-    height: 500px;
-    border-radius: 1rem;
+  .input-content {
+    min-height: 100px;
+    padding: 14px;
   }
-  
-  .ai-chat__header {
-    padding: 1rem;
-  }
-  
-  .ai-chat__messages {
-    padding: 1rem;
+
+  .message-input {
+    font-size: 14px;
   }
 }
 </style>

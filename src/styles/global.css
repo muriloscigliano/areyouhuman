@@ -42,7 +42,26 @@ html {
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
+}
+
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
 body {
@@ -269,5 +288,56 @@ code {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.7);
+}
+
+/* Landing page visibility control */
+.landing--hidden {
+  display: none !important;
+}
+
+/* PP Supply font paragraph indent effect - only for larger text */
+[style*="font-family: 'PP Supply"],
+[class*="pp-supply"],
+.section-description,
+.step-description {
+  font-family: 'PP Supply Mono', monospace;
+}
+
+/* Text indent for PP Supply fonts - only for text 18px and larger */
+[style*="font-family: 'PP Supply"]:not([style*="font-size: 1"]):not([style*="font-size: 0"]),
+.section-description,
+.what-we-do-content p,
+.framework-content p {
+  text-indent: 2em;
+}
+
+/* Don't indent if the text is explicitly small */
+[style*="font-size: 12px"],
+[style*="font-size: 14px"],
+[style*="font-size: 16px"],
+[style*="font-size: 0."],
+[style*="font-size: 1rem"],
+[style*="font-size: 1.0"] {
+  text-indent: 0 !important;
+}
+
+/* Don't indent single-line text, headings, or split text animations */
+h1, h2, h3, h4, h5, h6,
+.step-title,
+.framework-title,
+.what-we-do-title,
+.hero-tagline,
+.logo-text {
+  text-indent: 0 !important;
+}
+
+@media (max-width: 768px) {
+  /* Smaller indent on mobile */
+  [style*="font-family: 'PP Supply"]:not([style*="font-size: 1"]):not([style*="font-size: 0"]),
+  .section-description,
+  .what-we-do-content p,
+  .framework-content p {
+    text-indent: 3em;
+  }
 }
 

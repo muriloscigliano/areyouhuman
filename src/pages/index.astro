@@ -1,262 +1,55 @@
 ---
 import LandingLayout from '../layouts/LandingLayout.astro';
-import AiChat from '../components/AiChat.vue';
+import AreYouHuman from '../components/AreYouHuman.vue';
+import HeroSection from '../components/HeroSection.vue';
+import StatementSection from '../components/StatementSection.vue';
+import WhatWeDoSections from '../components/WhatWeDoSections.astro';
+import FrameworkAuditSection from '../components/FrameworkAuditSection.astro';
+import WhatWeBuildSection from '../components/WhatWeBuildSection.astro';
+import FooterSection from '../components/FooterSection.astro';
 import '../styles/global.css';
 ---
 
 <LandingLayout>
-  <main class="landing">
-    <!-- Hero Section -->
-    <section class="hero-section">
-      <div class="container">
-        <div class="hero-content">
-          <h1 class="hero-title">
-            Are You <span class="text-gradient">Human</span>?
-          </h1>
-          <p class="hero-subtitle">
-            Let AI help you work smarter. We identify automation opportunities that save time, reduce costs, and scale your business.
-          </p>
-          <div class="hero-badges">
-            <span class="badge">🚀 AI-Powered</span>
-            <span class="badge">⚡ Fast ROI</span>
-            <span class="badge">🎯 Custom Solutions</span>
-          </div>
-        </div>
-      </div>
-    </section>
+  <AreYouHuman client:load />
 
-    <!-- Chat Section -->
-    <section class="chat-section">
-      <div class="container">
-        <div class="chat-intro text-center mb-4">
-          <h2>Start Your Automation Journey</h2>
-          <p>Chat with our AI copilot to discover automation opportunities for your business</p>
-        </div>
-        
-        <div class="chat-wrapper">
-          <AiChat client:load />
-        </div>
-      </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section">
-      <div class="container">
-        <h2 class="text-center mb-5">Why Choose Are You Human?</h2>
-        
-        <div class="features-grid">
-          <div class="card feature-card">
-            <div class="feature-icon">🤖</div>
-            <h3>AI-Driven Analysis</h3>
-            <p>Our copilot analyzes your workflow and identifies the best automation opportunities tailored to your business.</p>
-          </div>
-          
-          <div class="card feature-card">
-            <div class="feature-icon">⚡</div>
-            <h3>Fast Implementation</h3>
-            <p>Get started quickly with proven automation strategies that deliver results in weeks, not months.</p>
-          </div>
-          
-          <div class="card feature-card">
-            <div class="feature-icon">💰</div>
-            <h3>Clear ROI</h3>
-            <p>Every automation recommendation comes with estimated time savings and ROI projections.</p>
-          </div>
-          
-          <div class="card feature-card">
-            <div class="feature-icon">🎯</div>
-            <h3>Custom Solutions</h3>
-            <p>No cookie-cutter approaches. We design automation solutions that fit your unique needs.</p>
-          </div>
-          
-          <div class="card feature-card">
-            <div class="feature-icon">🔗</div>
-            <h3>Tool Integration</h3>
-            <p>Connect your existing tools and systems for seamless automation across your tech stack.</p>
-          </div>
-          
-          <div class="card feature-card">
-            <div class="feature-icon">📈</div>
-            <h3>Scalable Growth</h3>
-            <p>Start small and scale your automation as your business grows and needs evolve.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-      <div class="container text-center">
-        <h2 class="mb-3">Ready to Automate?</h2>
-        <p class="mb-4">Join hundreds of businesses already saving time with intelligent automation.</p>
-        <a href="#chat" class="btn btn-primary">Start Chatting Now</a>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container text-center">
-        <p>&copy; 2025 Are You Human? All rights reserved.</p>
-        <p class="footer-tech">
-          Built with <span class="text-gradient">Astro</span> + <span class="text-gradient">Vue</span> + <span class="text-gradient">Supabase</span>
-        </p>
-      </div>
-    </footer>
+  <main class="landing landing--hidden" id="main-content">
+    <HeroSection client:load />
+    
+    <StatementSection client:load />
+    
+    <WhatWeDoSections />
+    
+    <FrameworkAuditSection />
+    
+    <WhatWeBuildSection />
+    
+    <FooterSection />
   </main>
 </LandingLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const mainContent = document.getElementById('main-content');
+    
+    window.addEventListener('intro-complete', () => {
+      if (mainContent) {
+        mainContent.classList.remove('landing--hidden');
+      }
+    });
+  });
+</script>
 
 <style>
   .landing {
     min-height: 100vh;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    background: #000;
   }
-
-  /* Hero Section */
-  .hero-section {
-    padding: 6rem 0 4rem;
-    text-align: center;
-  }
-
-  .hero-title {
-    margin-bottom: 1.5rem;
-  }
-
-  .hero-subtitle {
-    font-size: 1.25rem;
-    max-width: 700px;
-    margin: 0 auto 2rem;
-  }
-
-  .hero-badges {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .badge {
-    background: rgba(102, 126, 234, 0.2);
-    border: 1px solid rgba(102, 126, 234, 0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 2rem;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    backdrop-filter: blur(10px);
-  }
-
-  /* Chat Section */
-  .chat-section {
-    padding: 4rem 0;
-    scroll-margin-top: 2rem;
-  }
-
-  .chat-intro h2 {
-    margin-bottom: 0.5rem;
-  }
-
-  .chat-intro p {
-    font-size: 1.125rem;
-    color: var(--color-text-muted);
-  }
-
-  .chat-wrapper {
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  /* Features Section */
-  .features-section {
-    padding: 5rem 0;
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 3rem;
-  }
-
-  .feature-card {
-    text-align: center;
-  }
-
-  .feature-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  .feature-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .feature-card p {
-    font-size: 1rem;
-  }
-
-  /* CTA Section */
-  .cta-section {
-    padding: 5rem 0;
-    background: linear-gradient(
-      135deg,
-      rgba(102, 126, 234, 0.1) 0%,
-      rgba(118, 75, 162, 0.1) 100%
-    );
-    border-radius: 2rem;
-    margin: 3rem auto;
-    max-width: 1200px;
-  }
-
-  .cta-section h2 {
-    font-size: 2.5rem;
-  }
-
-  .cta-section p {
-    font-size: 1.25rem;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  /* Footer */
-  .footer {
-    padding: 3rem 0;
-    border-top: 1px solid var(--color-border);
-    margin-top: 4rem;
-  }
-
-  .footer p {
-    margin-bottom: 0.5rem;
-    font-size: 0.9375rem;
-  }
-
-  .footer-tech {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .hero-section {
-      padding: 4rem 0 2rem;
-    }
-
-    .hero-badges {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .features-grid {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-
-    .cta-section {
-      padding: 3rem 1.5rem;
-      margin: 2rem 1rem;
-    }
-
-    .cta-section h2 {
-      font-size: 2rem;
-    }
+  
+  .landing--hidden {
+    opacity: 0;
+    pointer-events: none;
   }
 </style>
