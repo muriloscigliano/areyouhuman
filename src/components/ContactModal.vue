@@ -101,6 +101,32 @@ import { gsap } from 'gsap';
 import { useContactModal } from '../composables/useContactModal';
 import AiChat from './AiChat.vue';
 
+// Custom easing function - Material Design curve (0.4, 0.0, 0.2, 1)
+// This creates a smooth, professional animation without needing CustomEase plugin
+const telosEase = (t: number): number => {
+  const p1 = 0.4, p2 = 0.0, p3 = 0.2, p4 = 1.0;
+  const cx = 3 * p1;
+  const bx = 3 * (p3 - p1) - cx;
+  const ax = 1 - cx - bx;
+  const cy = 3 * p2;
+  const by = 3 * (p4 - p2) - cy;
+  const ay = 1 - cy - by;
+  
+  const sampleCurveX = (t: number) => ((ax * t + bx) * t + cx) * t;
+  const sampleCurveY = (t: number) => ((ay * t + by) * t + cy) * t;
+  
+  let t2 = t;
+  for (let i = 0; i < 8; i++) {
+    const x = sampleCurveX(t2) - t;
+    if (Math.abs(x) < 0.001) break;
+    const d = (3 * ax * t2 + 2 * bx) * t2 + cx;
+    if (Math.abs(d) < 0.000001) break;
+    t2 -= x / d;
+  }
+  
+  return sampleCurveY(t2);
+};
+
 const { isOpen, close } = useContactModal();
 
 const userInput = ref('');
@@ -158,8 +184,8 @@ function initModal() {
     .set(modalWrap, { display: 'block' })
     .set(sidebar, { display: 'flex' })
     .set(sidebar, { x: isMobileLandscape ? 0 : window.innerWidth - 18, y: isMobileLandscape ? window.innerHeight - 18 : 0 })
-    .fromTo(bg, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' })
-    .to(sidebar, { x: 0, y: 0, duration: 0.8, ease: 'power2.out' }, '<');
+    .fromTo(bg, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: telosEase })
+    .to(sidebar, { x: 0, y: 0, duration: 0.8, ease: telosEase }, '<');
 
   closeTimeline = gsap.timeline({
     paused: true,
@@ -169,12 +195,12 @@ function initModal() {
       isChatting.value = false; // Reset chat state on close
     },
   })
-    .to(bg, { opacity: 0, duration: 0.5, ease: 'power2.in' })
+    .to(bg, { opacity: 0, duration: 0.5, ease: telosEase })
     .to(sidebar, { 
       x: isMobileLandscape ? 0 : window.innerWidth - 18, 
       y: isMobileLandscape ? window.innerHeight - 18 : 0,
       duration: 0.8,
-      ease: 'power2.in'
+      ease: telosEase
     }, '<+=0.2')
     .set(modalWrap, { display: 'none' });
 }

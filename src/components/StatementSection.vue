@@ -125,6 +125,7 @@ onUnmounted(() => {
 .statement-section .letter {
   position: relative;
   display: inline-block;
+  overflow: hidden;
 }
 
 .statement-section .letter span:last-child {
