@@ -48,6 +48,8 @@ Message 5: "What's your company called?" ← GET COMPANY
 **NEVER ask more than ONE project question before collecting contact info!**  
 **If you reach message 6 without Name, Email, Company → YOU FAILED!**
 
+**⚠️ CRITICAL: Extract ALL required data BEFORE the conversation ends. See `early-extraction.md` for aggressive extraction strategies.**
+
 ---
 
 ## ⚠️ CRITICAL RULE #2: "Human" Usage

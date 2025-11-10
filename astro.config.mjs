@@ -15,5 +15,8 @@ export default defineConfig({
     define: {
       'import.meta.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY || ''),
     },
+    ssr: {
+      noExternal: ['gsap'],
+    },
   },
 });
