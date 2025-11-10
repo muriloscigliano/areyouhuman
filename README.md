@@ -66,9 +66,27 @@ graph TD
     D --> E[Deep Discovery: WHY + Goals + Pain]
     E --> F[Extract Structured Data]
     F --> G[Store in Supabase]
-    G --> H[Trigger Quote Generation]
-    H --> I[Email Custom Proposal]
+    G --> H[Supabase Trigger to n8n]
+    H --> I{AI Analysis: Lead Qualified?}
+    I -->|High Quality| J[Quote Generator Workflow]
+    I -->|Needs Nurturing| K[Follow-up Automation]
+    J --> L[Email Custom Proposal PDF]
+    K --> M[Drip Campaign / Human Handoff]
 ```
+
+### The Complete Automation Pipeline
+
+**Telos AI** isn't just a chatbot — it's a complete **intelligent lead routing system**:
+
+1. **User Conversation** → Telos qualifies leads through natural dialogue
+2. **Data Extraction** → GPT-4o-mini extracts structured JSON
+3. **Supabase Storage** → Lead data stored with conversation history
+4. **Database Trigger** → Supabase webhook fires on new lead insert
+5. **n8n Intelligence** → AI analyzes lead quality and intent
+6. **Smart Routing** → Leads flow to appropriate automation:
+   - **✅ Qualified** → Quote Generator (instant proposal + pricing)
+   - **⏳ Nurture** → Follow-up automation (drip campaigns, reminders)
+7. **Delivery** → Proposal emailed or human handoff triggered
 
 ### The 5-Message Sequence (Critical Rule #1)
 
@@ -120,7 +138,7 @@ The **real value** happens here. Telos asks layered questions to understand:
 
 ### System Design
 
-Telos AI is built on a **modular, prompt-driven architecture** that separates concerns:
+Telos AI is built on a **modular, prompt-driven architecture** with intelligent automation routing:
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -135,7 +153,7 @@ Telos AI is built on a **modular, prompt-driven architecture** that separates co
 │  - /api/chat (OpenAI integration)           │
 │  - Token optimization                       │
 │  - Lead extraction                          │
-│  - Quote triggers                           │
+│  - Supabase write operations                │
 └─────────────────┬───────────────────────────┘
                   │
 ┌─────────────────┴───────────────────────────┐
@@ -151,7 +169,26 @@ Telos AI is built on a **modular, prompt-driven architecture** that separates co
 │  - Lead storage & qualification             │
 │  - Conversation history (JSONB)             │
 │  - RLS policies for security                │
-│  - Real-time analytics views                │
+│  - Database triggers (webhook on insert)    │
+└─────────────────┬───────────────────────────┘
+                  │
+                  │ ← Supabase Webhook Trigger
+                  │
+┌─────────────────┴───────────────────────────┐
+│      Automation Layer (n8n Workflows)       │
+│  ┌──────────────────────────────────────┐   │
+│  │  Smart Lead Router (AI-Powered)      │   │
+│  │  - Analyze lead quality & intent     │   │
+│  │  - Score: interest_level, budget, etc│   │
+│  │  - Route to appropriate workflow     │   │
+│  └─────────┬───────────────┬────────────┘   │
+│            │               │                 │
+│    ┌───────▼──────┐  ┌────▼─────────────┐   │
+│    │ Quote Gen    │  │ Follow-up Auto   │   │
+│    │ - Build PDF  │  │ - Drip campaigns │   │
+│    │ - Pricing    │  │ - Nurture emails │   │
+│    │ - Send email │  │ - Human handoff  │   │
+│    └──────────────┘  └──────────────────┘   │
 └─────────────────────────────────────────────┘
 ```
 
@@ -332,6 +369,7 @@ async function generateSummary(messages) {
 | **OpenAI GPT-4o-mini** | Conversational AI | Fast, cost-effective, high quality |
 | **Supabase** | Database + Auth | Postgres + real-time + RLS |
 | **Astro API Routes** | Backend logic | Serverless, fast, integrated |
+| **n8n** | Workflow automation | Self-hosted, flexible, AI-ready |
 
 ### Infrastructure
 | Technology | Purpose | Why We Chose It |
@@ -383,6 +421,107 @@ async function generateSummary(messages) {
 - ✅ **Hot module replacement** (HMR)
 - ✅ **Built-in API routes**
 - ✅ **One-command deployment**
+
+### ⚡ Intelligent Automation (n8n)
+- ✅ **Database triggers** (Supabase webhook on lead insert)
+- ✅ **AI-powered lead routing** (GPT-4 analyzes quality)
+- ✅ **Smart lead scoring** (interest level, budget, urgency)
+- ✅ **Conditional workflows** (qualified vs nurture paths)
+- ✅ **Quote generation** (automated PDF + pricing)
+- ✅ **Follow-up automation** (drip campaigns, reminders)
+- ✅ **Human handoff triggers** (escalation rules)
+
+---
+
+## 🤖 n8n Intelligent Routing System
+
+### How the Smart Router Works
+
+When a lead is stored in Supabase, a **database trigger** fires a webhook to n8n, which activates the **Smart Lead Router** workflow.
+
+#### 1. Lead Analysis (AI-Powered)
+
+The router uses **GPT-4** to analyze lead quality based on:
+
+```javascript
+{
+  "interest_level": 8,        // 1-10 engagement score
+  "budget_range": "$3000-5000",
+  "urgency": "Within 2 weeks",
+  "problem_clarity": "High",   // How well they articulated the problem
+  "decision_authority": "Yes", // Can they make buying decisions?
+  "tech_readiness": "Medium"   // Technical sophistication
+}
+```
+
+#### 2. Routing Logic
+
+**✅ High-Quality Lead (Score ≥ 7)**
+- Budget provided and reasonable
+- Clear problem articulation
+- Decision authority
+- Reasonable timeline
+- **→ Route to: Quote Generator Workflow**
+
+**⏳ Needs Nurturing (Score 4-6)**
+- Interested but uncertain
+- Budget unclear or low
+- Long timeline
+- Needs education
+- **→ Route to: Follow-up Automation**
+
+**❌ Low-Quality (Score < 4)**
+- Time-waster signals
+- No budget
+- Unrealistic expectations
+- **→ Route to: Polite exit email**
+
+#### 3. Quote Generator Workflow
+
+For qualified leads, n8n automatically:
+
+1. **Extracts project details** from Supabase
+2. **Calculates pricing** based on complexity
+3. **Generates PDF quote** with scope, timeline, investment
+4. **Sends personalized email** with proposal attached
+5. **Schedules follow-up** (3-day reminder if no response)
+6. **Notifies team** via Slack/email about new qualified lead
+
+#### 4. Follow-up Automation Workflow
+
+For nurture leads, n8n runs:
+
+1. **Thank you email** (immediate)
+2. **Educational content** (Day 2: case studies, examples)
+3. **Value demonstration** (Day 5: ROI calculator, testimonials)
+4. **Gentle prompt** (Day 10: "Still interested? Let's chat")
+5. **Human handoff** (Day 15: notification to sales team)
+
+### n8n Workflow Files
+
+The repository includes production-ready n8n workflows:
+
+- `n8n-workflow-smart-lead-router.json` — Main routing logic
+- `n8n-workflow-telos-lead-pipeline.json` — Complete pipeline
+
+### Setting Up n8n Integration
+
+1. **Deploy n8n** (Railway, Docker, or n8n Cloud)
+2. **Import workflows** from JSON files
+3. **Configure Supabase trigger**:
+   ```sql
+   CREATE TRIGGER on_lead_insert
+   AFTER INSERT ON leads
+   FOR EACH ROW
+   EXECUTE FUNCTION notify_n8n_webhook();
+   ```
+4. **Set environment variables** in n8n:
+   - `OPENAI_API_KEY` — For AI analysis
+   - `SMTP_HOST` — Email delivery
+   - `SLACK_WEBHOOK` — Team notifications
+5. **Activate workflows** and test
+
+**See `N8N_INTEGRATION_COMPLETE.md` for full setup guide.**
 
 ---
 
