@@ -69,19 +69,22 @@ const {
     <slot />
     
     <ContactModal client:load />
-    
-    <script>
-      import { useLenis } from '../composables/useLenis.js';
-      
-      const { initLenis, destroyLenis } = useLenis();
-      
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initLenis);
-      } else {
-        initLenis();
+
+    <script is:inline>
+      // Wait for client-side hydration before initializing Lenis
+      if (typeof window !== 'undefined') {
+        import('../composables/useLenis.js').then(({ useLenis }) => {
+          const { initLenis, destroyLenis } = useLenis();
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initLenis);
+          } else {
+            initLenis();
+          }
+
+          window.addEventListener('beforeunload', destroyLenis);
+        });
       }
-      
-      window.addEventListener('beforeunload', destroyLenis);
     </script>
   </body>
 </html>
