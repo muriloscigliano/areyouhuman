@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { gsap } from 'gsap';
+import ThinkingIndicator from './ThinkingIndicator.vue';
 
 interface Props {
   message: string;
@@ -123,7 +124,9 @@ onMounted(() => {
       <div class="message__bubble message__bubble--bot">
         <div class="message__text" v-html="formattedMessage"></div>
       </div>
-      <p v-if="showThinking" class="message__thinking">Thinking...</p>
+      <div v-if="showThinking" class="message__thinking">
+        <ThinkingIndicator />
+      </div>
     </div>
     <div v-else class="message__content">
       <div class="message__bubble message__bubble--user">
@@ -163,7 +166,7 @@ onMounted(() => {
 
 .message__bubble {
   border-radius: 18px;
-  padding: 12px 16px;
+  padding: 16px 16px;
   max-width: 100%;
   word-wrap: break-word;
 }
@@ -178,6 +181,9 @@ onMounted(() => {
   border: 1px solid #424242;
   padding: 24px 18px;
   align-self: flex-start;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .message__text {
@@ -277,11 +283,6 @@ onMounted(() => {
 }
 
 .message__thinking {
-  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  color: #868797;
-  letter-spacing: 0.48px;
   margin: 0;
   padding: 0;
 }

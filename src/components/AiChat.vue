@@ -3,6 +3,7 @@ import { ref, nextTick, onMounted } from 'vue';
 import { gsap } from 'gsap';
 import axios from 'axios';
 import AiMessage from './AiMessage.vue';
+import ThinkingIndicator from './ThinkingIndicator.vue';
 import greetingsData from '../data/context/greetings.json';
 
 interface Message {
@@ -223,7 +224,7 @@ const handleSend = async (messageText: string) => {
       </template>
       
       <div v-if="isLoading && messages.length > 0 && messages[messages.length - 1].isBot === false" class="ai-chat__thinking">
-        <p class="thinking-text">Thinking...</p>
+        <ThinkingIndicator />
       </div>
     </div>
     
@@ -312,16 +313,6 @@ const handleSend = async (messageText: string) => {
   width: 100%;
 }
 
-.thinking-text {
-  font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  color: #868797;
-  letter-spacing: 0.48px;
-  margin: 0;
-  padding: 0;
-}
-
 /* Input Wrapper */
 .ai-chat__input-wrapper {
   width: 100%;
@@ -355,7 +346,6 @@ const handleSend = async (messageText: string) => {
   font-size: 16px;
   letter-spacing: 0.48px;
   width: 100%;
-  flex: 1;
   resize: none;
   margin-bottom: auto;
 }
