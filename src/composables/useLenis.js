@@ -21,7 +21,8 @@ export function useLenis() {
     if (!Lenis) {
       const [lenisModule, scrollTriggerModule] = await Promise.all([
         import('lenis'),
-        import('gsap/ScrollTrigger')
+        // @ts-ignore
+        import('gsap/ScrollTrigger.js')
       ]);
       Lenis = lenisModule.default;
       ScrollTrigger = scrollTriggerModule.default;
@@ -37,15 +38,13 @@ export function useLenis() {
       touchMultiplier: 2,
     });
 
-    function raf(time) {
-      if (lenis) {
-        lenis.raf(time);
-      }
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
-
+    // Connect Lenis to ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
+
+    // Use GSAP ticker instead of requestAnimationFrame (more reliable with ScrollTrigger)
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
 
     gsap.ticker.lagSmoothing(0);
 

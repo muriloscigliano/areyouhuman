@@ -2,8 +2,8 @@
 import LandingLayout from '../layouts/LandingLayout.astro';
 import AreYouHuman from '../components/AreYouHuman.vue';
 import HeroSection from '../components/HeroSection.vue';
-import StatementSection from '../components/StatementSection.vue';
-import WhatWeDoSections from '../components/WhatWeDoSections.astro';
+import StatementSection from '../components/StatementSection.astro';
+import WhatWeDoSections from '../components/WhatWeDoSections.vue';
 import FrameworkAuditSection from '../components/FrameworkAuditSection.astro';
 import WhatWeBuildSection from '../components/WhatWeBuildSection.astro';
 import FooterSection from '../components/FooterSection.astro';
@@ -15,10 +15,10 @@ import '../styles/global.css';
 
   <main class="landing landing--hidden" id="main-content">
     <HeroSection client:load />
-    
-    <StatementSection client:load />
-    
-    <WhatWeDoSections />
+
+    <StatementSection />
+
+    <WhatWeDoSections client:load />
     
     <FrameworkAuditSection />
     

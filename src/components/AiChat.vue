@@ -320,7 +320,7 @@ const handleSend = async (messageText: string) => {
 
 .input-container {
   background: #121212;
-  border: 1px solid #7f7f7f;
+  border: 1px solid #444444;
   border-radius: 24px;
   padding: 6px;
   min-height: 200px;

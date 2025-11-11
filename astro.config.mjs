@@ -18,5 +18,8 @@ export default defineConfig({
     ssr: {
       noExternal: ['gsap'],
     },
+    optimizeDeps: {
+      include: ['gsap/ScrollTrigger', 'gsap/ScrambleTextPlugin', 'gsap/SplitText'],
+    },
   },
 });

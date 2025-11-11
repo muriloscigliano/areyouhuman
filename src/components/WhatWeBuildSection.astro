@@ -1,33 +1,52 @@
 ---
+import MatterObjects from './MatterObjects.astro';
+
 const items = [
   {
     title: 'AI Product Strategy',
-    description: 'Define your roadmap with human-first guardrails.'
-  },
-  {
-    title: 'Prototyping & Experience Design',
-    description: 'From wireframe to working model in days.'
+    subtitle: 'Where vision meets execution.',
+    description: 'Strategic planning • Roadmap development • Human-first approach • Guardrails implementation'
   },
   {
     title: 'AI Agent Development',
-    description: 'From wireframe to working model in days.'
+    subtitle: 'Intelligence that understands context.',
+    description: 'Custom agents • Task automation • Explainable AI • Agent architecture'
+  },
+  {
+    title: 'AI Automation & Workflow Design',
+    subtitle: 'Clarity from complexity.',
+    description: 'Process mapping • Workflow optimization • Automation design • Clear documentation'
+  },
+  {
+    title: 'Prototyping & Experience Design',
+    subtitle: 'Feel the future, today.',
+    description: 'Rapid prototyping • UX design • AI interfaces • User experience'
   },
   {
     title: 'Voice & Conversational Interfaces',
-    description: 'Natural, brand-aligned interaction.'
+    subtitle: 'Conversations that feel natural.',
+    description: 'Voice interfaces • Conversational AI • Brand alignment • Natural interaction'
   },
   {
     title: 'Third-Party AI Integration',
-    description: 'Vendor-agnostic, seamless deployment.'
+    subtitle: 'Seamless, vendor-agnostic solutions.',
+    description: 'API integration • Vendor management • Seamless deployment • System integration'
   }
 ];
 ---
 
 <section class="what-we-build-section" data-name="What we build">
   <div class="what-we-build-header">
-    <p class="section-label">What We Build</p>
+    <p class="section-label">
+      <span class="label-chars">
+        {Array.from('What We Build').map((char) => (
+          <span class="label-char">{char === ' ' ? '\u00A0' : char}</span>
+        ))}
+      </span>
+    </p>
+    
     <h2 class="section-title">
-      From strategy to integration — built for human advantage.
+      <span class="title-text">From strategy to integration <span class="bold">built for human advantage</span></span>
     </h2>
   </div>
   
@@ -35,27 +54,46 @@ const items = [
     {items.map((item) => (
       <div class="build-item">
         <div class="divider"></div>
-        <div class="build-item-content">
-          <h3 class="build-item-title">{item.title}</h3>
-          <p class="build-item-description">{item.description}</p>
+        <div class="build-item-wrapper">
+          <div class="build-item-title-section">
+            <h3 class="build-item-title">{item.title}</h3>
+            <p class="build-item-subtitle">{item.subtitle}</p>
+          </div>
+          <div class="build-item-description-section">
+            <div class="marquee-wrapper">
+              <div class="marquee-content">
+                <span>{item.description}</span>
+                <span>{item.description}</span>
+              </div>
+            </div>
+          </div>
+          <div class="build-item-title-section">
+            <h3 class="build-item-title">{item.title}</h3>
+            <p class="build-item-subtitle">{item.subtitle}</p>
+          </div>
         </div>
-        <div class="divider"></div>
       </div>
     ))}
   </div>
+  
+  <MatterObjects />
 </section>
+
+
 
 <style>
 .what-we-build-section {
   background: #000;
   min-height: 1525px;
-  padding: 72px;
   display: flex;
   flex-direction: column;
   gap: 80px;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 0;
+  padding: 0;
+  will-change: border-radius, padding;
 }
 
 .what-we-build-header {
@@ -64,24 +102,51 @@ const items = [
   align-items: flex-start;
   justify-content: space-between;
   color: #fff;
+  padding: clamp(18px, 3vw, 72px);
+  flex-direction: column;
+  gap: 36px;
 }
 
 .section-label {
   font-family: 'PP Neue Machina', sans-serif;
-  font-weight: 800;
+  font-weight: 400;
   font-size: 24px;
   line-height: 1;
   white-space: nowrap;
+  color: #fff;
 }
 
 .section-title {
   font-family: 'PP Neue Machina', sans-serif;
-  font-weight: 800;
-  font-size: 64px;
-  line-height: 1.1;
+  font-weight: 400;
+  font-size: clamp(40px, 10vw, 140px);
+  line-height: 0.9;
   text-transform: uppercase;
-  width: 907px;
+  max-width: 1600px;
+  width: 100%;
   margin: 0;
+  overflow: visible;
+  text-wrap: balance;
+}
+.title-text {
+  display: inline-block;
+}
+
+.title-text .bold {
+  font-weight: 800;
+}
+
+.section-label {
+  position: relative;
+  overflow: hidden;
+}
+
+.label-chars {
+  display: inline-block;
+}
+
+.label-char {
+  display: inline-block;
 }
 
 .what-we-build-list {
@@ -93,11 +158,89 @@ const items = [
 
 .build-item {
   width: 100%;
+  height: 200px;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(50px);
+}
+
+.build-item-wrapper {
+  position: relative;
+  height: 600px;
+  will-change: transform;
+  transform: translateY(-400px);
+  transform-origin: center;
+}
+
+.build-item-title-section {
+  width: 100%;
+  height: 200px;
   display: flex;
-  flex-direction: column;
-  gap: 80px;
-  align-items: flex-end;
-  justify-content: center;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  background-color: #000;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.build-item-title {
+  font-family: 'PP Neue Machina', sans-serif;
+  font-weight: 800;
+  font-size: clamp(24px, 5vw, 32px);
+  line-height: 0.9;
+  text-transform: uppercase;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.build-item-subtitle {
+  font-family: 'PP Supply Mono', monospace;
+  font-weight: 200;
+  font-size: clamp(16px, 8vw, 28px);
+  line-height: 1.2;
+  text-align: right;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.build-item-description-section {
+  width: 100%;
+  height: 199px;
+  background-color: #fff;
+  color: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.marquee-wrapper {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.marquee-content {
+  display: inline-flex;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.marquee-content span {
+  display: inline-block;
+  padding: 0 50px;
+  font-family: 'PP Neue Machina', sans-serif;
+  font-weight: 800;
+  font-style: italic;
+  font-size: clamp(20px, 8vw, 52px);
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .divider {
@@ -105,34 +248,6 @@ const items = [
   height: 1px;
   background: #fff;
   opacity: 0.1;
-}
-
-.build-item-content {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 48px;
-  color: #fff;
-  white-space: nowrap;
-}
-
-.build-item-title {
-  font-family: 'PP Neue Machina', sans-serif;
-  font-weight: 800;
-  font-size: 32px;
-  line-height: 0.9;
-  text-transform: uppercase;
-  margin: 0;
-}
-
-.build-item-description {
-  font-family: 'PP Supply Mono', monospace;
-  font-weight: 200;
-  font-size: 28px;
-  line-height: 1.2;
-  text-align: right;
-  margin: 0;
 }
 
 @media (max-width: 768px) {
@@ -156,21 +271,595 @@ const items = [
     gap: 32px;
   }
   
-  .build-item-content {
+  .build-item-title-section {
+    padding: 0 24px;
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-    padding: 0;
   }
   
   .build-item-title {
     font-size: 24px;
   }
   
-  .build-item-description {
+  .build-item-subtitle {
     font-size: 18px;
     text-align: left;
   }
+  
+  .marquee-content span {
+    font-size: 18px;
+    padding: 0 24px;
+  }
 }
 </style>
+
+<script>
+  import { gsap } from 'gsap';
+
+  const POSITIONS = {
+    BOTTOM: 0,
+    MIDDLE: -200,
+    TOP: -400,
+  };
+
+  async function loadScrollTrigger() {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      // @ts-ignore
+      const module = await import('gsap/ScrollTrigger.js');
+      const ScrollTrigger = module.default;
+      gsap.registerPlugin(ScrollTrigger);
+      return ScrollTrigger;
+    } catch (error) {
+      console.error('Failed to load ScrollTrigger', error);
+      return null;
+    }
+  }
+
+  async function loadScramblePlugins() {
+    if (typeof window === 'undefined') return { ScrambleTextPlugin: null, SplitText: null };
+    
+    try {
+      let ScrambleTextPlugin = null;
+      let SplitText = null;
+      
+      try {
+        // @ts-ignore
+        const scrambleModule = await import('gsap/ScrambleTextPlugin');
+        ScrambleTextPlugin = scrambleModule.default || scrambleModule.ScrambleTextPlugin || scrambleModule;
+      } catch (e) {
+        console.error('Failed to load ScrambleTextPlugin', e);
+      }
+      
+      try {
+        // @ts-ignore
+        const splitModule = await import('gsap/SplitText');
+        SplitText = splitModule.default || splitModule.SplitText || splitModule;
+      } catch (e) {
+        console.error('Failed to load SplitText', e);
+      }
+      
+      if (ScrambleTextPlugin && SplitText) {
+        gsap.registerPlugin(ScrambleTextPlugin, SplitText);
+        return { ScrambleTextPlugin, SplitText };
+      }
+      
+      return { ScrambleTextPlugin: null, SplitText: null };
+    } catch (error) {
+      console.error('Failed to load scramble plugins', error);
+      return { ScrambleTextPlugin: null, SplitText: null };
+    }
+  }
+
+  async function initTitleAnimation() {
+    if (typeof window === 'undefined') return;
+
+    // Wait a bit for DOM to be ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const titleElement = document.querySelector('.what-we-build-section .title-text');
+    if (!titleElement) {
+      console.warn('WhatWeBuildSection: title-text not found');
+      return;
+    }
+
+    const ScrollTrigger = await loadScrollTrigger();
+    if (!ScrollTrigger) {
+      console.error('WhatWeBuildSection: ScrollTrigger failed to load');
+      return;
+    }
+
+    const { ScrambleTextPlugin, SplitText } = await loadScramblePlugins();
+    if (!SplitText) {
+      console.warn('WhatWeBuildSection: SplitText not available');
+      return;
+    }
+
+    // Use SplitText to split into words (keeps words together)
+    // @ts-ignore
+    const split = new SplitText(titleElement, {
+      type: "words",
+      wordsClass: "title-word"
+    });
+
+    // @ts-ignore
+    const wordElements = split.words;
+    if (!wordElements || wordElements.length === 0) {
+      console.warn('WhatWeBuildSection: No words found after SplitText');
+      return;
+    }
+
+    console.log('WhatWeBuildSection: Initializing title animation with', wordElements.length, 'words');
+
+    // Set initial state: off-screen left with blur
+    gsap.set(wordElements, {
+      opacity: 0,
+      x: -100,
+      filter: 'blur(60px)',
+      visibility: 'visible',
+      display: 'inline-block'
+    });
+
+    // Animate in: left to right with blur clearing (word by word)
+    gsap.to(wordElements, {
+      opacity: 1,
+      x: 0,
+      filter: 'blur(0px)',
+      duration: 0.5,
+      ease: 'power3.out',
+      scrollTrigger: {
+        trigger: titleElement,
+        start: 'top 85%',
+        end: 'top 50%',
+        once: true,
+        invalidateOnRefresh: true,
+        onEnter: () => {
+          console.log('WhatWeBuildSection: Title animation triggered');
+        },
+      },
+      stagger: {
+        each: 0.08,
+        from: 'start'
+      },
+      onComplete: () => {
+        // Revert SplitText to reduce DOM size after animation
+        // @ts-ignore
+        if (split && split.revert) {
+          // @ts-ignore
+          split.revert();
+        }
+      }
+    });
+
+    // Refresh ScrollTrigger after setup
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 200);
+  }
+
+  async function initLabelAnimation() {
+    if (typeof window === 'undefined') return;
+
+    // Wait a bit for DOM to be ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const labelElement = document.querySelector('.what-we-build-section .section-label');
+    if (!labelElement) {
+      console.warn('WhatWeBuildSection: section-label not found');
+      return;
+    }
+
+    const ScrollTrigger = await loadScrollTrigger();
+    if (!ScrollTrigger) {
+      console.error('WhatWeBuildSection: ScrollTrigger failed to load');
+      return;
+    }
+
+    const { ScrambleTextPlugin, SplitText } = await loadScramblePlugins();
+    const labelChars = labelElement.querySelectorAll('.label-char');
+    
+    if (labelChars.length === 0) {
+      console.warn('WhatWeBuildSection: No label chars found, checking structure...');
+      console.log('Label element:', labelElement);
+      console.log('Label HTML:', labelElement.innerHTML);
+      return;
+    }
+
+    console.log('WhatWeBuildSection: Initializing label animation with', labelChars.length, 'chars');
+    
+    // Set initial state
+    gsap.set(labelChars, {
+      opacity: 0,
+      filter: 'blur(10px)',
+      y: 10
+    });
+
+    if (ScrambleTextPlugin && SplitText) {
+      // Animate in with blur and scramble
+      const labelTween = gsap.to(labelChars, {
+        opacity: 1,
+        filter: 'blur(0px)',
+        y: 0,
+        duration: 0.5,
+        ease: 'power3.out',
+        stagger: {
+          each: 0.02,
+          from: 'start'
+        },
+        scrollTrigger: {
+          trigger: labelElement,
+          start: 'top 80%',
+          end: 'top 50%',
+          once: true,
+          invalidateOnRefresh: true,
+          onEnter: () => {
+            console.log('WhatWeBuildSection: Label animation triggered');
+          },
+        },
+        onComplete: () => {
+          console.log('WhatWeBuildSection: Label blur animation complete, applying scramble');
+          // Apply scramble effect
+          labelChars.forEach((charEl) => {
+            if (!charEl || !charEl.textContent) return;
+            
+            const text = charEl.textContent.trim();
+            // Skip spaces and empty content
+            if (text === '' || text === '\u00A0' || text === ' ') return;
+            
+            try {
+              // @ts-ignore
+              const split = new SplitText(charEl, {
+                type: "chars",
+                charsClass: "char"
+              });
+              
+              // Check if split.chars exists and has elements
+              // @ts-ignore
+              if (split.chars && split.chars.length > 0) {
+                // @ts-ignore
+                gsap.to(split.chars, {
+                  duration: 0.8,
+                  scrambleText: {
+                    text: "{original}",
+                    chars: 'upperCase',
+                    speed: 0.9,
+                  },
+                  onComplete: () => {
+                    // @ts-ignore
+                    if (split && split.revert) {
+                      // @ts-ignore
+                      split.revert();
+                    }
+                  }
+                });
+              }
+            } catch (err) {
+              console.error('Error applying scramble:', err);
+            }
+          });
+        }
+      });
+
+      // Refresh ScrollTrigger after setup
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 200);
+    } else {
+      // Fallback: simple fade in
+      gsap.to(labelChars, {
+        opacity: 1,
+        filter: 'blur(0px)',
+        y: 0,
+        duration: 0.5,
+        ease: 'power2.out',
+        stagger: 0.02,
+        scrollTrigger: {
+          trigger: labelElement,
+          start: 'top 85%',
+          once: true,
+          invalidateOnRefresh: true
+        }
+      });
+
+      setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 200);
+    }
+  }
+
+  async function initListAnimation() {
+    if (typeof window === 'undefined') return;
+
+    const listContainer = document.querySelector('.what-we-build-list');
+    if (!listContainer) {
+      console.warn('WhatWeBuildSection: what-we-build-list not found');
+      return;
+    }
+
+    const ScrollTrigger = await loadScrollTrigger();
+    if (!ScrollTrigger) {
+      console.error('WhatWeBuildSection: ScrollTrigger failed to load');
+      return;
+    }
+
+    const buildItems = document.querySelectorAll('.build-item');
+    if (buildItems.length === 0) {
+      console.warn('WhatWeBuildSection: No build items found');
+      return;
+    }
+
+    console.log('WhatWeBuildSection: Initializing list animation with', buildItems.length, 'items');
+
+    gsap.to(buildItems, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: 'power3.out',
+      stagger: {
+        each: 0.1,
+        from: 'end'
+      },
+      scrollTrigger: {
+        trigger: listContainer,
+        start: 'top 50%',
+        end: 'top 50%',
+        once: true,
+        invalidateOnRefresh: true,
+        onEnter: () => {
+          console.log('WhatWeBuildSection: List animation triggered');
+        },
+      }
+    });
+
+    // Refresh ScrollTrigger after setup
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 200);
+  }
+
+  async function initFooterScaleAnimation() {
+    if (typeof window === 'undefined') return;
+
+    const section = document.querySelector('.what-we-build-section');
+    const footer = document.querySelector('[data-footer-parallax]');
+    
+    if (!section || !footer) {
+      console.warn('WhatWeBuildSection: Section or footer not found for scale animation');
+      return;
+    }
+
+    const ScrollTrigger = await loadScrollTrigger();
+    if (!ScrollTrigger) {
+      console.error('WhatWeBuildSection: ScrollTrigger failed to load');
+      return;
+    }
+
+    // Set initial state
+    gsap.set(section, {
+      borderRadius: '0px',
+      padding: '0px'
+    });
+
+    // Animate when section bottom approaches viewport bottom (footer is coming)
+    gsap.to(section, {
+      borderRadius: '32px',
+      padding: '32px',
+      ease: 'power2.out',
+      scrollTrigger: {
+        trigger: section,
+        start: 'bottom 90%',
+        end: 'bottom 50%',
+        scrub: 1,
+        invalidateOnRefresh: true,
+        onEnter: () => {
+          console.log('WhatWeBuildSection: Footer border-radius animation started');
+        },
+        onLeaveBack: () => {
+          gsap.to(section, {
+            borderRadius: '0px',
+            padding: '0px',
+            duration: 0.3,
+            ease: 'power2.out'
+          });
+        }
+      }
+    });
+  }
+
+  async function initBuildItemsHover() {
+    if (typeof window === 'undefined') return;
+
+    const buildItems = document.querySelectorAll('.build-item');
+    if (buildItems.length === 0) return;
+
+    let activeItem = null;
+    let lastMousePosition = { x: 0, y: 0 };
+
+    // @ts-ignore
+    const startMarquee = (marqueeContent: HTMLElement, enterFromTop: boolean) => {
+      const marqueeWidth = marqueeContent.scrollWidth / 2;
+      
+      if (enterFromTop) {
+        gsap.set(marqueeContent, { x: 0 });
+        gsap.to(marqueeContent, {
+          opacity: 1,
+          duration: 0.4,
+          ease: "power2.out",
+        });
+        
+        const marqueeTween = gsap.to(marqueeContent, {
+          x: -marqueeWidth,
+          duration: 15,
+          ease: "none",
+          repeat: -1,
+        });
+        
+        return marqueeTween;
+      } else {
+        gsap.set(marqueeContent, { x: -marqueeWidth });
+        gsap.to(marqueeContent, {
+          opacity: 1,
+          duration: 0.4,
+          ease: "power2.out",
+        });
+        
+        const marqueeTween = gsap.to(marqueeContent, {
+          x: 0,
+          duration: 15,
+          ease: "none",
+          repeat: -1,
+        });
+        
+        return marqueeTween;
+      }
+    };
+
+    // Initialize marquee content as hidden
+    buildItems.forEach((item) => {
+      const descriptionSection = item.querySelector('.build-item-description-section');
+      const marqueeContent = descriptionSection?.querySelector('.marquee-content');
+      if (marqueeContent) {
+        gsap.set(marqueeContent, { opacity: 0 });
+      }
+    });
+
+    // Track mouse position
+    document.addEventListener("mousemove", (e) => {
+      lastMousePosition.x = e.clientX;
+      lastMousePosition.y = e.clientY;
+    });
+
+    // Add hover events to each item
+    buildItems.forEach((item) => {
+      const wrapper = item.querySelector('.build-item-wrapper');
+      const descriptionSection = item.querySelector('.build-item-description-section');
+      const marqueeContent = descriptionSection?.querySelector('.marquee-content');
+      let currentPosition = POSITIONS.TOP;
+
+      item.addEventListener("mouseenter", (e) => {
+        activeItem = item;
+        const rect = item.getBoundingClientRect();
+        // @ts-ignore
+        const enterFromTop = (e as MouseEvent).clientY < rect.top + rect.height / 2;
+
+        if (enterFromTop || currentPosition === POSITIONS.BOTTOM) {
+          currentPosition = POSITIONS.MIDDLE;
+          
+          gsap.to(wrapper, {
+            y: POSITIONS.MIDDLE,
+            duration: 0.4,
+            ease: "power2.out",
+          });
+
+          if (marqueeContent) {
+            // @ts-ignore
+            descriptionSection.marqueeTween = startMarquee(marqueeContent, enterFromTop);
+          }
+        }
+      });
+
+      item.addEventListener("mouseleave", (e) => {
+        activeItem = null;
+        const rect = item.getBoundingClientRect();
+        // @ts-ignore
+        const leavingFromTop = (e as MouseEvent).clientY < rect.top + rect.height / 2;
+        // @ts-ignore
+        const marqueeTween = descriptionSection?.marqueeTween;
+
+        if (marqueeTween) {
+          marqueeTween.kill();
+          // @ts-ignore
+          descriptionSection.marqueeTween = null;
+        }
+
+        currentPosition = leavingFromTop ? POSITIONS.TOP : POSITIONS.BOTTOM;
+        gsap.to(wrapper, {
+          y: currentPosition,
+          duration: 0.4,
+          ease: "power2.out",
+        });
+
+        if (marqueeContent) {
+          gsap.to(marqueeContent, {
+            opacity: 0,
+            x: 0,
+            duration: 0.3,
+            ease: "power2.in",
+          });
+        }
+      });
+    });
+  }
+
+  // Initialize all animations when DOM is ready
+  if (typeof window !== 'undefined') {
+    const initAll = async () => {
+      console.log('WhatWeBuildSection: Starting initialization...');
+      
+      // CRITICAL: Wait for intro animation to complete before initializing
+      // The main content is hidden with opacity: 0 until intro-complete event
+      await new Promise<void>((resolve) => {
+        const checkIntroComplete = () => {
+          const mainContent = document.getElementById('main-content');
+          if (mainContent && !mainContent.classList.contains('landing--hidden')) {
+            // Intro is complete
+            resolve();
+          } else {
+            // Wait for intro-complete event
+            window.addEventListener('intro-complete', () => {
+              // Give it a moment for opacity transition to complete
+              setTimeout(() => resolve(), 500);
+            }, { once: true });
+          }
+        };
+        checkIntroComplete();
+      });
+      
+      // Wait for Lenis and ScrollTrigger to be ready
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Wait for ScrollTrigger to be available globally
+      let retries = 0;
+      while (retries < 10 && typeof window !== 'undefined') {
+        // @ts-ignore
+        if (window.ScrollTrigger || gsap.plugins?.ScrollTrigger) {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 100));
+        retries++;
+      }
+      
+      try {
+        await initTitleAnimation();
+        await initLabelAnimation();
+        await initListAnimation();
+        initBuildItemsHover();
+        initFooterScaleAnimation();
+        
+        // Final refresh after all animations are set up
+        const ScrollTrigger = await loadScrollTrigger();
+        if (ScrollTrigger) {
+          setTimeout(() => {
+            ScrollTrigger.refresh();
+            console.log('WhatWeBuildSection: ScrollTrigger refreshed');
+          }, 300);
+        }
+        
+        console.log('WhatWeBuildSection: All animations initialized');
+      } catch (error) {
+        console.error('WhatWeBuildSection: Error initializing animations:', error);
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initAll, 100);
+      });
+    } else {
+      setTimeout(initAll, 100);
+    }
+  }
+</script>
 

@@ -1,0 +1,485 @@
+<section class="canvas-matter-container">
+    <div class="canvas-matter-objects">
+      <div class="object"><p>AI Strategy</p></div>
+      <div class="object"><p>Custom Agents</p></div>
+      <div class="object"><p>Workflow Design</p></div>
+      <div class="object"><p>Human-First AI</p></div>
+      <div class="object"><p>Conversational Design</p></div>
+      <div class="object"><p>System Integration</p></div>
+      <div class="object"><p>Automation</p></div>
+      <div class="object"><p>UX Design</p></div>
+      <div class="object"><p>Voice Interfaces</p></div>
+      <div class="object"><p>Prototyping</p></div>
+      <div class="object"><p>API Integration</p></div>
+      <div class="object"><p>Explainable AI</p></div>
+      <div class="object"><p>Human Advantage</p></div>
+      <div class="object"><p>Conscious AI</p></div>
+      <div class="object"><p>Behavioral Design</p></div>
+      <div class="object"><p>Task Automation</p></div>
+      <div class="object"><p>Roadmap Development</p></div>
+      <div class="object"><p>Guardrails</p></div>
+      <div class="object"><p>Process Mapping</p></div>
+      <div class="object"><p>Vendor Agnostic</p></div>
+    </div>
+</section>
+
+<script>
+  if (typeof window !== 'undefined') {
+    (async () => {
+      const { gsap } = await import("gsap");
+      // @ts-ignore
+      const ScrollTriggerModule = await import("gsap/ScrollTrigger.js");
+      const ScrollTrigger = ScrollTriggerModule.default;
+      // @ts-ignore
+      const MatterModule = await import("matter-js");
+      // @ts-ignore
+      const Matter = MatterModule.default || MatterModule;
+
+      // Wait for intro animation to complete
+      await new Promise((resolve) => {
+        const checkIntroComplete = () => {
+          const mainContent = document.getElementById('main-content');
+          if (mainContent && !mainContent.classList.contains('landing--hidden')) {
+            resolve(undefined);
+          } else {
+            window.addEventListener('intro-complete', () => {
+              setTimeout(() => resolve(undefined), 500);
+            }, { once: true });
+          }
+        };
+        checkIntroComplete();
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      // @ts-ignore
+      const config = {
+        gravity: { x: 0, y: 0.8 },
+        restitution: 0.75,
+        friction: 0.06,
+        frictionAir: 0.02,
+        frictionStatic: 0.1,
+        density: 0.001,
+        wallThickness: 50,
+        mouseStiffness: 0.4,
+        collisionPadding: 12,
+        sleepThreshold: 0.1,
+        timeScale: 1,
+      };
+
+      // @ts-ignore
+      let engine, runner, mouseConstraint, bodies = [], topWall = null;
+      let isUpdating = false;
+
+      // @ts-ignore
+      function clamp(val, min, max) {
+        return Math.max(min, Math.min(max, val));
+      }
+
+      // @ts-ignore
+      function initPhysics(container) {
+        // @ts-ignore
+        engine = Matter.Engine.create();
+        engine.gravity = config.gravity;
+        engine.constraintIterations = 10;
+        engine.positionIterations = 20;
+        engine.velocityIterations = 16;
+        engine.timing.timeScale = config.timeScale;
+        engine.enableSleeping = true;
+
+        const containerRect = container.getBoundingClientRect();
+        const wallThickness = config.wallThickness;
+
+        // @ts-ignore
+        const walls = [
+          // @ts-ignore
+          Matter.Bodies.rectangle(
+            containerRect.width / 2,
+            containerRect.height,
+            containerRect.width,
+            wallThickness,
+            { isStatic: true, render: { visible: false } }
+          ),
+          // @ts-ignore
+          Matter.Bodies.rectangle(
+            0,
+            containerRect.height / 2,
+            wallThickness,
+            containerRect.height,
+            { isStatic: true, render: { visible: false } }
+          ),
+          // @ts-ignore
+          Matter.Bodies.rectangle(
+            containerRect.width,
+            containerRect.height / 2,
+            wallThickness,
+            containerRect.height,
+            { isStatic: true, render: { visible: false } }
+          ),
+        ];
+        // @ts-ignore
+        Matter.World.add(engine.world, walls);
+
+        // @ts-ignore
+        const objects = container.querySelectorAll(".object");
+        console.log('MatterObjects: Found', objects.length, 'objects');
+        
+        if (objects.length === 0) {
+          console.error('MatterObjects: No objects found!');
+          return;
+        }
+        
+        // @ts-ignore
+        objects.forEach((obj, index) => {
+          const objRect = obj.getBoundingClientRect();
+          const halfWidth = objRect.width / 2;
+          const halfHeight = objRect.height / 2;
+
+          const startX =
+            Math.random() * (containerRect.width - objRect.width) +
+            halfWidth;
+          const startY = -200 - index * 80;
+          const startRotation = (Math.random() - 0.5) * 0.3;
+          const startVelocityX = (Math.random() - 0.5) * 2;
+          const startVelocityY = Math.random() * 1 + 0.5;
+          
+          console.log(`MatterObjects: Creating body ${index + 1}/${objects.length} at y=${startY}`);
+
+          const chamferRadius = objRect.height / 2;
+          const collisionPadding = config.collisionPadding;
+          const horizontalPadding = collisionPadding * 1.5;
+          const verticalPadding = collisionPadding;
+          
+          const bodyWidth = Math.max(objRect.width - horizontalPadding * 2, objRect.height - verticalPadding);
+          const bodyHeight = objRect.height - verticalPadding;
+          const adjustedChamferRadius = Math.max(chamferRadius - verticalPadding / 2, bodyHeight / 2);
+          
+          // @ts-ignore
+          const body = Matter.Bodies.rectangle(
+            startX,
+            startY,
+            bodyWidth,
+            bodyHeight,
+            {
+              restitution: config.restitution,
+              friction: config.friction,
+              frictionAir: config.frictionAir,
+              frictionStatic: config.frictionStatic,
+              density: config.density,
+              chamfer: { radius: Math.min(adjustedChamferRadius, bodyHeight / 2) },
+              sleepThreshold: config.sleepThreshold,
+            }
+          );
+
+          // @ts-ignore
+          Matter.Body.setAngle(body, startRotation);
+          // @ts-ignore
+          Matter.Body.setVelocity(body, {
+            x: startVelocityX,
+            y: startVelocityY
+          });
+          // @ts-ignore
+          Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.1);
+
+          bodies.push({
+            body: body,
+            element: obj,
+            width: objRect.width,
+            height: objRect.height,
+            halfWidth: halfWidth,
+            halfHeight: halfHeight,
+          });
+
+          // @ts-ignore
+          Matter.World.add(engine.world, body);
+        });
+
+        setTimeout(() => {
+          // @ts-ignore
+          topWall = Matter.Bodies.rectangle(
+            containerRect.width / 2,
+            0,
+            containerRect.width,
+            wallThickness,
+            { isStatic: true, render: { visible: false } }
+          );
+          // @ts-ignore
+          Matter.World.add(engine.world, topWall);
+        }, 3000);
+
+        // @ts-ignore
+        const mouse = Matter.Mouse.create(container);
+        mouse.element.removeEventListener("mousewheel", mouse.mousewheel);
+        mouse.element.removeEventListener("DOMMouseScroll", mouse.mousewheel);
+
+        // @ts-ignore
+        mouseConstraint = Matter.MouseConstraint.create(engine, {
+          mouse: mouse,
+          constraint: {
+            stiffness: config.mouseStiffness,
+            render: { visible: false },
+          },
+        });
+
+        mouseConstraint.mouse.element.oncontextmenu = () => false;
+
+        // @ts-ignore
+        let dragging = null;
+        // @ts-ignore
+        let originalInertia = null;
+        // @ts-ignore
+        let draggedElement = null;
+
+        // @ts-ignore
+        Matter.Events.on(mouseConstraint, "startdrag", function (event) {
+          dragging = event.body;
+          if (dragging) {
+            // @ts-ignore
+            const found = bodies.find((b) => b.body === dragging);
+            if (found) {
+              draggedElement = found.element;
+              draggedElement.style.transition = "transform 0.2s ease-out, background-color 0.3s ease";
+              draggedElement.style.backgroundColor = "#fff";
+              draggedElement.style.color = "#000000";
+              draggedElement.style.zIndex = "10";
+            }
+            originalInertia = dragging.inertia;
+            // @ts-ignore
+            Matter.Body.setInertia(dragging, Infinity);
+            // @ts-ignore
+            Matter.Body.setVelocity(dragging, { x: 0, y: 0 });
+            // @ts-ignore
+            Matter.Body.setAngularVelocity(dragging, 0);
+          }
+        });
+
+        // @ts-ignore
+        Matter.Events.on(mouseConstraint, "enddrag", function (event) {
+          // @ts-ignore
+          if (dragging && draggedElement) {
+            // @ts-ignore
+            draggedElement.style.transition = "transform 0.2s ease-out, background-color 0.3s ease";
+            // @ts-ignore
+            draggedElement.style.backgroundColor = "#000000";
+            // @ts-ignore
+            draggedElement.style.color = "#fff";
+            // @ts-ignore
+            draggedElement.style.zIndex = "2";
+            draggedElement = null;
+          }
+          // @ts-ignore
+          if (dragging) {
+            // @ts-ignore
+            Matter.Body.setInertia(dragging, originalInertia || 1);
+            dragging = null;
+            originalInertia = null;
+          }
+        });
+
+        // @ts-ignore
+        Matter.Events.on(engine, "beforeUpdate", function () {
+          // @ts-ignore
+          if (dragging) {
+            // @ts-ignore
+            const found = bodies.find((b) => b.body === dragging);
+            if (found) {
+              const minX = found.width / 2;
+              const maxX = containerRect.width - found.width / 2;
+              const minY = found.height / 2;
+              const maxY = containerRect.height - found.height / 2;
+
+              // @ts-ignore
+              Matter.Body.setPosition(dragging, {
+                // @ts-ignore
+                x: clamp(dragging.position.x, minX, maxX),
+                // @ts-ignore
+                y: clamp(dragging.position.y, minY, maxY),
+              });
+
+              // @ts-ignore
+              Matter.Body.setVelocity(dragging, {
+                // @ts-ignore
+                x: clamp(dragging.velocity.x, -20, 20),
+                // @ts-ignore
+                y: clamp(dragging.velocity.y, -20, 20),
+              });
+            }
+          }
+        });
+
+        container.addEventListener("mouseleave", () => {
+          // @ts-ignore
+          mouseConstraint.constraint.bodyB = null;
+          // @ts-ignore
+          mouseConstraint.constraint.pointB = null;
+        });
+
+        document.addEventListener("mouseup", () => {
+          // @ts-ignore
+          mouseConstraint.constraint.bodyB = null;
+          // @ts-ignore
+          mouseConstraint.constraint.pointB = null;
+        });
+
+        // @ts-ignore
+        Matter.World.add(engine.world, mouseConstraint);
+
+        // @ts-ignore
+        runner = Matter.Runner.create();
+        // @ts-ignore
+        Matter.Runner.run(runner, engine);
+
+        function updatePositions() {
+          if (isUpdating) return;
+          isUpdating = true;
+
+          requestAnimationFrame(() => {
+            // @ts-ignore
+            bodies.forEach(({ body, element, halfWidth, halfHeight }) => {
+              // @ts-ignore
+              const isDragging = dragging === body;
+              // @ts-ignore
+              const isSleeping = body.isSleeping;
+              const scale = isDragging ? 1.2 : 1;
+              
+              const x = body.position.x - halfWidth;
+              const y = body.position.y - halfHeight;
+              
+              // Smooth rotation with easing
+              const currentRotation = parseFloat(element.style.transform.match(/rotate\(([^)]+)\)/)?.[1] || '0') || 0;
+              const targetRotation = body.angle;
+              const rotationDiff = targetRotation - currentRotation;
+              const smoothedRotation = currentRotation + rotationDiff * 0.3;
+
+              element.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${smoothedRotation}rad)`;
+              
+              // Reduce opacity slightly when sleeping for performance hint
+              if (isSleeping && !isDragging) {
+                element.style.opacity = '0.95';
+              } else {
+                element.style.opacity = '1';
+              }
+            });
+
+            isUpdating = false;
+          });
+        }
+
+        // @ts-ignore
+        Matter.Events.on(engine, "afterUpdate", updatePositions);
+        
+        // Add collision events for visual feedback
+        // @ts-ignore
+        Matter.Events.on(engine, "collisionStart", function(event) {
+          // @ts-ignore
+          event.pairs.forEach(function(pair: any) {
+            const { bodyA, bodyB } = pair;
+            // @ts-ignore
+            const foundA = bodies.find((b) => b.body === bodyA);
+            // @ts-ignore
+            const foundB = bodies.find((b) => b.body === bodyB);
+            
+            // @ts-ignore
+            if (foundA && foundA.element && dragging !== bodyA) {
+              foundA.element.style.transition = "transform 0.1s ease-out";
+            }
+            // @ts-ignore
+            if (foundB && foundB.element && dragging !== bodyB) {
+              foundB.element.style.transition = "transform 0.1s ease-out";
+            }
+          });
+        });
+      }
+
+      const section = document.querySelector('.canvas-matter-container');
+      if (section) {
+        const container = section.querySelector(".canvas-matter-objects");
+        if (container) {
+          ScrollTrigger.create({
+            trigger: section,
+            start: "top bottom",
+            once: true,
+            onEnter: () => {
+              // @ts-ignore
+              if (container && !engine) {
+                initPhysics(container);
+              }
+            },
+          });
+        }
+      }
+    })();
+  }
+</script>
+
+<style> 
+ /* Main container section */
+.canvas-matter-container {
+  position: relative;
+  background-color: #000000;
+  color: #fff;
+  min-height: 1080px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Heading inside container */
+.canvas-matter-container h1 {
+  width: 45%;
+  text-align: center;
+}
+
+/* Objects container */
+.canvas-matter-objects {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-height: 1080px;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  contain: layout style paint;
+}
+
+/* Individual objects/chips */
+.object {
+  position: absolute;
+  width: max-content;
+  background-color: #000000;
+  color: #fff;
+  border: 1px solid #fff;
+  padding: 1.5rem 3rem;
+  border-radius: 500px;
+  cursor: grab;
+  user-select: none;
+  pointer-events: auto;
+  z-index: 2;
+  will-change: transform, background-color;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition: background-color 0.3s ease, transform 0.2s ease-out;
+}
+
+.object p {
+  font-size: 2rem !important;
+  font-weight: 500;
+}
+
+.object:active {
+  cursor: grabbing;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+  .canvas-matter-container h1 {
+    width: 100%;
+  }
+
+  .object {
+    font-size: 1rem;
+  }
+}
+</style>

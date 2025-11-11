@@ -609,6 +609,7 @@ onUnmounted(() => {
   position: relative;
 }
 
+
 .hero-header {
   width: 100%;
   height: 56px;
@@ -624,8 +625,9 @@ onUnmounted(() => {
   font-size: clamp(20px, 2vw, 24px);
   line-height: 1;
   color: #fff;
-  width: 120px;
+  width: 130px;
   cursor: pointer;
+  text-transform: uppercase;
 }
 
 .logo-char {

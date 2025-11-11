@@ -16,12 +16,12 @@ let scrambleInterval: NodeJS.Timeout | null = null;
 let changeInterval: NodeJS.Timeout | null = null;
 let currentIndex = 0;
 
-// Scramble text function with smooth animation
-const scrambleText = (target: HTMLElement, finalText: string, duration: number = 0.8) => {
+// Scramble text function with smooth animation (slower)
+const scrambleText = (target: HTMLElement, finalText: string, duration: number = 1.5) => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
   const finalLength = finalText.length;
   let progress = 0;
-  const steps = 30;
+  const steps = 40; // More steps for smoother animation
   const stepDuration = duration * 1000 / steps;
   
   // Clear any existing scramble
@@ -73,11 +73,11 @@ const getRandomMessage = () => {
 const startAnimation = () => {
   if (!textRef.value) return;
   
-  // Initial message with scramble
+  // Initial message with scramble (slower)
   const initialMessage = getRandomMessage();
-  scrambleText(textRef.value, initialMessage, 0.8);
+  scrambleText(textRef.value, initialMessage, 1.5);
   
-  // Change message every 2-3 seconds with scramble
+  // Change message every 3-4 seconds with scramble (slower)
   if (changeInterval) {
     clearInterval(changeInterval);
   }
@@ -85,8 +85,8 @@ const startAnimation = () => {
   changeInterval = setInterval(() => {
     if (!textRef.value) return;
     const newMessage = getRandomMessage();
-    scrambleText(textRef.value, newMessage, 0.6);
-  }, 2500);
+    scrambleText(textRef.value, newMessage, 1.2);
+  }, 3500);
 };
 
 onMounted(() => {
@@ -112,7 +112,7 @@ onUnmounted(() => {
   font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
   font-weight: 400;
   font-size: 16px;
-  color: #868797;
+  color: #acacac;
   letter-spacing: 0.48px;
   margin: 0;
   padding: 0;

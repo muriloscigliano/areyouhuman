@@ -13,7 +13,8 @@ async function loadScrollTrigger() {
     return scrollTriggerPromise;
   }
 
-  scrollTriggerPromise = import('gsap/ScrollTrigger').then((module) => {
+  // @ts-ignore
+  scrollTriggerPromise = import('gsap/ScrollTrigger.js').then((module) => {
     ScrollTrigger = module.default;
     if (typeof window !== 'undefined') {
       gsap.registerPlugin(ScrollTrigger);

@@ -564,6 +564,19 @@ async function start() {
     return;
   }
 
+  // Ensure material exists - recreate if needed
+  if (!material) {
+    console.warn('Material not found, recreating...');
+    await initThree();
+  }
+
+  if (!material) {
+    console.error('Material failed to initialize');
+    isActive.value = false;
+    emit('complete');
+    return;
+  }
+
   if (renderer && material) {
     try {
       // Re-capture intro screen (current state)
@@ -720,4 +733,3 @@ defineExpose({
   left: 0;
 }
 </style>
-

@@ -15,7 +15,9 @@
       "Bash(cat:*)",
       "Bash(curl:*)",
       "Bash(find:*)",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(open http://localhost:4322/)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

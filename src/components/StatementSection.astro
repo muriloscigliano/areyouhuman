@@ -1,0 +1,204 @@
+---
+// import PixelCanvas from './PixelCanvas.astro';
+---
+
+<section class="statement-section" data-name="Statement Section">
+  <!-- <PixelCanvas
+    colors="#808080,#fff,#a0a0a0"
+    gap={6}
+    speed={35}
+    shimmerIntensity={0.4}
+    noFocus={true}
+    class="statement-pixel-canvas"
+  /> -->
+  <ul>
+    <li>
+      <span class="letter">
+        <span>H</span>
+        <span>H</span>
+      </span>
+      <span class="letter">
+        <span>u</span>
+        <span>u</span>
+      </span>
+      <span class="letter">
+        <span>m</span>
+        <span>m</span>
+      </span>
+      <span class="letter">
+        <span>a</span>
+        <span>a</span>
+      </span>
+      <span class="letter">
+        <span>n</span>
+        <span>n</span>
+      </span>
+      <span class="letter">
+        <span>i</span>
+        <span>i</span>
+      </span>
+      <span class="letter">
+        <span>t</span>
+        <span>t</span>
+      </span>
+      <span class="letter">
+        <span>y</span>
+        <span>y</span>
+      </span>
+    </li>
+    <li>
+      <span class="letter">
+        <span>A</span>
+        <span>A</span>
+      </span>
+      <span class="letter">
+        <span>m</span>
+        <span>m</span>
+      </span>
+      <span class="letter">
+        <span>p</span>
+        <span>p</span>
+      </span>
+      <span class="letter">
+        <span>l</span>
+        <span>l</span>
+      </span>
+      <span class="letter">
+        <span>i</span>
+        <span>i</span>
+      </span>
+      <span class="letter">
+        <span>f</span>
+        <span>f</span>
+      </span>
+      <span class="letter">
+        <span>i</span>
+        <span>i</span>
+      </span>
+      <span class="letter">
+        <span>e</span>
+        <span>e</span>
+      </span>
+      <span class="letter">
+        <span>d</span>
+        <span>d</span>
+      </span>
+    </li>
+  </ul>
+</section>
+
+<script>
+  async function initStatementAnimation() {
+    const section = document.querySelector('.statement-section');
+    if (!section) return;
+
+    // Lazy load GSAP ScrollTrigger
+    const [{ gsap }, { default: ScrollTrigger }] = await Promise.all([
+      import('gsap'),
+      // @ts-ignore
+      import('gsap/ScrollTrigger.js')
+    ]);
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const ulElement = section.querySelector('ul');
+    const letterElements = section.querySelectorAll('.letter');
+
+    if (!ulElement || letterElements.length === 0) {
+      console.error('StatementSection: Elements not found');
+      return;
+    }
+
+    console.log('StatementSection: Creating animation with', letterElements.length, 'letters');
+
+    gsap.to(letterElements, {
+      yPercent: 100,
+      ease: 'power1.inOut',
+      scrollTrigger: {
+        trigger: ulElement,
+        start: '33.33% bottom',
+        end: '100% 80%',
+        scrub: 1,
+        invalidateOnRefresh: true,
+      },
+      stagger: {
+        each: 0.05,
+        from: 'random'
+      }
+    });
+
+    // Refresh after setup
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+      console.log('StatementSection: Animation created and ScrollTrigger refreshed');
+    }, 100);
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(initStatementAnimation, 800);
+    });
+  } else {
+    setTimeout(initStatementAnimation, 800);
+  }
+</script>
+
+<style>
+  .statement-section {
+    padding: 50vh 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .statement-pixel-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: 0.75;
+  }
+
+  .statement-section ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .statement-section li {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: clamp(86px, 12vw, 300px);
+    line-height: 0.95;
+    color: #fff;
+    text-transform: uppercase;
+    overflow: hidden;
+    display: flex;
+    position: relative;
+  }
+
+  .statement-section .letter {
+    position: relative;
+    display: inline-block;
+  }
+
+  .statement-section .letter span:last-child {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+  }
+
+  @media (max-width: 768px) {
+    .statement-section li {
+      font-size: clamp(60px, 15vw, 86px);
+    }
+  }
+</style>

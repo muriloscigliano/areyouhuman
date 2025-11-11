@@ -345,7 +345,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 48px 36px 36px 36px;
+  padding: 48px 24px 24px 24px;
 }
 
 .welcome-top {
@@ -513,7 +513,7 @@ onUnmounted(() => {
   border-radius: 50%;
   background: #fb6400;
   border: none;
-  color: #000;
+  color: #ffffff;
   cursor: pointer;
   display: flex;
   align-items: center;
