@@ -106,14 +106,22 @@ Access to the Human-First Leaders Network.`,
     }
   }
 
+  // Cache plugins globally to avoid reloading on every transition
+  let pluginsCache: { ScrambleTextPlugin: any, SplitText: any } | null = null;
+
   async function loadScramblePlugins() {
     if (typeof window === 'undefined') return { ScrambleTextPlugin: null, SplitText: null };
-    
+
+    // Return cached plugins if available
+    if (pluginsCache) {
+      return pluginsCache;
+    }
+
     try {
       // Load GSAP plugins - import without .js extension (same pattern as ScrollTrigger)
       let ScrambleTextPlugin = null;
       let SplitText = null;
-      
+
       try {
         // Import without .js extension - Vite will resolve it correctly
         // @ts-ignore
@@ -125,7 +133,7 @@ Access to the Human-First Leaders Network.`,
       } catch (e) {
         console.error('FrameworkAuditSection: Failed to load ScrambleTextPlugin', e);
       }
-      
+
       try {
         // Import without .js extension - Vite will resolve it correctly
         // @ts-ignore
@@ -137,13 +145,14 @@ Access to the Human-First Leaders Network.`,
       } catch (e) {
         console.error('FrameworkAuditSection: Failed to load SplitText', e);
       }
-      
+
       if (ScrambleTextPlugin && SplitText) {
         gsap.registerPlugin(ScrambleTextPlugin, SplitText);
         console.log('FrameworkAuditSection: Plugins registered successfully');
-        return { ScrambleTextPlugin, SplitText };
+        pluginsCache = { ScrambleTextPlugin, SplitText };
+        return pluginsCache;
       }
-      
+
       console.warn('FrameworkAuditSection: ScrambleTextPlugin or SplitText not found');
       return { ScrambleTextPlugin: null, SplitText: null };
     } catch (error) {
@@ -261,15 +270,29 @@ Access to the Human-First Leaders Network.`,
       function animateOut(itemEl) {
         // @ts-ignore
         const itemIndex = items.indexOf(itemEl);
-        
+
+        // Kill all running animations on this item to prevent conflicts
+        gsap.killTweensOf(itemEl);
+
         // Hide text elements but keep item container structure
         const texts = getTexts(itemEl);
         // @ts-ignore
         texts.forEach((textEl) => {
+          // Kill any running animations (including scramble)
+          gsap.killTweensOf(textEl);
+
+          // Also kill animations on child elements (from SplitText)
+          // @ts-ignore
+          const words = textEl.querySelectorAll('.word');
+          gsap.killTweensOf(words);
+          // @ts-ignore
+          const chars = textEl.querySelectorAll('.char');
+          gsap.killTweensOf(chars);
+
           // @ts-ignore
           gsap.set(textEl, { autoAlpha: 0, opacity: 0, visibility: 'hidden' });
         });
-        
+
         // Hide the entire item (including first item when transitioning away)
         // @ts-ignore
         gsap.set(itemEl, { autoAlpha: 0 });
@@ -280,24 +303,35 @@ Access to the Human-First Leaders Network.`,
         const texts = getTexts(itemEl);
         // Make item visible immediately - no fade
         gsap.set(itemEl, { autoAlpha: 1 });
-        
+
+        // Kill any existing animations first
+        texts.forEach((textEl) => {
+          gsap.killTweensOf(textEl);
+          // @ts-ignore
+          const words = textEl.querySelectorAll('.word');
+          gsap.killTweensOf(words);
+          // @ts-ignore
+          const chars = textEl.querySelectorAll('.char');
+          gsap.killTweensOf(chars);
+        });
+
         // Make all text visible immediately first
         // @ts-ignore
         texts.forEach((textEl) => {
           // @ts-ignore
           gsap.set(textEl, { autoAlpha: 1, opacity: 1, visibility: 'visible' });
         });
-        
-        // Try to load scramble plugins
+
+        // Try to load scramble plugins (cached after first load)
         const { ScrambleTextPlugin, SplitText } = await loadScramblePlugins();
-        
+
         if (ScrambleTextPlugin && SplitText) {
           // Use scramble text animation for each text element
           texts.forEach((textEl, index) => {
             // @ts-ignore
             const originalText = textEl.textContent || '';
             if (!originalText.trim()) return;
-            
+
             try {
               // Split text into words and chars
               // @ts-ignore
@@ -306,17 +340,17 @@ Access to the Human-First Leaders Network.`,
                 wordsClass: "word",
                 charsClass: "char"
               });
-              
-              // Animate with scramble effect only - no fade/slide
+
+              // Animate with scramble effect only - faster and snappier
               // @ts-ignore
               gsap.to(split.words, {
-                duration: 1.2,
-                stagger: 0.01,
-                delay: index * 0.1,
+                duration: 0.35,  // Reduced from 1.2s to 0.35s for snappier feel
+                stagger: 0.008,  // Reduced stagger for faster sequence
+                delay: index * 0.02,  // Minimal delay between elements (was 0.1s)
                 scrambleText: {
                   text: "{original}",
                   chars: 'upperCase',
-                  speed: 0.85,
+                  speed: 1.2,  // Increased speed for faster scramble (was 0.85)
                 },
                 onComplete: () => {
                   // Revert split to reduce DOM size
@@ -467,6 +501,9 @@ Access to the Human-First Leaders Network.`,
     const init = async () => {
       scrollTriggerInstance = await loadScrollTrigger();
       if (!scrollTriggerInstance) return;
+
+      // Pre-load scramble plugins to eliminate delay on first transition
+      await loadScramblePlugins();
 
       // CRITICAL: Wait for intro animation to complete before initializing
       // The main content is hidden with opacity: 0 until intro-complete event
