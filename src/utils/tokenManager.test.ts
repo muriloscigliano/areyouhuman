@@ -46,7 +46,7 @@ describe('tokenManager', () => {
     });
 
     it('should trim oldest messages first', () => {
-      const trimmed = trimConversation(messages, 50);
+      const trimmed = trimConversation(messages, 20);
       expect(trimmed.length).toBeLessThan(messages.length);
       expect(trimmed[trimmed.length - 1].content).toBe('Third response');
     });
