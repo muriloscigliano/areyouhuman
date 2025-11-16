@@ -6,7 +6,25 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint . --ext .ts,.js,.astro,.vue",
+    "lint:fix": "eslint . --ext .ts,.js,.astro,.vue --fix",
+    "format": "prettier --write \"**/*.{ts,js,astro,vue,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,astro,vue,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{ts,js,astro,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@astrojs/vercel": "^8.2.10",
@@ -25,5 +43,21 @@
     "resend": "^6.2.0",
     "three": "^0.181.0",
     "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@testing-library/vue": "^8.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
+    "@vitest/ui": "^4.0.9",
+    "@vue/test-utils": "^2.4.6",
+    "eslint": "^9.39.1",
+    "eslint-plugin-astro": "^1.5.0",
+    "eslint-plugin-vue": "^10.5.1",
+    "happy-dom": "^20.0.10",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.6.2",
+    "prettier-plugin-astro": "^0.14.1",
+    "vitest": "^4.0.9"
   }
 }

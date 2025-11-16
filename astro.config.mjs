@@ -12,9 +12,8 @@ export default defineConfig({
   adapter: vercel(), // Vercel adapter for deployment
   integrations: [vue()],
   vite: {
-    define: {
-      'import.meta.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY || ''),
-    },
+    // Security: API keys should NOT be exposed to client-side code
+    // OpenAI calls are made server-side only via API routes
     ssr: {
       noExternal: ['gsap'],
     },
