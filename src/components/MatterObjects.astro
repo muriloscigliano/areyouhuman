@@ -131,29 +131,47 @@
           return;
         }
         
+        // First, ensure all objects are laid out to get accurate dimensions
+        // Temporarily position them to get measurements
+        // @ts-ignore
+        objects.forEach((obj) => {
+          obj.style.position = 'absolute';
+          obj.style.top = '0';
+          obj.style.left = '0';
+          obj.style.opacity = '0'; // Hide but keep layout
+        });
+        
+        // Force a reflow to ensure dimensions are calculated
+        void container.offsetHeight;
+        
         // @ts-ignore
         objects.forEach((obj, index) => {
+          // Use offsetWidth/offsetHeight as fallback if getBoundingClientRect fails
           const objRect = obj.getBoundingClientRect();
-          const halfWidth = objRect.width / 2;
-          const halfHeight = objRect.height / 2;
+          const objWidth = objRect.width || obj.offsetWidth || 200;
+          const objHeight = objRect.height || obj.offsetHeight || 60;
+          const halfWidth = objWidth / 2;
+          const halfHeight = objHeight / 2;
 
+          // Spread objects more evenly and ensure they start within reasonable range
+          const spacing = Math.max(100, containerRect.height / objects.length);
           const startX =
-            Math.random() * (containerRect.width - objRect.width) +
+            Math.random() * (containerRect.width - objWidth) +
             halfWidth;
-          const startY = -200 - index * 80;
+          const startY = -100 - index * spacing;
           const startRotation = (Math.random() - 0.5) * 0.3;
           const startVelocityX = (Math.random() - 0.5) * 2;
           const startVelocityY = Math.random() * 1 + 0.5;
           
-          console.log(`MatterObjects: Creating body ${index + 1}/${objects.length} at y=${startY}`);
+          console.log(`MatterObjects: Creating body ${index + 1}/${objects.length} at y=${startY}, dimensions: ${objWidth}x${objHeight}`);
 
-          const chamferRadius = objRect.height / 2;
+          const chamferRadius = objHeight / 2;
           const collisionPadding = config.collisionPadding;
           const horizontalPadding = collisionPadding * 1.5;
           const verticalPadding = collisionPadding;
           
-          const bodyWidth = Math.max(objRect.width - horizontalPadding * 2, objRect.height - verticalPadding);
-          const bodyHeight = objRect.height - verticalPadding;
+          const bodyWidth = Math.max(objWidth - horizontalPadding * 2, objHeight - verticalPadding);
+          const bodyHeight = objHeight - verticalPadding;
           const adjustedChamferRadius = Math.max(chamferRadius - verticalPadding / 2, bodyHeight / 2);
           
           // @ts-ignore
@@ -186,16 +204,27 @@
           bodies.push({
             body: body,
             element: obj,
-            width: objRect.width,
-            height: objRect.height,
+            width: objWidth,
+            height: objHeight,
             halfWidth: halfWidth,
             halfHeight: halfHeight,
           });
 
           // @ts-ignore
           Matter.World.add(engine.world, body);
+          
+          // Make object visible now that it's initialized
+          obj.style.opacity = '1';
         });
+        
+        console.log(`MatterObjects: Successfully initialized ${bodies.length} physics bodies out of ${objects.length} objects`);
 
+        // Add top wall after objects have had time to fall into view
+        // Calculate delay based on number of objects to ensure all have time to fall
+        const maxStartY = -100 - (objects.length - 1) * Math.max(100, containerRect.height / objects.length);
+        const fallTime = Math.abs(maxStartY) / 2; // Rough estimate for fall time
+        const topWallDelay = Math.max(5000, fallTime + 2000);
+        
         setTimeout(() => {
           // @ts-ignore
           topWall = Matter.Bodies.rectangle(
@@ -207,7 +236,8 @@
           );
           // @ts-ignore
           Matter.World.add(engine.world, topWall);
-        }, 3000);
+          console.log('MatterObjects: Top wall added after', topWallDelay, 'ms');
+        }, topWallDelay);
 
         // @ts-ignore
         const mouse = Matter.Mouse.create(container);

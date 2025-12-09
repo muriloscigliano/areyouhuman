@@ -93,7 +93,7 @@ const items = [
   overflow: hidden;
   border-radius: 0;
   padding: 0;
-  will-change: border-radius, padding;
+  will-change: border-radius, margin;
 }
 
 .what-we-build-header {
@@ -147,6 +147,9 @@ const items = [
 
 .label-char {
   display: inline-block;
+  position: relative;
+  white-space: pre;
+  overflow: visible;
 }
 
 .what-we-build-list {
@@ -478,6 +481,7 @@ const items = [
 
     if (ScrambleTextPlugin && SplitText) {
       // Animate in with blur and scramble
+      // Store tween for potential cleanup/control
       const labelTween = gsap.to(labelChars, {
         opacity: 1,
         filter: 'blur(0px)',
@@ -500,47 +504,43 @@ const items = [
         },
         onComplete: () => {
           console.log('WhatWeBuildSection: Label blur animation complete, applying scramble');
-          // Apply scramble effect
-          labelChars.forEach((charEl) => {
+          // Apply scramble effect directly to each char element without splitting
+          labelChars.forEach((charEl, index) => {
             if (!charEl || !charEl.textContent) return;
-            
+
             const text = charEl.textContent.trim();
             // Skip spaces and empty content
             if (text === '' || text === '\u00A0' || text === ' ') return;
-            
+
             try {
+              // Store original text
+              const originalText = charEl.textContent;
+
+              // Apply scramble directly to the element (no SplitText)
               // @ts-ignore
-              const split = new SplitText(charEl, {
-                type: "chars",
-                charsClass: "char"
+              gsap.to(charEl, {
+                duration: 0.6,
+                delay: index * 0.03, // Stagger the scramble
+                scrambleText: {
+                  text: originalText,
+                  chars: 'upperCase',
+                  speed: 0.8,
+                  revealDelay: 0.2
+                }
               });
-              
-              // Check if split.chars exists and has elements
-              // @ts-ignore
-              if (split.chars && split.chars.length > 0) {
-                // @ts-ignore
-                gsap.to(split.chars, {
-                  duration: 0.8,
-                  scrambleText: {
-                    text: "{original}",
-                    chars: 'upperCase',
-                    speed: 0.9,
-                  },
-                  onComplete: () => {
-                    // @ts-ignore
-                    if (split && split.revert) {
-                      // @ts-ignore
-                      split.revert();
-                    }
-                  }
-                });
-              }
             } catch (err) {
               console.error('Error applying scramble:', err);
             }
           });
         }
       });
+
+      // Store tween reference on the element for potential cleanup
+      // @ts-ignore
+      if (labelElement && !labelElement._labelTween) {
+        // @ts-ignore
+        labelElement._labelTween = labelTween;
+      }
 
       // Refresh ScrollTrigger after setup
       setTimeout(() => {
@@ -645,7 +645,7 @@ const items = [
     // Animate when section bottom approaches viewport bottom (footer is coming)
     gsap.to(section, {
       borderRadius: '32px',
-      padding: '32px',
+      margin: '0px 32px',
       ease: 'power2.out',
       scrollTrigger: {
         trigger: section,
@@ -659,7 +659,7 @@ const items = [
         onLeaveBack: () => {
           gsap.to(section, {
             borderRadius: '0px',
-            padding: '0px',
+            margin: '0px 0px',
             duration: 0.3,
             ease: 'power2.out'
           });

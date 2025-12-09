@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { buildSystemPrompt, PromptStages } from '../utils/parsePrompt.js';
+import { buildSystemPrompt, PromptStages } from '../utils/parsePrompt';
 import { 
   optimizeMessagePayload, 
   limitMessageLength, 
