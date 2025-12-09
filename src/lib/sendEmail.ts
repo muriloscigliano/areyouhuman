@@ -1,7 +1,7 @@
 /**
  * Email Service
  * Sends emails with quote PDFs attached using Resend
- * 
+ *
  * Setup:
  * 1. Sign up at https://resend.com
  * 2. Get API key from dashboard
@@ -10,6 +10,9 @@
  */
 
 import { Resend } from 'resend';
+import { createLogger } from './logger';
+
+const log = createLogger('email');
 
 interface EmailOptions {
   to: string;
@@ -33,7 +36,7 @@ interface QuoteEmailData {
 const getResendClient = () => {
   const apiKey = import.meta.env?.RESEND_API_KEY || process.env.RESEND_API_KEY;
   if (!apiKey || apiKey.includes('your_') || apiKey.includes('placeholder')) {
-    console.warn('⚠️ Resend API key not configured');
+    log.warn('Resend API key not configured');
     return null;
   }
   return new Resend(apiKey);
@@ -46,11 +49,9 @@ const getResendClient = () => {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     const resend = getResendClient();
-    
+
     if (!resend) {
-      console.log('📧 [DEMO MODE] Email would be sent to:', options.to);
-      console.log('📋 Subject:', options.subject);
-      console.log('⚠️ Resend not configured. Add RESEND_API_KEY to .env');
+      log.info('Demo mode - email not sent', { to: options.to, subject: options.subject });
       return true; // Return success in demo mode
     }
 
@@ -67,12 +68,13 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html || options.text || '',
       attachments: resendAttachments
     });
-    
-    console.log('✅ Email sent successfully to:', options.to);
+
+    log.info('Email sent successfully', { to: options.to });
     return true;
-  } catch (error: any) {
-    console.error('Error sending email:', error);
-    throw new Error(`Failed to send email: ${error.message}`);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    log.error('Error sending email', error, { to: options.to });
+    throw new Error(`Failed to send email: ${message}`);
   }
 }
 

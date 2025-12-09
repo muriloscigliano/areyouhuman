@@ -15,7 +15,8 @@ import {
   sql,
 } from '../../lib/db';
 import { sendEmail } from '../../lib/sendEmail';
-import { verifyWebhookSignature, getEnvVar } from '../../lib/security';
+import { verifyWebhookSignature, getEnvVar, checkRateLimit } from '../../lib/security';
+import { webhookLogger as log } from '../../lib/logger';
 import {
   generateWelcomeEmail,
   generateQuoteAcceptedEmail,
@@ -70,9 +71,9 @@ async function updateLeadStatus(
 
   const success = await dbUpdateLeadStatus(leadId, status);
   if (success) {
-    console.log(`✅ Lead status updated to "${status}"`);
+    log.info('Lead status updated', { leadId, status });
   } else {
-    console.error(`Error updating lead status to "${status}"`);
+    log.error('Error updating lead status', undefined, { leadId, status });
   }
 }
 
@@ -81,7 +82,7 @@ async function updateLeadStatus(
  */
 async function notifyTeam(leadData: LeadCreatedData): Promise<void> {
   if (!TEAM_NOTIFICATION_EMAIL) {
-    console.log('📢 Team notification skipped (TEAM_NOTIFICATION_EMAIL not configured)');
+    log.debug('Team notification skipped (TEAM_NOTIFICATION_EMAIL not configured)');
     return;
   }
 
@@ -94,11 +95,11 @@ async function notifyTeam(leadData: LeadCreatedData): Promise<void> {
 
   await sendEmail({
     to: TEAM_NOTIFICATION_EMAIL,
-    subject: `🎯 New Lead: ${leadData.name} from ${leadData.company || 'Unknown Company'}`,
+    subject: `New Lead: ${leadData.name} from ${leadData.company || 'Unknown Company'}`,
     html,
   });
 
-  console.log('✅ Team notification sent');
+  log.info('Team notification sent');
 }
 
 // =============================================================================
@@ -109,7 +110,7 @@ async function notifyTeam(leadData: LeadCreatedData): Promise<void> {
  * Handle new lead creation
  */
 async function handleLeadCreated(data: LeadCreatedData): Promise<void> {
-  console.log('👤 New lead created:', data.email);
+  log.info('New lead created', { email: data.email });
 
   try {
     // Send welcome email
@@ -123,11 +124,11 @@ async function handleLeadCreated(data: LeadCreatedData): Promise<void> {
 
       await sendEmail({
         to: data.email,
-        subject: '🤖 Your Automation Project - Next Steps',
+        subject: 'Your Automation Project - Next Steps',
         html,
       });
 
-      console.log('✅ Welcome email sent to:', data.email);
+      log.info('Welcome email sent', { email: data.email });
     }
 
     // Send team notification
@@ -139,8 +140,7 @@ async function handleLeadCreated(data: LeadCreatedData): Promise<void> {
       await updateLeadStatus(leadId, 'contacted');
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error handling lead creation:', message);
+    log.error('Error handling lead creation', error);
   }
 }
 
@@ -148,7 +148,7 @@ async function handleLeadCreated(data: LeadCreatedData): Promise<void> {
  * Handle quote acceptance
  */
 async function handleQuoteAccepted(data: QuoteEventData): Promise<void> {
-  console.log('✅ Quote accepted:', data.quote_id);
+  log.info('Quote accepted', { quoteId: data.quote_id });
 
   if (!isDatabaseConfigured()) return;
 
@@ -160,7 +160,7 @@ async function handleQuoteAccepted(data: QuoteEventData): Promise<void> {
     const result = await getQuoteWithLead(data.quote_id);
 
     if (!result) {
-      console.error('Error fetching quote');
+      log.error('Error fetching quote', undefined, { quoteId: data.quote_id });
       return;
     }
 
@@ -176,11 +176,11 @@ async function handleQuoteAccepted(data: QuoteEventData): Promise<void> {
 
       await sendEmail({
         to: lead.email,
-        subject: `🎉 Quote Accepted - Let's Get Started!`,
+        subject: `Quote Accepted - Let's Get Started!`,
         html,
       });
 
-      console.log('✅ Acceptance confirmation sent to:', lead.email);
+      log.info('Acceptance confirmation sent', { email: lead.email });
     }
 
     // Update lead status to converted
@@ -188,8 +188,7 @@ async function handleQuoteAccepted(data: QuoteEventData): Promise<void> {
       await updateLeadStatus(lead.id, 'converted');
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error handling quote acceptance:', message);
+    log.error('Error handling quote acceptance', error, { quoteId: data.quote_id });
   }
 }
 
@@ -197,7 +196,7 @@ async function handleQuoteAccepted(data: QuoteEventData): Promise<void> {
  * Handle quote decline
  */
 async function handleQuoteDeclined(data: QuoteEventData): Promise<void> {
-  console.log('❌ Quote declined:', data.quote_id);
+  log.info('Quote declined', { quoteId: data.quote_id });
 
   if (!isDatabaseConfigured()) return;
 
@@ -209,7 +208,7 @@ async function handleQuoteDeclined(data: QuoteEventData): Promise<void> {
     const result = await getQuoteWithLead(data.quote_id);
 
     if (!result) {
-      console.error('Error fetching quote');
+      log.error('Error fetching quote', undefined, { quoteId: data.quote_id });
       return;
     }
 
@@ -229,7 +228,7 @@ async function handleQuoteDeclined(data: QuoteEventData): Promise<void> {
         html,
       });
 
-      console.log('✅ Feedback request sent to:', lead.email);
+      log.info('Feedback request sent', { email: lead.email });
     }
 
     // Update lead status to nurture
@@ -237,8 +236,7 @@ async function handleQuoteDeclined(data: QuoteEventData): Promise<void> {
       await updateLeadStatus(lead.id, 'nurture');
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error handling quote decline:', message);
+    log.error('Error handling quote decline', error, { quoteId: data.quote_id });
   }
 }
 
@@ -246,7 +244,7 @@ async function handleQuoteDeclined(data: QuoteEventData): Promise<void> {
  * Handle conversation completion
  */
 async function handleConversationCompleted(data: ConversationCompletedData): Promise<void> {
-  console.log('💬 Conversation completed:', data.conversation_id);
+  log.info('Conversation completed', { conversationId: data.conversation_id });
 
   if (!isDatabaseConfigured()) return;
 
@@ -272,7 +270,7 @@ async function handleConversationCompleted(data: ConversationCompletedData): Pro
     `;
 
     if (!result[0]) {
-      console.error('Error fetching conversation');
+      log.error('Error fetching conversation', undefined, { conversationId: data.conversation_id });
       return;
     }
 
@@ -285,14 +283,14 @@ async function handleConversationCompleted(data: ConversationCompletedData): Pro
       WHERE id = ${data.conversation_id}
     `;
 
-    console.log('✅ Conversation marked as completed');
+    log.info('Conversation marked as completed', { conversationId: data.conversation_id });
 
     // Check if lead is qualified for quote generation
     const leadScore = row.lead_score as number | null;
     const isQualified = leadScore && leadScore >= QUALIFIED_LEAD_SCORE_THRESHOLD;
 
     if (isQualified && row.lead_id) {
-      console.log(`🎯 Lead is qualified (score: ${leadScore}) - ready for quote generation`);
+      log.info('Lead qualified for quote generation', { leadScore });
 
       // Update lead status to qualified
       await updateLeadStatus(row.lead_id as string, 'qualified');
@@ -308,20 +306,19 @@ async function handleConversationCompleted(data: ConversationCompletedData): Pro
 
         await sendEmail({
           to: row.lead_email as string,
-          subject: '🎯 Your Custom Proposal is Being Prepared',
+          subject: 'Your Custom Proposal is Being Prepared',
           html,
         });
       }
     } else {
-      console.log(`⚠️ Lead not qualified (score: ${leadScore || 'N/A'}) - adding to nurture`);
+      log.debug('Lead not qualified, adding to nurture', { leadScore });
 
       if (row.lead_id) {
         await updateLeadStatus(row.lead_id as string, 'nurture');
       }
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error handling conversation completion:', message);
+    log.error('Error handling conversation completion', error, { conversationId: data.conversation_id });
   }
 }
 
@@ -331,6 +328,18 @@ async function handleConversationCompleted(data: ConversationCompletedData): Pro
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Rate limiting - 100 requests per minute per IP
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimitResult = checkRateLimit(`webhook:${clientIP}`, 100, 60000);
+
+    if (!rateLimitResult.allowed) {
+      log.warn('Webhook rate limit exceeded', { clientIP });
+      return new Response(
+        JSON.stringify({ error: 'Too many requests' }),
+        { status: 429, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Get raw body for signature verification
     const rawBody = await request.text();
     const signature = request.headers.get('x-webhook-signature');
@@ -339,20 +348,20 @@ export const POST: APIRoute = async ({ request }) => {
     // Verify webhook signature (if secret is configured)
     if (webhookSecret) {
       if (!verifyWebhookSignature(rawBody, signature, webhookSecret)) {
-        console.warn('⚠️ Invalid webhook signature');
+        log.warn('Invalid webhook signature');
         return new Response(
           JSON.stringify({ error: 'Unauthorized' }),
           { status: 401, headers: { 'Content-Type': 'application/json' } }
         );
       }
-      console.log('✅ Webhook signature verified');
+      log.debug('Webhook signature verified');
     }
 
     // Parse payload
     const payload = JSON.parse(rawBody) as WebhookPayload;
     const { event, data } = payload;
 
-    console.log('🔔 Webhook received:', event);
+    log.info('Webhook received', { event });
 
     // Route to appropriate handler
     switch (event as WebhookEvent) {
@@ -373,7 +382,7 @@ export const POST: APIRoute = async ({ request }) => {
         break;
 
       default:
-        console.log('Unknown event type:', event);
+        log.warn('Unknown event type', { event });
     }
 
     return new Response(
@@ -381,11 +390,10 @@ export const POST: APIRoute = async ({ request }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Webhook error:', errorMessage);
+    log.error('Webhook error', error);
 
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }

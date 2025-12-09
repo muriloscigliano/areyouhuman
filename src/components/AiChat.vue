@@ -36,13 +36,33 @@ const conversationId = ref<string | null>(null);
 const currentMessage = ref('');
 const inputRef = ref<HTMLInputElement | null>(null);
 
+// Safe localStorage access (SSR-compatible)
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Silently fail if localStorage is not available
+    }
+  }
+};
+
 // Smart greeting system - loads from JSON with condition matching
 const getSmartGreeting = () => {
   const hour = new Date().getHours();
   const day = new Date().getDay();
-  const isReturningUser = localStorage.getItem('telos_visited') === 'true';
-  const lastProject = localStorage.getItem('telos_last_project');
-  const lastIntent = localStorage.getItem('telos_last_intent');
+  const isReturningUser = safeLocalStorage.getItem('telos_visited') === 'true';
+  const lastProject = safeLocalStorage.getItem('telos_last_project');
+  const lastIntent = safeLocalStorage.getItem('telos_last_intent');
   
   // Determine time context
   let timeContext = '';
@@ -108,7 +128,7 @@ onMounted(() => {
   }
   
   // Mark user as visited for future sessions
-  localStorage.setItem('telos_visited', 'true');
+  safeLocalStorage.setItem('telos_visited', 'true');
   
   // Don't auto-send greeting - let the API handle it based on conversation state
   // This prevents double introductions

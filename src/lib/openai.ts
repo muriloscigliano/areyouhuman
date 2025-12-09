@@ -1,21 +1,24 @@
 import OpenAI from 'openai';
 import { buildSystemPrompt, PromptStages } from '../utils/parsePrompt';
-import { 
-  optimizeMessagePayload, 
-  limitMessageLength, 
+import {
+  optimizeMessagePayload,
+  limitMessageLength,
   needsSummarization,
   getTokenStats,
   countTokens
 } from '../utils/tokenManager.js';
-import { 
-  validateResponse, 
-  truncateToWordLimit, 
-  countWords 
+import {
+  validateResponse,
+  truncateToWordLimit,
+  countWords
 } from '../utils/responseGuardrails.js';
-import { 
+import {
   validateExtractedData,
-  getHallucinationPreventionPrompt 
+  getHallucinationPreventionPrompt
 } from '../utils/dataValidator.js';
+import { createLogger } from './logger';
+
+const log = createLogger('openai');
 
 // Get API key - lazy evaluation for proper Astro context
 const getApiKey = () => {
@@ -53,7 +56,7 @@ export async function getSystemPrompt(stage: string = 'briefing', context: any =
     try {
       _cachedSystemPrompt = await buildSystemPrompt(stage, context);
     } catch (error) {
-      console.error('Error loading system prompt, using fallback:', error);
+      log.error('Error loading system prompt, using fallback', error);
       // Fallback if markdown files can't be loaded
       _cachedSystemPrompt = `You are Telos, the AI strategist of Are You Human? 
       
@@ -105,7 +108,7 @@ export async function getChatCompletion(
     
     // Log token stats for monitoring
     const stats = getTokenStats(messages);
-    console.log(`📊 Token stats - Total: ${stats.totalTokens}, User: ${stats.userTokens}, Assistant: ${stats.assistantTokens}`);
+    log.debug('Token stats', { total: stats.totalTokens, user: stats.userTokens, assistant: stats.assistantTokens });
     
     // Higher temperature for first message to get more varied greetings
     const isFirstMessage = messages.length === 1 && messages[0]?.role === 'user';
@@ -125,21 +128,19 @@ export async function getChatCompletion(
     
     if (!validation.isValid) {
       if (validation.isOffTopic && validation.redirectMessage) {
-        // If off-topic, return redirect message instead
-        console.log('⚠️ Response off-topic, redirecting:', { wordCount: validation.wordCount });
+        log.debug('Response off-topic, redirecting');
         return validation.redirectMessage;
       }
-      
+
       if (validation.wordCount > validation.maxWords) {
-        // If too long, truncate to word limit
-        console.log(`⚠️ Response too long (${validation.wordCount} words), truncating to ${validation.maxWords}`);
+        log.debug('Response too long, truncating', { wordCount: validation.wordCount, max: validation.maxWords });
         response = truncateToWordLimit(response, validation.maxWords);
       }
     }
-    
+
     return response;
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    log.error('OpenAI API error', error);
     throw error;
   }
 }
@@ -210,31 +211,26 @@ Extract complete information even from short conversations.`
     // Validate extracted data to prevent hallucinations
     if (extractedData) {
       const validation = validateExtractedData(extractedData, conversationMessages);
-      
+
       if (validation.isHallucinated || validation.confidence < 0.5) {
-        console.warn('⚠️ Potential hallucination detected:', {
+        log.warn('Potential hallucination detected', {
           suspiciousFields: validation.suspiciousFields,
-          warnings: validation.warnings,
           confidence: validation.confidence
         });
-        
+
         // Remove suspicious fields
         validation.suspiciousFields.forEach(field => {
-          console.log(`🗑️ Removing suspicious field: ${field}`);
+          log.debug('Removing suspicious field', { field });
           extractedData[field] = null;
         });
       }
-      
-      if (validation.warnings.length > 0) {
-        console.log('⚠️ Validation warnings:', validation.warnings);
-      }
-      
-      console.log(`✅ Data validation: confidence=${validation.confidence.toFixed(2)}, valid=${validation.isValid}`);
+
+      log.debug('Data validation complete', { confidence: validation.confidence, valid: validation.isValid });
     }
-    
+
     return extractedData;
   } catch (error) {
-    console.error('Error extracting lead info:', error);
+    log.error('Error extracting lead info', error);
     return null;
   }
 }

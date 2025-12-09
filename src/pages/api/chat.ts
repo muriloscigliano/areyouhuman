@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { sql, isDatabaseConfigured, createLead, updateLead, createConversation, updateConversation } from '../../lib/db';
+import { isDatabaseConfigured, createLead, updateLead, createConversation, updateConversation } from '../../lib/db';
 import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../lib/openai';
 import { triggerLeadProcessing, isAutomationConfigured } from '../../lib/automationTrigger';
 import { limitMessageLength, needsSummarization, createConversationSummary } from '../../utils/tokenManager';
@@ -12,7 +12,8 @@ import { validateAndCleanEmail } from '../../utils/emailValidator';
 import { validateProjectQuality } from '../../utils/projectValidator';
 import { validateResponse, truncateToWordLimit } from '../../utils/responseGuardrails';
 import { validateExtractedData, verifyDataCollection } from '../../utils/dataValidator';
-import { sanitizeInput } from '../../lib/security';
+import { sanitizeInput, checkRateLimit } from '../../lib/security';
+import { apiLogger as log } from '../../lib/logger';
 import type {
   ChatRequest,
   ChatResponse,
@@ -91,30 +92,28 @@ async function processExtractedData(
     return {};
   }
 
-  console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
+  log.debug('Extracted lead data', { fieldCount: Object.keys(extractedInfo).length });
 
   // Validate for hallucinations during early extraction
   if (messageCount <= EARLY_EXTRACTION_END) {
     const dataValidation = validateExtractedData(extractedInfo, messages);
 
     if (dataValidation.isHallucinated) {
-      console.warn('⚠️ HALLUCINATION DETECTED:', {
+      log.warn('Hallucination detected in extraction', {
         suspiciousFields: dataValidation.suspiciousFields,
-        warnings: dataValidation.warnings,
         confidence: dataValidation.confidence,
       });
 
       for (const field of dataValidation.suspiciousFields) {
-        console.log(`🗑️ Removing hallucinated field: ${field}`);
+        log.debug('Removing hallucinated field', { field });
         delete extractedInfo[field as keyof typeof extractedInfo];
       }
     }
 
     const verification = verifyDataCollection(messages, ['name', 'email', 'company']);
-    console.log('🔍 Data collection verification:', {
+    log.debug('Data collection verification', {
       collected: verification.collected,
       missing: verification.missing,
-      needsFollowUp: verification.needsFollowUp,
     });
   }
 
@@ -123,9 +122,9 @@ async function processExtractedData(
     const validatedEmail = validateAndCleanEmail(extractedInfo.email);
     if (validatedEmail) {
       extractedInfo.email = validatedEmail;
-      console.log(`✅ Email validated: ${validatedEmail}`);
+      log.debug('Email validated successfully');
     } else {
-      console.log(`❌ Invalid email format: "${extractedInfo.email}"`);
+      log.debug('Invalid email format, removing');
       delete extractedInfo.email;
     }
   }
@@ -141,17 +140,17 @@ function applyGuardrails(reply: string): string {
 
   if (!validation.isValid) {
     if (validation.isOffTopic && validation.redirectMessage) {
-      console.log('⚠️ Response off-topic, using redirect');
+      log.debug('Response off-topic, using redirect');
       return validation.redirectMessage;
     }
 
     if (validation.wordCount > validation.maxWords) {
-      console.log(`⚠️ Response too long (${validation.wordCount} words), truncating`);
+      log.debug('Response too long, truncating', { wordCount: validation.wordCount });
       return truncateToWordLimit(reply, validation.maxWords);
     }
   }
 
-  console.log(`✅ Response validated: ${validation.wordCount} words, on-topic: ${!validation.isOffTopic}`);
+  log.debug('Response validated', { wordCount: validation.wordCount, onTopic: !validation.isOffTopic });
   return reply;
 }
 
@@ -174,10 +173,9 @@ function isLeadQualified(leadData: Partial<LeadData>, reply: string): boolean {
     projectValidation.isValid;
 
   if (!projectValidation.isValid && leadData.problem_text) {
-    console.log('⚠️ Project data exists but lacks quality:', {
+    log.debug('Project data exists but lacks quality', {
       missingFields: projectValidation.missingFields,
       lowQualityFields: projectValidation.lowQualityFields,
-      suggestions: projectValidation.suggestions,
     });
   }
 
@@ -289,7 +287,7 @@ async function saveToDatabase(
   existingConversationId?: string
 ): Promise<{ leadId?: string; conversationId?: string; isNewLead?: boolean }> {
   if (!isDatabaseConfigured()) {
-    console.warn('⚠️ Database not configured - skipping save');
+    log.warn('Database not configured - skipping save');
     return {};
   }
 
@@ -307,16 +305,16 @@ async function saveToDatabase(
     if (currentLeadId) {
       const updated = await updateLead(currentLeadId, fullLeadData);
       if (!updated) {
-        console.error('Error updating lead');
+        log.error('Error updating lead', undefined, { leadId: currentLeadId });
       }
     } else {
       const newLead = await createLead(fullLeadData);
       if (newLead) {
         currentLeadId = newLead.id;
         isNewLead = true;
-        console.log('✅ New lead created:', currentLeadId);
+        log.info('New lead created', { leadId: currentLeadId });
       } else {
-        console.error('Error creating lead');
+        log.error('Error creating lead');
       }
     }
 
@@ -343,22 +341,22 @@ async function saveToDatabase(
       if (currentConversationId) {
         const success = await updateConversation(currentConversationId, conversationMessages);
         if (!success) {
-          console.error('Error updating conversation');
+          log.error('Error updating conversation', undefined, { conversationId: currentConversationId });
         }
       } else {
         const newConversation = await createConversation(currentLeadId, conversationMessages);
         if (newConversation) {
           currentConversationId = newConversation.id;
-          console.log('✅ New conversation created:', currentConversationId);
+          log.info('New conversation created', { conversationId: currentConversationId });
         } else {
-          console.error('Error creating conversation');
+          log.error('Error creating conversation');
         }
       }
     }
 
     return { leadId: currentLeadId, conversationId: currentConversationId, isNewLead };
   } catch (err) {
-    console.error('Error saving to database:', err);
+    log.error('Error saving to database', err);
     return { leadId: currentLeadId, conversationId: currentConversationId };
   }
 }
@@ -369,8 +367,20 @@ async function saveToDatabase(
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    // Rate limiting - 30 requests per minute per IP
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rateLimitResult = checkRateLimit(`chat:${clientIP}`, 30, 60000);
+
+    if (!rateLimitResult.allowed) {
+      log.warn('Rate limit exceeded', { clientIP, resetIn: rateLimitResult.resetIn });
+      return new Response(
+        JSON.stringify({ error: 'Too many requests', retryAfter: Math.ceil(rateLimitResult.resetIn / 1000) }),
+        { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(Math.ceil(rateLimitResult.resetIn / 1000)) } }
+      );
+    }
+
     if (!isDatabaseConfigured()) {
-      console.warn('⚠️ Database not configured - running in demo mode');
+      log.warn('Database not configured - running in demo mode');
     }
 
     const body = (await request.json()) as ChatRequest;
@@ -379,7 +389,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Sanitize and limit message length
     message = sanitizeInput(limitMessageLength(message, MAX_MESSAGE_LENGTH));
     if (message.length >= MAX_MESSAGE_LENGTH) {
-      console.log('⚠️ Message truncated to max length');
+      log.debug('Message truncated to max length');
     }
 
     let reply = '';
@@ -391,7 +401,7 @@ export const POST: APIRoute = async ({ request }) => {
     // AI-POWERED CONVERSATION
     // ==========================================================================
     if (isOpenAIConfigured()) {
-      console.log('🤖 Using OpenAI GPT-4o-mini');
+      log.debug('Using OpenAI GPT-4o-mini');
 
       try {
         const messages = convertToOpenAIMessages(conversationHistory);
@@ -400,9 +410,8 @@ export const POST: APIRoute = async ({ request }) => {
         // Check if summarization is needed
         let conversationSummary: string | undefined;
         if (needsSummarization(messages)) {
-          console.log('📝 Generating conversation summary...');
+          log.debug('Generating conversation summary');
           conversationSummary = createConversationSummary(messages);
-          console.log(`✅ Summary: ${conversationSummary}`);
           // Summary is stored when conversation is updated
         }
 
@@ -424,7 +433,7 @@ export const POST: APIRoute = async ({ request }) => {
 
         // Extract lead info if appropriate
         if (shouldExtractLeadInfo(messageCount)) {
-          console.log(`🎯 Extracting lead info at message ${messageCount}...`);
+          log.debug('Extracting lead info', { messageCount });
           const extractedData = await processExtractedData(messages, messageCount);
           Object.assign(leadData, extractedData);
           shouldSaveLead = Object.keys(extractedData).length > 0;
@@ -432,18 +441,17 @@ export const POST: APIRoute = async ({ request }) => {
 
         // Always save if we have lead data
         if (Object.keys(leadData).length > 0) {
-          console.log(`💾 Saving lead data (${Object.keys(leadData).length} fields)...`);
+          log.debug('Lead data collected', { fieldCount: Object.keys(leadData).length });
           shouldSaveLead = true;
         }
 
         // Check if lead is qualified
         if (isLeadQualified(leadData, reply)) {
-          console.log('🎯 Lead qualified! Saving to database');
+          log.info('Lead qualified', { leadId });
           shouldSaveLead = true;
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error('OpenAI error, falling back to rule-based:', errorMessage);
+        log.error('OpenAI error, falling back to rule-based', error);
       }
     }
 
@@ -451,7 +459,7 @@ export const POST: APIRoute = async ({ request }) => {
     // RULE-BASED FALLBACK
     // ==========================================================================
     if (!reply) {
-      console.log('📋 Using rule-based responses');
+      log.debug('Using rule-based responses');
       const fallback = getRuleBasedResponse(messageCount, message, conversationHistory);
       reply = fallback.reply;
       Object.assign(leadData, fallback.leadData);
@@ -488,7 +496,7 @@ export const POST: APIRoute = async ({ request }) => {
     // TRIGGER AUTOMATION FOR QUALIFIED LEADS
     // ==========================================================================
     if (isQualifiedLead && leadId && isAutomationConfigured()) {
-      console.log('🚀 Triggering automation for qualified lead:', leadId);
+      log.info('Triggering automation for qualified lead', { leadId });
 
       // Fire and forget - don't block the chat response
       triggerLeadProcessing({
@@ -506,12 +514,12 @@ export const POST: APIRoute = async ({ request }) => {
         source: 'Telos Chat',
       }).then(result => {
         if (result.success) {
-          console.log('✅ Automation triggered successfully');
+          log.info('Automation triggered successfully', { leadId });
         } else {
-          console.warn('⚠️ Automation trigger failed:', result.message);
+          log.warn('Automation trigger failed', { leadId, message: result.message });
         }
       }).catch(err => {
-        console.error('❌ Automation trigger error:', err);
+        log.error('Automation trigger error', err, { leadId });
       });
     }
 
@@ -527,8 +535,7 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Chat API error:', errorMessage);
+    log.error('Chat API error', error);
 
     return new Response(
       JSON.stringify({

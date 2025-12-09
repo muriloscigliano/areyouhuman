@@ -4,6 +4,7 @@
  */
 
 import { neon, neonConfig } from '@neondatabase/serverless';
+import { dbLogger as log } from './logger';
 
 // Configure for serverless environments
 neonConfig.fetchConnectionCache = true;
@@ -108,7 +109,7 @@ export async function createLead(data: Partial<LeadRecord>): Promise<LeadRecord 
     `;
     return result[0] as LeadRecord;
   } catch (error) {
-    console.error('Error creating lead:', error);
+    log.error('Error creating lead', error);
     return null;
   }
 }
@@ -126,7 +127,7 @@ export async function getLeadById(id: string): Promise<LeadRecord | null> {
     `;
     return result[0] as LeadRecord || null;
   } catch (error) {
-    console.error('Error fetching lead:', error);
+    log.error('Error fetching lead', error, { id });
     return null;
   }
 }
@@ -166,7 +167,7 @@ export async function updateLead(
     `;
     return result[0] as LeadRecord || null;
   } catch (error) {
-    console.error('Error updating lead:', error);
+    log.error('Error updating lead', error, { id });
     return null;
   }
 }
@@ -193,7 +194,7 @@ export async function updateLeadStatus(
     `;
     return true;
   } catch (error) {
-    console.error('Error updating lead status:', error);
+    log.error('Error updating lead status', error, { id, status });
     return false;
   }
 }
@@ -230,7 +231,7 @@ export async function createConversation(
     `;
     return result[0] as ConversationRecord;
   } catch (error) {
-    console.error('Error creating conversation:', error);
+    log.error('Error creating conversation', error, { leadId });
     return null;
   }
 }
@@ -255,7 +256,7 @@ export async function updateConversation(
     `;
     return true;
   } catch (error) {
-    console.error('Error updating conversation:', error);
+    log.error('Error updating conversation', error, { id });
     return false;
   }
 }
@@ -330,7 +331,7 @@ export async function getQuoteWithLead(quoteId: string): Promise<{
       } as LeadRecord,
     };
   } catch (error) {
-    console.error('Error fetching quote:', error);
+    log.error('Error fetching quote', error, { quoteId });
     return null;
   }
 }
@@ -364,7 +365,7 @@ export async function updateQuoteStatus(
     }
     return true;
   } catch (error) {
-    console.error('Error updating quote status:', error);
+    log.error('Error updating quote status', error, { id, status });
     return false;
   }
 }
