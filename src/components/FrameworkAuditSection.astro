@@ -289,20 +289,27 @@ Access to the Human-First Leaders Network.`,
           const chars = textEl.querySelectorAll('.char');
           gsap.killTweensOf(chars);
 
+          // Force immediate hide with inline styles to prevent overlap
+          // @ts-ignore
+          textEl.style.opacity = '0';
+          // @ts-ignore
+          textEl.style.visibility = 'hidden';
           // @ts-ignore
           gsap.set(textEl, { autoAlpha: 0, opacity: 0, visibility: 'hidden' });
         });
 
         // Hide the entire item (including first item when transitioning away)
         // @ts-ignore
-        gsap.set(itemEl, { autoAlpha: 0 });
+        itemEl.style.opacity = '0';
+        // @ts-ignore
+        itemEl.style.visibility = 'hidden';
+        // @ts-ignore
+        gsap.set(itemEl, { autoAlpha: 0, opacity: 0, visibility: 'hidden' });
       }
 
       // @ts-ignore
       async function animateIn(itemEl) {
         const texts = getTexts(itemEl);
-        // Make item visible immediately - no fade
-        gsap.set(itemEl, { autoAlpha: 1 });
 
         // Kill any existing animations first
         texts.forEach((textEl) => {
@@ -315,9 +322,24 @@ Access to the Human-First Leaders Network.`,
           gsap.killTweensOf(chars);
         });
 
+        // Store original text content before any manipulation
+        // @ts-ignore
+        const originalTexts = texts.map(textEl => textEl.textContent || '');
+
+        // Make item visible immediately - no fade
+        // @ts-ignore
+        itemEl.style.opacity = '1';
+        // @ts-ignore
+        itemEl.style.visibility = 'visible';
+        gsap.set(itemEl, { autoAlpha: 1, opacity: 1, visibility: 'visible' });
+
         // Make all text visible immediately first
         // @ts-ignore
         texts.forEach((textEl) => {
+          // @ts-ignore
+          textEl.style.opacity = '1';
+          // @ts-ignore
+          textEl.style.visibility = 'visible';
           // @ts-ignore
           gsap.set(textEl, { autoAlpha: 1, opacity: 1, visibility: 'visible' });
         });
@@ -328,8 +350,7 @@ Access to the Human-First Leaders Network.`,
         if (ScrambleTextPlugin && SplitText) {
           // Use scramble text animation for each text element
           texts.forEach((textEl, index) => {
-            // @ts-ignore
-            const originalText = textEl.textContent || '';
+            const originalText = originalTexts[index];
             if (!originalText.trim()) return;
 
             try {
@@ -344,23 +365,37 @@ Access to the Human-First Leaders Network.`,
               // Animate with scramble effect only - faster and snappier
               // @ts-ignore
               gsap.to(split.words, {
-                duration: 0.35,  // Reduced from 1.2s to 0.35s for snappier feel
-                stagger: 0.008,  // Reduced stagger for faster sequence
-                delay: index * 0.02,  // Minimal delay between elements (was 0.1s)
+                duration: 0.35,
+                stagger: 0.008,
+                delay: index * 0.02,
                 scrambleText: {
                   text: "{original}",
                   chars: 'upperCase',
-                  speed: 1.2,  // Increased speed for faster scramble (was 0.85)
+                  speed: 1.2,
                 },
                 onComplete: () => {
-                  // Revert split to reduce DOM size
-                  // @ts-ignore
-                  split.revert();
+                  // Revert split and restore original text to clean up DOM
+                  try {
+                    // @ts-ignore
+                    split.revert();
+                    // Ensure original text is restored
+                    // @ts-ignore
+                    textEl.textContent = originalText;
+                    // Re-apply visibility after revert
+                    // @ts-ignore
+                    textEl.style.opacity = '1';
+                    // @ts-ignore
+                    textEl.style.visibility = 'visible';
+                  } catch (e) {
+                    // Silently handle revert errors
+                  }
                 }
               });
             } catch (err) {
               console.error('Error applying scramble animation:', err);
-              // Text is already visible, so just continue
+              // Restore original text on error
+              // @ts-ignore
+              textEl.textContent = originalText;
             }
           });
         } else {
