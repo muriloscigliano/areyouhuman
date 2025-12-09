@@ -1,5 +1,7 @@
 <template>
   <section class="hero-section" data-name="Hero Section">
+    <!-- Using global starfield from index.astro - no embedded starfield needed -->
+
     <header class="hero-header" data-name="Header">
       <p 
         ref="logoRef"
@@ -86,6 +88,8 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { gsap } from 'gsap';
 import { useContactModal } from '../composables/useContactModal';
+
+// No embedded starfield - using global one from index.astro
 
 const logoRef = ref<HTMLElement | null>(null);
 const logoChars = ref('Are You Human?'.split(''));
@@ -565,6 +569,7 @@ function startAnimations() {
 }
 
 function handleTransitionComplete() {
+  // Global starfield continues from intro - no need to show separate one
   startAnimations();
 }
 
@@ -596,7 +601,7 @@ onUnmounted(() => {
 
 <style scoped>
 .hero-section {
-  background: #000;
+  background: transparent; /* Transparent so global starfield shows through */
   width: 100vw;
   height: 100vh;
   min-height: 100vh;

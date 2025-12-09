@@ -1,5 +1,6 @@
 ---
 import LandingLayout from '../layouts/LandingLayout.astro';
+import GlobalStarfield from '../components/GlobalStarfield.vue';
 import AreYouHuman from '../components/AreYouHuman.vue';
 import HeroSection from '../components/HeroSection.vue';
 import StatementSection from '../components/StatementSection.astro';
@@ -11,6 +12,11 @@ import '../styles/global.css';
 ---
 
 <LandingLayout>
+  <!-- Global Starfield - persists across intro and hero, never resets -->
+  <div id="starfield-container">
+    <GlobalStarfield client:load />
+  </div>
+
   <AreYouHuman client:load />
 
   <main class="landing landing--hidden" id="main-content">
@@ -31,7 +37,7 @@ import '../styles/global.css';
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('main-content');
-    
+
     window.addEventListener('intro-complete', () => {
       if (mainContent) {
         mainContent.classList.remove('landing--hidden');
@@ -41,13 +47,30 @@ import '../styles/global.css';
 </script>
 
 <style>
+  #starfield-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
   .landing {
     min-height: 100vh;
     opacity: 1;
     transition: opacity 0.5s ease;
-    background: #ffffff;
+    position: relative;
+    z-index: 2;
+    background: transparent; /* Transparent for hero section to show starfield */
   }
-  
+
+  /* Only hero section is transparent, other sections have solid backgrounds */
+  .landing > :not(:first-child) {
+    background: #000; /* Solid black for sections after hero */
+  }
+
   .landing--hidden {
     opacity: 0;
     pointer-events: none;
