@@ -268,9 +268,6 @@ Access to the Human-First Leaders Network.`,
 
       // @ts-ignore
       function animateOut(itemEl) {
-        // @ts-ignore
-        const itemIndex = items.indexOf(itemEl);
-
         // Kill all running animations on this item to prevent conflicts
         gsap.killTweensOf(itemEl);
 
@@ -288,23 +285,17 @@ Access to the Human-First Leaders Network.`,
           // @ts-ignore
           const chars = textEl.querySelectorAll('.char');
           gsap.killTweensOf(chars);
-
-          // Force immediate hide with inline styles to prevent overlap
-          // @ts-ignore
-          textEl.style.opacity = '0';
-          // @ts-ignore
-          textEl.style.visibility = 'hidden';
-          // @ts-ignore
-          gsap.set(textEl, { autoAlpha: 0, opacity: 0, visibility: 'hidden' });
         });
 
-        // Hide the entire item (including first item when transitioning away)
+        // Use data attribute to trigger CSS hide (works with !important)
+        // @ts-ignore
+        itemEl.setAttribute('data-hidden', 'true');
+        // Also set inline styles as backup
         // @ts-ignore
         itemEl.style.opacity = '0';
         // @ts-ignore
         itemEl.style.visibility = 'hidden';
-        // @ts-ignore
-        gsap.set(itemEl, { autoAlpha: 0, opacity: 0, visibility: 'hidden' });
+        gsap.set(itemEl, { autoAlpha: 0 });
       }
 
       // @ts-ignore
@@ -326,22 +317,23 @@ Access to the Human-First Leaders Network.`,
         // @ts-ignore
         const originalTexts = texts.map(textEl => textEl.textContent || '');
 
+        // Remove data-hidden attribute to allow visibility
+        // @ts-ignore
+        itemEl.removeAttribute('data-hidden');
+
         // Make item visible immediately - no fade
         // @ts-ignore
         itemEl.style.opacity = '1';
         // @ts-ignore
         itemEl.style.visibility = 'visible';
-        gsap.set(itemEl, { autoAlpha: 1, opacity: 1, visibility: 'visible' });
+        gsap.set(itemEl, { autoAlpha: 1 });
 
         // Make all text visible immediately first
         // @ts-ignore
-        texts.forEach((textEl) => {
-          // @ts-ignore
+        texts.forEach((textEl: any) => {
           textEl.style.opacity = '1';
-          // @ts-ignore
           textEl.style.visibility = 'visible';
-          // @ts-ignore
-          gsap.set(textEl, { autoAlpha: 1, opacity: 1, visibility: 'visible' });
+          gsap.set(textEl, { autoAlpha: 1 });
         });
 
         // Try to load scramble plugins (cached after first load)
@@ -786,6 +778,7 @@ Access to the Human-First Leaders Network.`,
 
 .sticky-features__text-item {
   opacity: 0;
+  visibility: hidden;
   flex-flow: column;
   justify-content: space-between;
   align-items: flex-start;
@@ -798,24 +791,21 @@ Access to the Human-First Leaders Network.`,
   overflow: hidden;
 }
 
+/* First item visible by default - JS will control all visibility after init */
 .sticky-features__text-item:first-of-type {
-  visibility: visible !important;
-  opacity: 1 !important;
-  display: flex !important;
+  visibility: visible;
+  opacity: 1;
 }
 
-.sticky-features__text-item:first-of-type [data-sticky-feature-text] {
-  visibility: visible !important;
-  opacity: 1 !important;
-  display: block !important;
+/* When item has data-hidden attribute, hide it regardless of position */
+.sticky-features__text-item[data-hidden="true"] {
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
-.sticky-features__text-item:first-of-type .sticky-features__header,
-.sticky-features__text-item:first-of-type .sticky-features__number,
-.sticky-features__text-item:first-of-type .sticky-features__heading,
-.sticky-features__text-item:first-of-type .sticky-features__p {
-  visibility: visible !important;
-  opacity: 1 !important;
+.sticky-features__text-item[data-hidden="true"] [data-sticky-feature-text] {
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 .sticky-feaures__col {
