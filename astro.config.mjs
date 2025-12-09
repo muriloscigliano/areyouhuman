@@ -16,7 +16,7 @@ export default defineConfig({
       'import.meta.env.OPENAI_API_KEY': JSON.stringify(env.OPENAI_API_KEY || ''),
     },
     ssr: {
-      noExternal: ['gsap'],
+      noExternal: ['gsap', '@neondatabase/serverless'],
     },
     optimizeDeps: {
       include: ['gsap/ScrollTrigger', 'gsap/ScrambleTextPlugin', 'gsap/SplitText'],
