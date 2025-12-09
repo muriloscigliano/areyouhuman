@@ -2,7 +2,8 @@
 // import PixelCanvas from './PixelCanvas.astro';
 ---
 
-<section class="statement-section" data-name="Statement Section">
+<section class="statement-section" data-name="Statement Section" data-statement-section>
+  <div class="statement-inner">
   <!-- <PixelCanvas
     colors="#808080,#fff,#a0a0a0"
     gap={6}
@@ -85,14 +86,15 @@
       </span>
     </li>
   </ul>
+  </div>
 </section>
 
 <script>
   async function initStatementAnimation() {
-    const section = document.querySelector('.statement-section');
+    const section = document.querySelector('[data-statement-section]');
     if (!section) return;
 
-    // Lazy load GSAP ScrollTrigger
+    // Lazy load GSAP plugins
     const [{ gsap }, { default: ScrollTrigger }] = await Promise.all([
       import('gsap'),
       // @ts-ignore
@@ -109,8 +111,7 @@
       return;
     }
 
-    console.log('StatementSection: Creating animation with', letterElements.length, 'letters');
-
+    // Letter scramble animation
     gsap.to(letterElements, {
       yPercent: 100,
       ease: 'power1.inOut',
@@ -130,7 +131,6 @@
     // Refresh after setup
     setTimeout(() => {
       ScrollTrigger.refresh();
-      console.log('StatementSection: Animation created and ScrollTrigger refreshed');
     }, 100);
   }
 
@@ -146,10 +146,18 @@
 
 <style>
   .statement-section {
-    padding: 50vh 48px;
+    padding: 0;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     background-color: #000;
+  }
+
+  .statement-inner {
+    padding: 50vh 48px;
+    width: 100%;
+    min-height: 100%;
+    background-color: #000;
+    will-change: transform;
   }
 
   .statement-pixel-canvas {

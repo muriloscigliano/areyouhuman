@@ -72,6 +72,8 @@
       // @ts-ignore
       let engine, runner, mouseConstraint, bodies = [], topWall = null;
       let isUpdating = false;
+      let topWallTimeout: ReturnType<typeof setTimeout> | null = null;
+      let isDestroyed = false;
 
       // @ts-ignore
       function clamp(val, min, max) {
@@ -124,10 +126,8 @@
 
         // @ts-ignore
         const objects = container.querySelectorAll(".object");
-        console.log('MatterObjects: Found', objects.length, 'objects');
-        
+
         if (objects.length === 0) {
-          console.error('MatterObjects: No objects found!');
           return;
         }
         
@@ -162,8 +162,6 @@
           const startRotation = (Math.random() - 0.5) * 0.3;
           const startVelocityX = (Math.random() - 0.5) * 2;
           const startVelocityY = Math.random() * 1 + 0.5;
-          
-          console.log(`MatterObjects: Creating body ${index + 1}/${objects.length} at y=${startY}, dimensions: ${objWidth}x${objHeight}`);
 
           const chamferRadius = objHeight / 2;
           const collisionPadding = config.collisionPadding;
@@ -216,16 +214,13 @@
           // Make object visible now that it's initialized
           obj.style.opacity = '1';
         });
-        
-        console.log(`MatterObjects: Successfully initialized ${bodies.length} physics bodies out of ${objects.length} objects`);
 
         // Add top wall after objects have had time to fall into view
-        // Calculate delay based on number of objects to ensure all have time to fall
-        const maxStartY = -100 - (objects.length - 1) * Math.max(100, containerRect.height / objects.length);
-        const fallTime = Math.abs(maxStartY) / 2; // Rough estimate for fall time
-        const topWallDelay = Math.max(5000, fallTime + 2000);
-        
-        setTimeout(() => {
+        // Simplified: 5 seconds base + 100ms per object
+        const topWallDelay = 5000 + objects.length * 100;
+
+        topWallTimeout = setTimeout(() => {
+          if (isDestroyed) return;
           // @ts-ignore
           topWall = Matter.Bodies.rectangle(
             containerRect.width / 2,
@@ -236,7 +231,6 @@
           );
           // @ts-ignore
           Matter.World.add(engine.world, topWall);
-          console.log('MatterObjects: Top wall added after', topWallDelay, 'ms');
         }, topWallDelay);
 
         // @ts-ignore
@@ -362,35 +356,38 @@
         Matter.Runner.run(runner, engine);
 
         function updatePositions() {
-          if (isUpdating) return;
+          if (isUpdating || isDestroyed) return;
           isUpdating = true;
 
           requestAnimationFrame(() => {
+            if (isDestroyed) {
+              isUpdating = false;
+              return;
+            }
             // @ts-ignore
-            bodies.forEach(({ body, element, halfWidth, halfHeight }) => {
+            bodies.forEach((item) => {
+              const { body, element, halfWidth, halfHeight } = item;
               // @ts-ignore
               const isDragging = dragging === body;
               // @ts-ignore
               const isSleeping = body.isSleeping;
               const scale = isDragging ? 1.2 : 1;
-              
+
               const x = body.position.x - halfWidth;
               const y = body.position.y - halfHeight;
-              
-              // Smooth rotation with easing
-              const currentRotation = parseFloat(element.style.transform.match(/rotate\(([^)]+)\)/)?.[1] || '0') || 0;
+
+              // Use stored rotation instead of parsing transform string (performance)
+              // @ts-ignore
+              const lastRotation = item.lastRotation || 0;
               const targetRotation = body.angle;
-              const rotationDiff = targetRotation - currentRotation;
-              const smoothedRotation = currentRotation + rotationDiff * 0.3;
+              const smoothedRotation = lastRotation + (targetRotation - lastRotation) * 0.3;
+              // @ts-ignore
+              item.lastRotation = smoothedRotation;
 
               element.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${smoothedRotation}rad)`;
-              
+
               // Reduce opacity slightly when sleeping for performance hint
-              if (isSleeping && !isDragging) {
-                element.style.opacity = '0.95';
-              } else {
-                element.style.opacity = '1';
-              }
+              element.style.opacity = (isSleeping && !isDragging) ? '0.95' : '1';
             });
 
             isUpdating = false;
@@ -402,15 +399,15 @@
         
         // Add collision events for visual feedback
         // @ts-ignore
-        Matter.Events.on(engine, "collisionStart", function(event) {
+        Matter.Events.on(engine, "collisionStart", function(e) {
           // @ts-ignore
-          event.pairs.forEach(function(pair: any) {
+          e.pairs.forEach(function(pair: any) {
             const { bodyA, bodyB } = pair;
             // @ts-ignore
             const foundA = bodies.find((b) => b.body === bodyA);
             // @ts-ignore
             const foundB = bodies.find((b) => b.body === bodyB);
-            
+
             // @ts-ignore
             if (foundA && foundA.element && dragging !== bodyA) {
               foundA.element.style.transition = "transform 0.1s ease-out";
@@ -421,6 +418,25 @@
             }
           });
         });
+
+        // Return cleanup function
+        return function cleanup() {
+          isDestroyed = true;
+          if (topWallTimeout) {
+            clearTimeout(topWallTimeout);
+          }
+          // @ts-ignore
+          if (runner) {
+            // @ts-ignore
+            Matter.Runner.stop(runner);
+          }
+          // @ts-ignore
+          if (engine) {
+            // @ts-ignore
+            Matter.Engine.clear(engine);
+          }
+          bodies = [];
+        };
       }
 
       const section = document.querySelector('.canvas-matter-container');
@@ -454,6 +470,8 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
+  content-visibility: auto;
+  contain-intrinsic-size: 0 1080px;
 }
 
 /* Heading inside container */

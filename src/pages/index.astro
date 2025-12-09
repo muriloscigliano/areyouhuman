@@ -20,17 +20,23 @@ import '../styles/global.css';
   <AreYouHuman client:load />
 
   <main class="landing landing--hidden" id="main-content">
-    <HeroSection client:load />
+    <!-- Hero wrapper for sticky effect -->
+    <div class="hero-sticky-wrapper">
+      <HeroSection client:load />
+    </div>
 
-    <StatementSection />
+    <!-- Content that scrolls over the hero -->
+    <div class="content-over-hero">
+      <StatementSection />
 
     <WhatWeDoSections client:load />
     
     <FrameworkAuditSection />
-    
+
     <WhatWeBuildSection />
-    
+
     <FooterSection />
+    </div>
   </main>
 </LandingLayout>
 
@@ -63,16 +69,33 @@ import '../styles/global.css';
     transition: opacity 0.5s ease;
     position: relative;
     z-index: 2;
-    background: transparent; /* Transparent for hero section to show starfield */
-  }
-
-  /* Only hero section is transparent, other sections have solid backgrounds */
-  .landing > :not(:first-child) {
-    background: #000; /* Solid black for sections after hero */
+    background: transparent;
   }
 
   .landing--hidden {
     opacity: 0;
     pointer-events: none;
+  }
+
+  /* Hero sticky wrapper - hero stays fixed while content scrolls over */
+  .hero-sticky-wrapper {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    z-index: 1;
+  }
+
+  /* Content that scrolls over the hero */
+  .content-over-hero {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+    overflow: visible;
+  }
+
+  /* All sections after hero have solid black background */
+  .content-over-hero > * {
+    background: #000;
+    overflow: visible;
   }
 </style>

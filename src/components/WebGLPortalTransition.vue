@@ -61,9 +61,8 @@ const vertexShader = `
   }
 `;
 
-// Fragment shader - Expanding portal with glowing edge
-// The outside area is TRANSPARENT so starfield shows through
-// Only renders the glowing edge ring, rest is transparent
+// Fragment shader - Fish-eye/bubble distortion at the expanding edge
+// Creates a lens-like warping effect at the portal boundary
 const fragmentShader = `
   uniform float uProgress;
   uniform vec2 uResolution;
@@ -71,70 +70,88 @@ const fragmentShader = `
 
   varying vec2 vUv;
 
-  // Noise for organic edges
-  float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-  }
-
-  float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-
-    float a = hash(i);
-    float b = hash(i + vec2(1.0, 0.0));
-    float c = hash(i + vec2(0.0, 1.0));
-    float d = hash(i + vec2(1.0, 1.0));
-
-    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
-  }
-
   void main() {
     vec2 center = vec2(0.5, 0.5);
 
     // Adjust for aspect ratio
-    vec2 aspect = vec2(uResolution.x / uResolution.y, 1.0);
+    float aspectRatio = uResolution.x / uResolution.y;
+    vec2 aspect = vec2(aspectRatio, 1.0);
     vec2 uvAspect = (vUv - center) * aspect;
 
     // Distance from center
     float dist = length(uvAspect);
 
     // Max distance to corner
-    float maxDist = length(vec2(0.5, 0.5) * aspect) * 1.3;
+    float maxDist = length(vec2(0.5, 0.5) * aspect) * 1.4;
 
     // Expanding radius
     float radius = uProgress * maxDist;
 
-    // Edge softness for smooth transition
-    float edgeSoftness = 0.08 + uProgress * 0.15;
+    // ========================================
+    // FISH-EYE / BUBBLE DISTORTION
+    // ========================================
 
-    // Add organic noise to the edge
-    float noiseVal = noise(vUv * 12.0 + uTime * 0.3) * 0.06;
-    float edgeDist = dist - radius + noiseVal;
+    // Sphere parameters for lens effect
+    float sphereRadius = radius;
+    float focusFactor = 0.7;
+    float focusRadius = sphereRadius * focusFactor;
 
-    // Edge glow effect - white glow at the expanding edge
-    float glowDist = abs(edgeDist);
-    float glow = smoothstep(edgeSoftness * 2.5, 0.0, glowDist);
-    glow *= (1.0 - uProgress * 0.7) * 0.8; // Fade out glow as transition progresses
+    // Signed distance from sphere edge
+    float sphereSdf = dist - sphereRadius;
+    float focusSdf = dist - focusRadius;
 
-    // Ripple effect at edge
-    float ripple = sin((dist - radius) * 40.0 - uTime * 4.0) * 0.5 + 0.5;
-    ripple *= smoothstep(edgeSoftness * 3.0, 0.0, glowDist);
-    ripple *= (1.0 - uProgress) * 0.4;
+    // Inside the sphere = 1, outside = 0 (smooth transition)
+    float inside = smoothstep(0.02, -0.02, sphereSdf);
 
-    // Combined edge intensity
-    float edgeIntensity = glow + ripple;
+    // Magnification/distortion factor
+    // Creates the fish-eye bulge effect at the edge
+    float magnifierFactor = focusSdf / max(sphereRadius - focusRadius, 0.001);
+    float mFactor = clamp(magnifierFactor * inside, 0.0, 1.0);
+    mFactor = pow(mFactor, 4.0); // Sharp falloff for bubble effect
 
-    // Only render the glowing edge - everything else is transparent
-    // This lets the starfield show through everywhere except the edge glow
-    if (edgeIntensity < 0.01) {
+    // Distortion strength - how much the UV warps
+    float focusStrength = sphereRadius * 0.4;
+    float distortionFactor = mFactor * focusStrength;
+
+    // Direction of distortion (radial from center)
+    vec2 distortionDir = normalize(uvAspect);
+
+    // The actual distorted UV - this creates the fish-eye warp
+    vec2 distortedUv = vUv + distortionDir * distortionFactor / aspect;
+
+    // ========================================
+    // VISUAL EDGE EFFECT
+    // ========================================
+
+    // Edge ring thickness
+    float edgeThickness = 0.12 + uProgress * 0.08;
+    float edgeDist = abs(dist - radius);
+
+    // Distortion ring visibility (shows where the lens effect is)
+    float distortionRing = smoothstep(edgeThickness, 0.0, edgeDist);
+    distortionRing *= (1.0 - uProgress * 0.6); // Fade as it expands
+
+    // Subtle glow at the edge
+    float glow = smoothstep(edgeThickness * 2.0, 0.0, edgeDist);
+    glow *= (1.0 - uProgress * 0.8) * 0.5;
+
+    // Ripple/shimmer effect
+    float ripple = sin((dist - radius) * 60.0 - uTime * 5.0) * 0.5 + 0.5;
+    ripple *= smoothstep(edgeThickness * 1.5, 0.0, edgeDist);
+    ripple *= (1.0 - uProgress) * 0.25;
+
+    // Combined intensity
+    float intensity = distortionRing * 0.3 + glow + ripple;
+
+    // Only render the edge effect - rest is transparent
+    if (intensity < 0.01) {
       discard;
     }
 
-    // White/light glow color
-    vec3 glowColor = vec3(1.0, 1.0, 1.0);
+    // Color: white with subtle blue tint for glass/lens feel
+    vec3 edgeColor = vec3(0.95, 0.97, 1.0);
 
-    gl_FragColor = vec4(glowColor, edgeIntensity);
+    gl_FragColor = vec4(edgeColor, intensity);
   }
 `;
 

@@ -1,5 +1,5 @@
 <template>
-  <section class="hero-section" data-name="Hero Section">
+  <section ref="heroSectionRef" class="hero-section" data-name="Hero Section">
     <!-- Using global starfield from index.astro - no embedded starfield needed -->
 
     <header class="hero-header" data-name="Header">
@@ -89,8 +89,13 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { gsap } from 'gsap';
 import { useContactModal } from '../composables/useContactModal';
 
+// ScrollTrigger for exit animation
+let ScrollTrigger: any = null;
+let heroExitTrigger: any = null;
+
 // No embedded starfield - using global one from index.astro
 
+const heroSectionRef = ref<HTMLElement | null>(null);
 const logoRef = ref<HTMLElement | null>(null);
 const logoChars = ref('Are You Human?'.split(''));
 const logoCharRefs = ref<(HTMLElement | null)[]>([]);
@@ -562,10 +567,92 @@ function startAnimations() {
   animateButtonText();
   animateStay();
   initTitleAnimation();
-  
+
   setTimeout(() => {
     startTitleCycle();
   }, 1200);
+
+  // Initialize hero exit animation after a short delay
+  setTimeout(() => {
+    initHeroExitAnimation();
+  }, 500);
+}
+
+async function initHeroExitAnimation() {
+  if (!heroSectionRef.value) return;
+
+  try {
+    // Load ScrollTrigger
+    if (!ScrollTrigger) {
+      const stModule = await import('gsap/ScrollTrigger.js');
+      ScrollTrigger = stModule.default;
+      gsap.registerPlugin(ScrollTrigger);
+    }
+
+    // Get elements to animate
+    const heroContent = heroSectionRef.value.querySelector('.hero-content');
+    const heroHeader = heroSectionRef.value.querySelector('.hero-header');
+    const heroTagline = heroSectionRef.value.querySelector('.hero-tagline');
+    const starfieldContainer = document.getElementById('starfield-container');
+
+    // Create the exit animation timeline
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: heroSectionRef.value,
+        start: 'top top',
+        end: '+=60%', // Animation completes over 60% of viewport scroll
+        scrub: 1.5, // Smoother, more delayed follow (higher = smoother)
+        invalidateOnRefresh: true,
+      }
+    });
+
+    // Animate hero content: blur + scale down
+    if (heroContent) {
+      tl.to(heroContent, {
+        scale: 0.92,
+        filter: 'blur(10px)',
+        opacity: 0.2,
+        ease: 'none' // Linear for scroll-scrubbed animations
+      }, 0);
+    }
+
+    // Animate header: blur + fade
+    if (heroHeader) {
+      tl.to(heroHeader, {
+        filter: 'blur(6px)',
+        opacity: 0,
+        ease: 'none'
+      }, 0);
+    }
+
+    // Animate tagline: blur + fade
+    if (heroTagline) {
+      tl.to(heroTagline, {
+        filter: 'blur(6px)',
+        opacity: 0,
+        ease: 'none'
+      }, 0);
+    }
+
+    // Fade the starfield slightly
+    if (starfieldContainer) {
+      tl.to(starfieldContainer, {
+        opacity: 0.25,
+        ease: 'none'
+      }, 0);
+    }
+
+    // Store reference for cleanup
+    heroExitTrigger = tl.scrollTrigger;
+
+    // Refresh ScrollTrigger after setup
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 100);
+
+  } catch (error) {
+    console.error('HeroSection: Failed to initialize exit animation', error);
+  }
 }
 
 function handleTransitionComplete() {
@@ -579,11 +666,17 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('intro-complete', handleTransitionComplete);
-  
+
   if (titleCycleInterval) {
     clearInterval(titleCycleInterval);
   }
-  
+
+  // Kill hero exit trigger
+  if (heroExitTrigger) {
+    heroExitTrigger.kill();
+    heroExitTrigger = null;
+  }
+
   scrambleIntervals.forEach((interval) => {
     clearInterval(interval);
   });
@@ -622,6 +715,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   z-index: 10;
+  will-change: filter, opacity;
 }
 
 .logo {
@@ -671,6 +765,8 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: center;
   flex: 1;
+  will-change: transform, filter, opacity;
+  transform-origin: center center;
 }
 
 .hero-title {
@@ -775,6 +871,7 @@ onUnmounted(() => {
   text-align: right;
   z-index: 10;
   font-weight: 200;
+  will-change: filter, opacity;
   /* Paragraph indent effect for right-aligned split text */
 }
 

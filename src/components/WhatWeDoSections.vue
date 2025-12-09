@@ -50,7 +50,7 @@ const { gsap, loadScrollTrigger } = useGsap();
 const sections = [
   {
     sectionName: 'What We Do Section',
-    label: 'What We Do',
+    label: '01 Discovery',
     title: 'The AI studio for human advantage.',
     description: `<span class="bold">Are You Human</span> is the <span class="bold">AI studio for leaders</span> who want to win with AI. Without losing what makes them irreplaceable. We design, integrate, and deploy <span class="bold">human-first AI</span> systems using the worlds best third-party technologies, chosen for impact, not hype.`,
     variant: 'default',
@@ -58,15 +58,15 @@ const sections = [
   },
   {
     sectionName: 'What We Do Section',
-    label: 'Why We Exist',
-    title: 'The smarter AI becomes, the more valuable your humanity - if you design for it.',
-    description: `We believe AI should <span class="bold">amplify human strengths</span>, not automate them away.<br>Every system we build is crafted to`,
+    label: '02 Strategy',
+    title: 'The smarter AI becomes, the more valuable your humanity.',
+    description: `We believe AI should <span class="bold">amplify human strengths</span>, not automate them away.<br>Every system we build is crafted to enhance what makes you irreplaceable.`,
     variant: 'dark',
     italic: false
   },
   {
     sectionName: 'What We Do Section',
-    label: 'Our Principles',
+    label: '03 Design',
     title: 'Designing with the brain in mind.',
     description: `We apply <span class="bold">cognitive psychology</span> to ensure every <span class="bold">AI interaction enhances</span>, not overwhelms, human intelligence.`,
     variant: 'darker',
@@ -321,17 +321,17 @@ onMounted(async () => {
   // Ensure ScrollTrigger is ready
   if (typeof window !== 'undefined') {
     await nextTick();
-    
+
     // Wait longer for DOM and other components to be ready
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Initialize title animation - wait for title section to render
     if (!titleAnimation) {
       setTimeout(() => {
         initTitleAnimation();
       }, 500);
     }
-    
+
     // Verify sections exist before initializing
     if (sectionRefs.value && sectionRefs.value.length > 0) {
       initStickyCards();
@@ -354,7 +354,7 @@ onUnmounted(() => {
     }
   });
   scrollTriggers = [];
-  
+
   if (titleAnimation && titleAnimation.scrollTrigger) {
     titleAnimation.scrollTrigger.kill();
     titleAnimation.kill();
@@ -535,25 +535,25 @@ onUnmounted(() => {
     padding: 48px 24px;
     gap: 48px;
   }
-  
+
   .what-we-do-section {
     min-height: auto;
   }
-  
+
   .what-we-do-header {
     flex-direction: column;
     gap: 24px;
   }
-  
+
   .section-title {
     font-size: 48px;
     width: 100%;
   }
-  
+
   .section-title--italic {
     font-size: 36px;
   }
-  
+
   .section-description {
     font-size: 18px;
     width: 100%;
@@ -562,7 +562,7 @@ onUnmounted(() => {
   .section-title-only {
     font-size: clamp(60px, 15vw, 160px);
   }
-  
+
   .section-title-only li {
     font-size: clamp(60px, 15vw, 160px);
   }

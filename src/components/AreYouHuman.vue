@@ -66,19 +66,11 @@
           :stroke-dashoffset="progressOffset"
         />
       </svg>
-      <!-- Icon inside the ring -->
+      <!-- Icon inside the ring - Solar scanner-outline icon (human verification) -->
       <div class="hold-icon">
         <svg viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7z"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path d="M9 21h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M10 17v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M14 17v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Solar scanner-outline icon from Iconify -->
+          <path fill="currentColor" d="M14 2.75c1.907 0 3.262.002 4.29.14c1.005.135 1.585.389 2.008.812c.487.487.7.865.817 1.538c.132.759.135 1.84.135 3.76a.75.75 0 0 0 1.5 0v-.096c0-1.8 0-3.018-.158-3.922c-.175-1.005-.549-1.656-1.233-2.34c-.749-.75-1.698-1.081-2.87-1.239c-1.14-.153-2.595-.153-4.433-.153H14a.75.75 0 0 0 0 1.5M2 14.25a.75.75 0 0 1 .75.75c0 1.92.003 3.001.135 3.76c.118.673.33 1.051.817 1.538c.423.423 1.003.677 2.009.812c1.028.138 2.382.14 4.289.14a.75.75 0 0 1 0 1.5h-.056c-1.838 0-3.294 0-4.433-.153c-1.172-.158-2.121-.49-2.87-1.238c-.684-.685-1.058-1.336-1.233-2.341c-.158-.904-.158-2.123-.158-3.922V15a.75.75 0 0 1 .75-.75m20 0a.75.75 0 0 1 .75.75v.096c0 1.8 0 3.018-.158 3.922c-.175 1.005-.549 1.656-1.233 2.34c-.749.75-1.698 1.081-2.87 1.239c-1.14.153-2.595.153-4.433.153H14a.75.75 0 0 1 0-1.5c1.907 0 3.262-.002 4.29-.14c1.005-.135 1.585-.389 2.008-.812c.487-.487.7-.865.817-1.538c.132-.759.135-1.84.135-3.76a.75.75 0 0 1 .75-.75m-12.056-13H10a.75.75 0 0 1 0 1.5c-1.907 0-3.261.002-4.29.14c-1.005.135-1.585.389-2.008.812c-.487.487-.7.865-.817 1.538c-.132.759-.135 1.84-.135 3.76a.75.75 0 1 1-1.5 0v-.096c0-1.8 0-3.018.158-3.922c.175-1.005.549-1.656 1.233-2.34c.749-.75 1.698-1.081 2.87-1.239c1.14-.153 2.595-.153 4.433-.153M2 11.25a.75.75 0 0 0 0 1.5h20a.75.75 0 0 0 0-1.5z"/>
         </svg>
       </div>
     </div>
@@ -472,49 +464,53 @@ function animateColorInversion(reverse = false) {
     gsap.killTweensOf(holdTextCharRefs.value);
 
     // Title chars - blur out heavily (opacity stays 1, blur makes invisible)
+    // SLOWER: 1.0s -> 1.8s
     tl.to(charRefs.value, {
       filter: 'blur(60px)',
       scale: 0.9,
       y: -20,
-      duration: 1.0,
-      ease: 'power2.in',
+      duration: 1.8,
+      ease: 'power2.inOut',
       stagger: {
-        each: 0.02,
+        each: 0.03,
         from: 'center'
       }
     }, 0);
 
     // Hold text chars - blur out
+    // SLOWER: 0.8s -> 1.4s
     tl.to(holdTextCharRefs.value, {
       filter: 'blur(40px)',
       y: -15,
       scale: 0.95,
-      duration: 0.8,
-      ease: 'power2.in',
+      duration: 1.4,
+      ease: 'power2.inOut',
       stagger: {
-        each: 0.01,
+        each: 0.015,
         from: 'center'
       }
     }, 0);
 
     // Icon - fade and blur slightly (this one can use opacity)
+    // SLOWER: 0.6s -> 1.2s
     tl.to(holdIconRef.value, {
       opacity: 0.3,
       filter: 'blur(10px)',
-      duration: 0.6,
-      ease: 'power2.in'
+      duration: 1.2,
+      ease: 'power2.inOut'
     }, 0);
 
     // Change ring and icon colors to white
+    // SLOWER: 0.6s -> 1.2s
     tl.to('.progress-ring-bg, .progress-ring-progress', {
       stroke: '#ffffff',
-      duration: 0.6,
+      duration: 1.2,
       ease: 'power2.inOut'
     }, 0);
 
     tl.to('.hold-icon', {
       color: '#ffffff',
-      duration: 0.6,
+      duration: 1.2,
       ease: 'power2.inOut'
     }, 0);
   } else {

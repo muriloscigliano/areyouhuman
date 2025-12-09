@@ -1,957 +1,507 @@
 ---
-const frameworkData = {
-  steps: [
-    {
-      number: '01',
-      label: 'Discover',
-      title: 'Humanity Audit',
-      description: `Benchmark your Human Advantage Score (0–100).
+const steps = [
+  {
+    number: '01',
+    label: 'Discover',
+    title: 'Humanity Audit',
+    description: `Benchmark your Human Advantage Score (0–100).
 Compare against human-first leaders in your industry.
 Identify highest-risk areas for human value loss.`,
-      image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b847956497fe87b81b7025_Iced%20Matcha%20Latte.avif'
-    },
-    {
-      number: '02',
-      label: 'Design',
-      title: 'Design for humanity',
-      description: `Selecting the best-fit third-party AI tools
+    image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b847956497fe87b81b7025_Iced%20Matcha%20Latte.avif'
+  },
+  {
+    number: '02',
+    label: 'Design',
+    title: 'Design for humanity',
+    description: `Selecting the best-fit third-party AI tools
 Designing human-first experiences with cognitive and emotional design
 Transforming intelligence into meaningful human advantage`,
-      image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b847956468e74ee70e259e_Matcha%20Whisking%20Art.avif'
-    },
-    {
-      number: '03',
-      label: 'Deploy',
-      title: 'Human-Centered Deployment',
-      description: `Staging releases with deliberate human checkpoints
+    image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b847956468e74ee70e259e_Matcha%20Whisking%20Art.avif'
+  },
+  {
+    number: '03',
+    label: 'Deploy',
+    title: 'Human-Centered Deployment',
+    description: `Staging releases with deliberate human checkpoints
 Empowering teams to build trust and confidence in AI
 Driving adoption through clarity, training, and purpose`,
-      image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b84795dd49cb5a5f2a2640_Steaming%20Orange%20Beverage.avif'
-    },
-    {
-      number: '04',
-      label: 'Defend',
-      title: 'Humanity Safeguard',
-      description: `Quarterly "humanity health checks."
+    image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b84795dd49cb5a5f2a2640_Steaming%20Orange%20Beverage.avif'
+  },
+  {
+    number: '04',
+    label: 'Defend',
+    title: 'Humanity Safeguard',
+    description: `Quarterly "humanity health checks."
 AI evolution tracking and rebalancing.
 Access to the Human-First Leaders Network.`,
-      image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b8479522525b321756af2e_Hands%20Holding%20Matcha%20Cup.avif'
-    }
-  ]
-};
+    image: 'https://cdn.prod.website-files.com/68b83c9a431270d8deb1e6b1/68b8479522525b321756af2e_Hands%20Holding%20Matcha%20Cup.avif'
+  }
+];
 ---
 
-<!-- <div class="framework-container"> -->
-  <!-- Sticky Scroll Section -->
-  <div data-sticky-feature-wrap class="sticky-features__wrap">
-    <div class="sticky-features__scroll">
-      <div class="sticky-features__container">
-        <!-- Visual Column -->
-        <div class="sticky-feaures__col is--img">
-          <div class="sticky-features__img-list">
-            {frameworkData.steps.map((step, index) => (
-              <div
-                data-sticky-feature-visual-wrap
-                class="sticky-features__img-item"
-              >
-                <img src={step.image} alt={step.title} class="sticky-features__img" />
-              </div>
-            ))}
+<div data-framework-section class="framework-section">
+  <div class="framework-container">
+    <!-- Image Column -->
+    <div class="framework-col framework-col--img">
+      <div class="framework-images">
+        {steps.map((step) => (
+          <div data-framework-img class="framework-img-item">
+            <img src={step.image} alt={step.title} />
           </div>
-          <div class="sticky-features__progress-w">
-            <div class="sticky-features__progress-bar" data-sticky-feature-progress></div>
-          </div>
-        </div>
+        ))}
+      </div>
+      <div class="framework-progress">
+        <div data-framework-progress class="framework-progress-bar"></div>
+      </div>
+    </div>
 
-        <!-- Text Column -->
-        <div class="sticky-feaures__col">
-          <div class="sticky-features__text-collection">
-            <div class="sticky-features__text-list">
-              {frameworkData.steps.map((step, index) => (
-                <div
-                  data-sticky-feature-item
-                  class="sticky-features__text-item"
-                >
-                  <div data-sticky-feature-text class="sticky-features__header">
-                    <p data-sticky-feature-text class="sticky-features__number">{step.number}</p>
-                    <p data-sticky-feature-text class="sticky-features__label">{step.label}</p>
-                  </div>
-                  <h2 data-sticky-feature-text class="sticky-features__heading">{step.title}</h2>
-                  <p data-sticky-feature-text class="sticky-features__p">{step.description}</p>
-                </div>
-              ))}
+    <!-- Text Column -->
+    <div class="framework-col framework-col--text">
+      <div class="framework-text-list">
+        {steps.map((step) => (
+          <div data-framework-item class="framework-item">
+            <div class="framework-header">
+              <p class="framework-number">{step.number}</p>
+              <p class="framework-label">{step.label}</p>
             </div>
+            <h2 class="framework-title">{step.title}</h2>
+            <p class="framework-description">{step.description}</p>
           </div>
-        </div>
+        ))}
       </div>
     </div>
   </div>
-<!-- </div> -->
+</div>
 
 <script>
   import { gsap } from 'gsap';
 
-  async function loadScrollTrigger() {
-    if (typeof window === 'undefined') return null;
-    
+  // Plugin cache
+  let ScrollTrigger: any = null;
+  let ScrambleTextPlugin: any = null;
+  let SplitText: any = null;
+
+  // Store original text content and split instances
+  const originalTexts = new Map<Element, string>();
+  const splitInstances = new Map<Element, any>();
+
+  async function loadPlugins() {
+    if (typeof window === 'undefined') return false;
+
     try {
-      // @ts-ignore
-      const module = await import('gsap/ScrollTrigger.js');
-      const ScrollTrigger = module.default;
-      gsap.registerPlugin(ScrollTrigger);
-      return ScrollTrigger;
+      if (!ScrollTrigger) {
+        const stModule = await import('gsap/ScrollTrigger.js');
+        ScrollTrigger = stModule.default;
+        gsap.registerPlugin(ScrollTrigger);
+      }
+
+      if (!ScrambleTextPlugin) {
+        try {
+          const scrambleModule = await import('gsap/ScrambleTextPlugin');
+          ScrambleTextPlugin = scrambleModule.default || scrambleModule.ScrambleTextPlugin;
+          if (ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
+        } catch (e) { /* Optional */ }
+      }
+
+      if (!SplitText) {
+        try {
+          const splitModule = await import('gsap/SplitText');
+          SplitText = splitModule.default || splitModule.SplitText;
+          if (SplitText) gsap.registerPlugin(SplitText);
+        } catch (e) { /* Optional */ }
+      }
+
+      return true;
     } catch (error) {
-      console.error('Failed to load ScrollTrigger', error);
-      return null;
+      console.error('FrameworkAuditSection: Failed to load plugins', error);
+      return false;
     }
   }
 
-  // Cache plugins globally to avoid reloading on every transition
-  let pluginsCache: { ScrambleTextPlugin: any, SplitText: any } | null = null;
+  function animateTextIn(item: Element) {
+    const elements = item.querySelectorAll('.framework-number, .framework-label, .framework-title, .framework-description');
 
-  async function loadScramblePlugins() {
-    if (typeof window === 'undefined') return { ScrambleTextPlugin: null, SplitText: null };
+    // Show the item container
+    gsap.set(item, { autoAlpha: 1 });
 
-    // Return cached plugins if available
-    if (pluginsCache) {
-      return pluginsCache;
-    }
-
-    try {
-      // Load GSAP plugins - import without .js extension (same pattern as ScrollTrigger)
-      let ScrambleTextPlugin = null;
-      let SplitText = null;
-
-      try {
-        // Import without .js extension - Vite will resolve it correctly
-        // @ts-ignore
-        const scrambleModule = await import('gsap/ScrambleTextPlugin');
-        ScrambleTextPlugin = scrambleModule.default || scrambleModule.ScrambleTextPlugin || scrambleModule;
-        if (ScrambleTextPlugin) {
-          console.log('FrameworkAuditSection: ScrambleTextPlugin loaded');
-        }
-      } catch (e) {
-        console.error('FrameworkAuditSection: Failed to load ScrambleTextPlugin', e);
-      }
-
-      try {
-        // Import without .js extension - Vite will resolve it correctly
-        // @ts-ignore
-        const splitModule = await import('gsap/SplitText');
-        SplitText = splitModule.default || splitModule.SplitText || splitModule;
-        if (SplitText) {
-          console.log('FrameworkAuditSection: SplitText loaded');
-        }
-      } catch (e) {
-        console.error('FrameworkAuditSection: Failed to load SplitText', e);
-      }
-
-      if (ScrambleTextPlugin && SplitText) {
-        gsap.registerPlugin(ScrambleTextPlugin, SplitText);
-        console.log('FrameworkAuditSection: Plugins registered successfully');
-        pluginsCache = { ScrambleTextPlugin, SplitText };
-        return pluginsCache;
-      }
-
-      console.warn('FrameworkAuditSection: ScrambleTextPlugin or SplitText not found');
-      return { ScrambleTextPlugin: null, SplitText: null };
-    } catch (error) {
-      console.error('Failed to load ScrambleTextPlugin or SplitText', error);
-      return { ScrambleTextPlugin: null, SplitText: null };
-    }
-  }
-
-  // @ts-ignore
-  function initStickyFeatures(root) {
-    // @ts-ignore
-    const wraps = Array.from((root || document).querySelectorAll("[data-sticky-feature-wrap]"));
-
-    if (!wraps.length) return;
-
-    wraps.forEach((w) => {
-      // @ts-ignore
-      const visualWraps = Array.from(w.querySelectorAll("[data-sticky-feature-visual-wrap]"));
-      // @ts-ignore
-      const items = Array.from(w.querySelectorAll("[data-sticky-feature-item]"));
-      // @ts-ignore
-      const progressBar = w.querySelector("[data-sticky-feature-progress]");
-
-      if (visualWraps.length !== items.length) {
-        console.warn("[initStickyFeatures] visualWraps and items count do not match:", {
-          visualWraps: visualWraps.length,
-          items: items.length,
-          wrap: w
-        });
-      }
-
-      const count = Math.min(visualWraps.length, items.length);
-      if (count < 1) return;
-
-      const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const DURATION = rm ? 0.01 : 0.75;
-      const EASE = "power4.inOut";
-      const SCROLL_AMOUNT = 0.9;
-
-      // @ts-ignore
-      const getTexts = (el) => Array.from(el.querySelectorAll("[data-sticky-feature-text]"));
-
-      if (visualWraps[0]) gsap.set(visualWraps[0], { clipPath: "inset(0% round 12px)" });
-
-      // Initialize first item - make it visible immediately (CSS handles this too)
-      // @ts-ignore
-      const firstItem = items[0];
-      if (firstItem) {
-        // Force first item and all its content to be visible
-        // @ts-ignore
-        gsap.set(firstItem, {
-          autoAlpha: 1,
-          opacity: 1,
-          visibility: 'visible',
-          y: 0
-        });
-
-        // Ensure all text elements in first item are visible
-        const firstTexts = getTexts(firstItem);
-        firstTexts.forEach((textEl) => {
-          // @ts-ignore
-          gsap.set(textEl, {
-            autoAlpha: 1,
-            opacity: 1,
-            visibility: 'visible',
-            y: 0
-          });
-        });
-
-        console.log('FrameworkAuditSection: First item initialized with', firstTexts.length, 'text elements');
-      }
-
-      // @ts-ignore
-      function transition(fromIndex, toIndex) {
-        if (fromIndex === toIndex) return;
-
-        console.log(`FrameworkAuditSection: Transition from ${fromIndex} to ${toIndex}`);
-
-        const tl = gsap.timeline({ defaults: { overwrite: "auto" } });
-
-        if (fromIndex < toIndex) {
-          // Moving forward: reveal new visual
-          // @ts-ignore
-          tl.to(visualWraps[toIndex], {
-            clipPath: "inset(0% round 12px)",
-            duration: DURATION,
-            ease: EASE
-          }, 0);
+    // If we have SplitText and ScrambleText, use the proper scramble effect
+    if (SplitText && ScrambleTextPlugin) {
+      elements.forEach((el, i) => {
+        // Restore original text first if we have it stored
+        if (originalTexts.has(el)) {
+          el.textContent = originalTexts.get(el)!;
         } else {
-          // Moving backward: hide current visual
-          // @ts-ignore
-          tl.to(visualWraps[fromIndex], {
-            clipPath: "inset(50% round 12px)",
-            duration: DURATION,
-            ease: EASE
-          }, 0);
+          // Store original text on first run
+          originalTexts.set(el, el.textContent || '');
         }
 
-        // Animate out the old item (hide its text and container)
-        animateOut(items[fromIndex]);
-
-        // Animate in the new item
-        // @ts-ignore
-        animateIn(items[toIndex]).catch(err => {
-          console.error('Error in animateIn:', err);
-        });
-      }
-
-      // @ts-ignore
-      function updateCurrentIndex(newIndex) {
-        // No-op: localCurrentIndex in ScrollTrigger handles state
-      }
-
-      // @ts-ignore
-      function animateOut(itemEl) {
-        // Kill all running animations on this item to prevent conflicts
-        gsap.killTweensOf(itemEl);
-
-        // Hide text elements but keep item container structure
-        const texts = getTexts(itemEl);
-        // @ts-ignore
-        texts.forEach((textEl) => {
-          // Kill any running animations (including scramble)
-          gsap.killTweensOf(textEl);
-
-          // Also kill animations on child elements (from SplitText)
-          // @ts-ignore
-          const words = textEl.querySelectorAll('.word');
-          gsap.killTweensOf(words);
-          // @ts-ignore
-          const chars = textEl.querySelectorAll('.char');
-          gsap.killTweensOf(chars);
-        });
-
-        // Use data attribute to trigger CSS hide (works with !important)
-        // @ts-ignore
-        itemEl.setAttribute('data-hidden', 'true');
-        // Also set inline styles as backup
-        // @ts-ignore
-        itemEl.style.opacity = '0';
-        // @ts-ignore
-        itemEl.style.visibility = 'hidden';
-        gsap.set(itemEl, { autoAlpha: 0 });
-      }
-
-      // @ts-ignore
-      async function animateIn(itemEl) {
-        const texts = getTexts(itemEl);
-
-        // Kill any existing animations first
-        texts.forEach((textEl) => {
-          gsap.killTweensOf(textEl);
-          // @ts-ignore
-          const words = textEl.querySelectorAll('.word');
-          gsap.killTweensOf(words);
-          // @ts-ignore
-          const chars = textEl.querySelectorAll('.char');
-          gsap.killTweensOf(chars);
-        });
-
-        // Store original text content before any manipulation
-        // @ts-ignore
-        const originalTexts = texts.map(textEl => textEl.textContent || '');
-
-        // Remove data-hidden attribute to allow visibility
-        // @ts-ignore
-        itemEl.removeAttribute('data-hidden');
-
-        // Make item visible immediately - no fade
-        // @ts-ignore
-        itemEl.style.opacity = '1';
-        // @ts-ignore
-        itemEl.style.visibility = 'visible';
-        gsap.set(itemEl, { autoAlpha: 1 });
-
-        // Make all text visible immediately first
-        // @ts-ignore
-        texts.forEach((textEl: any) => {
-          textEl.style.opacity = '1';
-          textEl.style.visibility = 'visible';
-          gsap.set(textEl, { autoAlpha: 1 });
-        });
-
-        // Try to load scramble plugins (cached after first load)
-        const { ScrambleTextPlugin, SplitText } = await loadScramblePlugins();
-
-        if (ScrambleTextPlugin && SplitText) {
-          // Use scramble text animation for each text element
-          texts.forEach((textEl, index) => {
-            const originalText = originalTexts[index];
-            if (!originalText.trim()) return;
-
-            try {
-              // Split text into words and chars
-              // @ts-ignore
-              const split = new SplitText(textEl, {
-                type: "words, chars",
-                wordsClass: "word",
-                charsClass: "char"
-              });
-
-              // Animate with scramble effect only - faster and snappier
-              // @ts-ignore
-              gsap.to(split.words, {
-                duration: 0.35,
-                stagger: 0.008,
-                delay: index * 0.02,
-                scrambleText: {
-                  text: "{original}",
-                  chars: 'upperCase',
-                  speed: 1.2,
-                },
-                onComplete: () => {
-                  // Revert split and restore original text to clean up DOM
-                  try {
-                    // @ts-ignore
-                    split.revert();
-                    // Ensure original text is restored
-                    // @ts-ignore
-                    textEl.textContent = originalText;
-                    // Re-apply visibility after revert
-                    // @ts-ignore
-                    textEl.style.opacity = '1';
-                    // @ts-ignore
-                    textEl.style.visibility = 'visible';
-                  } catch (e) {
-                    // Silently handle revert errors
-                  }
-                }
-              });
-            } catch (err) {
-              console.error('Error applying scramble animation:', err);
-              // Restore original text on error
-              // @ts-ignore
-              textEl.textContent = originalText;
-            }
-          });
-        } else {
-          // Fallback: text is already visible, no animation needed
-          console.log('FrameworkAuditSection: ScrambleTextPlugin not available, showing text without animation');
-        }
-      }
-
-      // Steps calculation: with 4 items (indices 0-3), we need 3 transitions
-      // But we want to be able to reach index 3, so steps should allow idx up to count-1
-      const steps = count - 1;
-
-      loadScrollTrigger().then(ScrollTrigger => {
-        if (!ScrollTrigger) {
-          console.error('ScrollTrigger not available');
-          return;
+        // Revert any existing split
+        if (splitInstances.has(el)) {
+          splitInstances.get(el).revert();
+          splitInstances.delete(el);
         }
 
-        // Force layout recalculation before creating ScrollTrigger
-        // @ts-ignore
-        w.getBoundingClientRect();
-        // @ts-ignore
-        if (w.offsetHeight === 0) {
-          console.warn('FrameworkAuditSection: Container has zero height, waiting for layout...');
-          // @ts-ignore
-          requestAnimationFrame(() => {
-            // @ts-ignore
-            requestAnimationFrame(() => {
-              createScrollTrigger(ScrollTrigger, w, steps, count, progressBar, transition, updateCurrentIndex, SCROLL_AMOUNT);
-            });
-          });
-          return;
-        }
+        // Create new split
+        const split = new SplitText(el, {
+          type: 'words, chars',
+          wordsClass: 'word',
+          charsClass: 'char'
+        });
+        splitInstances.set(el, split);
 
-        // Use requestAnimationFrame to ensure layout is painted before creating ScrollTrigger
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            createScrollTrigger(ScrollTrigger, w, steps, count, progressBar, transition, updateCurrentIndex, SCROLL_AMOUNT);
-          });
+        // Animate with scramble - using {original} to reveal to original text
+        gsap.to(split.words, {
+          duration: 1.0,
+          delay: i * 0.08,
+          stagger: 0.015,
+          scrambleText: {
+            text: '{original}',
+            chars: 'upperCase',
+            speed: 0.8
+          },
+          onComplete: () => {
+            // Revert split after animation to clean up DOM
+            split.revert();
+            splitInstances.delete(el);
+          }
         });
       });
+    } else {
+      // Fallback: simple fade
+      gsap.fromTo(elements,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.4, stagger: 0.08 }
+      );
+    }
+  }
 
-      // @ts-ignore
-      function createScrollTrigger(ScrollTrigger, w, steps, count, progressBar, transitionFn, updateIndexFn, SCROLL_AMOUNT) {
-        // Force another layout recalculation right before creating trigger
-        // @ts-ignore
-        w.getBoundingClientRect();
-        
-        let localCurrentIndex = 0;
-        
-        const trigger = ScrollTrigger.create({
-          // @ts-ignore
-          trigger: w,
-          start: "top top",
-          end: () => `+=${steps * 100}%`,
-          pin: true,
-          scrub: true,
-          invalidateOnRefresh: true,
-          onUpdate: (self: any) => {
-            const p = Math.min(self.progress, SCROLL_AMOUNT) / SCROLL_AMOUNT;
-            let idx = Math.floor(p * steps + 1e-6);
-            idx = Math.max(0, Math.min(steps, idx));
+  function animateTextOut(item: Element) {
+    const elements = item.querySelectorAll('.framework-number, .framework-label, .framework-title, .framework-description');
 
-            if (progressBar) {
-              gsap.to(progressBar, {
-                scaleX: p,
-                ease: "none"
-              });
-            }
+    // Kill any running animations
+    gsap.killTweensOf(item);
+    elements.forEach(el => {
+      gsap.killTweensOf(el);
+      // Kill animations on words/chars too
+      el.querySelectorAll('.word, .char').forEach(w => gsap.killTweensOf(w));
 
-            if (idx !== localCurrentIndex) {
-              transitionFn(localCurrentIndex, idx);
-              localCurrentIndex = idx;
-              updateIndexFn(idx);
-            }
-          }
-        });
-
-        // Immediately refresh this trigger and globally
-        ScrollTrigger.refresh();
-
-        // Store trigger reference for later refresh
-        // @ts-ignore
-        if (typeof window !== 'undefined') {
-          // @ts-ignore
-          window.__frameworkAuditTrigger = trigger;
-        }
-
-        // CRITICAL FIX: Force first item to be visible AFTER ScrollTrigger is created
-        // This ensures it overrides any GSAP inline styles
-        setTimeout(() => {
-          // @ts-ignore
-          const items = Array.from(w.querySelectorAll("[data-sticky-feature-item]"));
-          // @ts-ignore
-          const firstItem = items[0];
-          if (firstItem) {
-            // Force visibility with inline styles that override GSAP
-            // @ts-ignore
-            firstItem.style.opacity = '1';
-            // @ts-ignore
-            firstItem.style.visibility = 'visible';
-
-            // Force all text elements visible
-            // @ts-ignore
-            const textElements = firstItem.querySelectorAll('[data-sticky-feature-text]');
-            // @ts-ignore
-            textElements.forEach((el) => {
-              // @ts-ignore
-              el.style.opacity = '1';
-              // @ts-ignore
-              el.style.visibility = 'visible';
-              // @ts-ignore
-              el.style.transform = 'translateY(0px)';
-            });
-
-            console.log('FrameworkAuditSection: Forced first item visible with inline styles');
-          }
-        }, 100);
+      // Revert any split instances
+      if (splitInstances.has(el)) {
+        splitInstances.get(el).revert();
+        splitInstances.delete(el);
       }
     });
+
+    // Hide immediately
+    gsap.set(item, { autoAlpha: 0 });
   }
 
-  // Initialize when DOM is ready
-  if (typeof window !== 'undefined') {
-    // @ts-ignore
-    let scrollTriggerInstance = null;
-    // @ts-ignore
-    let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
-    
-    const refreshScrollTrigger = () => {
-      // @ts-ignore
-      if (scrollTriggerInstance && typeof scrollTriggerInstance.refresh === 'function') {
-        // @ts-ignore
-        scrollTriggerInstance.refresh();
+  async function init() {
+    const section = document.querySelector('[data-framework-section]');
+    if (!section) return;
+
+    // Wait for intro animation
+    const mainContent = document.getElementById('main-content');
+    if (mainContent?.classList.contains('landing--hidden')) {
+      await new Promise<void>(resolve => {
+        window.addEventListener('intro-complete', () => setTimeout(resolve, 500), { once: true });
+      });
+    }
+
+    // Load plugins
+    const loaded = await loadPlugins();
+    if (!loaded || !ScrollTrigger) return;
+
+    // Get elements
+    const images = section.querySelectorAll('[data-framework-img]');
+    const items = section.querySelectorAll('[data-framework-item]');
+    const progressBar = section.querySelector('[data-framework-progress]');
+
+    if (images.length !== items.length || items.length === 0) return;
+
+    const count = items.length;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const DURATION = reducedMotion ? 0.01 : 0.6;
+
+    // Store all original text content first (before any animations)
+    items.forEach(item => {
+      const elements = item.querySelectorAll('.framework-number, .framework-label, .framework-title, .framework-description');
+      elements.forEach(el => {
+        if (!originalTexts.has(el)) {
+          originalTexts.set(el, el.textContent || '');
+        }
+      });
+    });
+
+    // Set initial states - first item visible, rest hidden
+    gsap.set(images[0], { clipPath: 'inset(0% round 12px)' });
+    gsap.set(items[0], { autoAlpha: 1 });
+
+    // Set other items to hidden state
+    for (let i = 1; i < count; i++) {
+      gsap.set(items[i], { autoAlpha: 0 });
+    }
+
+    let currentIndex = 0;
+
+    function transition(from: number, to: number) {
+      if (from === to) return;
+
+      // Image transition
+      if (from < to) {
+        gsap.to(images[to], { clipPath: 'inset(0% round 12px)', duration: DURATION, ease: 'power3.inOut' });
+      } else {
+        gsap.to(images[from], { clipPath: 'inset(50% round 12px)', duration: DURATION, ease: 'power3.inOut' });
       }
-    };
-    
-    const init = async () => {
-      scrollTriggerInstance = await loadScrollTrigger();
-      if (!scrollTriggerInstance) return;
 
-      // Pre-load scramble plugins to eliminate delay on first transition
-      await loadScramblePlugins();
+      // Text transition
+      animateTextOut(items[from]);
+      animateTextIn(items[to]);
+    }
 
-      // CRITICAL: Wait for intro animation to complete before initializing
-      // The main content is hidden with opacity: 0 until intro-complete event
-      await new Promise<void>((resolve) => {
-        const checkIntroComplete = () => {
-          const mainContent = document.getElementById('main-content');
-          if (mainContent && !mainContent.classList.contains('landing--hidden')) {
-            // Intro is complete
-            resolve();
-          } else {
-            // Wait for intro-complete event
-            window.addEventListener('intro-complete', () => {
-              // Give it a moment for opacity transition to complete
-              setTimeout(() => resolve(), 500);
-            }, { once: true });
-          }
-        };
-        checkIntroComplete();
-      });
+    // Create ScrollTrigger
+    ScrollTrigger.create({
+      trigger: section,
+      start: 'top top',
+      end: `+=${(count - 1) * 100}%`,
+      pin: true,
+      scrub: true,
+      onUpdate: (self: any) => {
+        const progress = Math.min(self.progress, 0.9) / 0.9;
+        const idx = Math.min(Math.floor(progress * (count - 1) + 0.001), count - 1);
 
-      // Wait for images to load
-      await new Promise<void>((resolve) => {
-        // @ts-ignore
-        const images = Array.from(document.querySelectorAll('.sticky-features__img'));
-        let loaded = 0;
-        const total = images.length;
-
-        if (total === 0) {
-          resolve();
-          return;
+        // Update progress bar
+        if (progressBar) {
+          gsap.to(progressBar, { scaleX: progress, duration: 0.1 });
         }
 
-        images.forEach((img) => {
-          // @ts-ignore
-          if (img.complete) {
-            loaded++;
-            if (loaded === total) resolve();
-          } else {
-            img.addEventListener('load', () => {
-              loaded++;
-              if (loaded === total) resolve();
-            });
-            img.addEventListener('error', () => {
-              loaded++;
-              if (loaded === total) resolve();
-            });
-          }
-        });
-      });
-
-      // Wait for layout to be stable - check if container has proper dimensions
-      await new Promise<void>((resolve) => {
-        // @ts-ignore
-        const wrap = document.querySelector('[data-sticky-feature-wrap]');
-        if (!wrap) {
-          setTimeout(() => resolve(), 2000);
-          return;
+        // Trigger transition
+        if (idx !== currentIndex) {
+          transition(currentIndex, idx);
+          currentIndex = idx;
         }
+      }
+    });
 
-        let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max
-        const checkLayout = () => {
-          attempts++;
-          // @ts-ignore
-          const rect = wrap.getBoundingClientRect();
+    // Refresh after setup
+    setTimeout(() => ScrollTrigger.refresh(), 500);
+  }
 
-          // Check if dimensions are valid and stable
-          if (rect.height > 0 && rect.width > 0) {
-            // Layout is ready
-            resolve();
-          } else if (attempts >= maxAttempts) {
-            console.warn('FrameworkAuditSection: Layout check timeout');
-            resolve();
-          } else {
-            // Check again
-            setTimeout(checkLayout, 100);
-          }
-        };
-
-        checkLayout();
-      });
-
-      // Use requestAnimationFrame to ensure layout is painted before initialization
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // @ts-ignore
-            initStickyFeatures();
-            resolve();
-          });
-        });
-      });
-
-      // Refresh ScrollTrigger after initialization with delay to coordinate with other components
-      // WhatWeDoSections uses 1000ms + 800ms delays, so we wait longer
-      setTimeout(() => {
-        refreshScrollTrigger();
-        // Also refresh all ScrollTriggers globally to prevent conflicts
-        // @ts-ignore
-        if (scrollTriggerInstance && typeof scrollTriggerInstance.refresh === 'function') {
-          // @ts-ignore
-          scrollTriggerInstance.refresh();
-        }
-        // Additional global refresh to ensure all triggers are updated
-        // @ts-ignore
-        if (typeof ScrollTrigger !== 'undefined' && ScrollTrigger.refresh) {
-          // @ts-ignore
-          ScrollTrigger.refresh();
-        }
-      }, 2500);
-    };
-
-    // Handle initial load
+  // Initialize
+  if (typeof window !== 'undefined') {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', init);
     } else {
       init();
     }
-    
-    // Coordinated resize handler - use a longer debounce to avoid conflicts
+
+    // Handle resize
+    let resizeTimer: ReturnType<typeof setTimeout>;
     window.addEventListener('resize', () => {
-      // @ts-ignore
-      clearTimeout(resizeTimeout);
-      // @ts-ignore
-      resizeTimeout = setTimeout(() => {
-        refreshScrollTrigger();
-      }, 300);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => ScrollTrigger?.refresh(), 200);
     });
   }
 </script>
 
 <style>
-/* .framework-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  background: #000;
-  position: relative;
-  margin-top: 0;
-  margin-bottom: 0;
-} */
-
-.sticky-features__wrap {
-  width: 100%;
-  padding: 72px;
-  background: #000;
-  position: relative;
-  display: block;
-  min-height: 100vh;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.sticky-features__scroll {
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  display: flex;
-}
-
-.sticky-features__container {
-  gap: 18px;
-  justify-content: center;
-  align-items: stretch;
-  width: 100%;
-  max-width: 1600px;
-  margin-left: auto;
-  margin-right: auto;
-  display: flex;
-  height: 900px;
-}
-
-.sticky-feaures__col.is--img {
-  overflow: hidden;
-  border-radius: 12px;
-  background: #0f0f0f;
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  padding: 0;
-  z-index: 1;
-}
-
-.sticky-features__progress-w {
-  position: absolute;
-  left: 0em;
-  right: 0em;
-  bottom: 0em;
-  height: 0.25em;
-  background-color: rgba(255, 255, 255, 0.15);
-  z-index: 10;
-}
-
-.sticky-features__progress-bar {
-  width: 100%;
-  height: 100%;
-  background-color: rgb(255, 255, 255);
-  transform: scale3d(0, 1, 1);
-  transform-origin: 0% 50%;
-}
-
-.sticky-features__img-list {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.sticky-features__img-item {
-  -webkit-clip-path: inset(50% round 12px);
-  clip-path: inset(50% round 12px);
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  inset: 0%;
-}
-
-.sticky-features__img-item:first-of-type {
-  clip-path: inset(0% round 12px);
-}
-
-.sticky-features__img {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
-  display: block;
-  border-radius: 12px;
-}
-
-.sticky-features__text-collection {
-  height: 100%;
-}
-
-.sticky-features__text-list {
-  flex-flow: column;
-  justify-content: center;
-  align-items: flex-start;
-  height: 100%;
-  max-height: 100%;
-  width: 600px;
-  display: flex;
-  position: relative;
-}
-
-.sticky-features__text-item {
-  opacity: 0;
-  visibility: hidden;
-  flex-flow: column;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  position: absolute;
-  left: 0;
-  top: 0;
-  overflow: hidden;
-}
-
-/* First item visible by default - JS will control all visibility after init */
-.sticky-features__text-item:first-of-type {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* When item has data-hidden attribute, hide it regardless of position */
-.sticky-features__text-item[data-hidden="true"] {
-  visibility: hidden !important;
-  opacity: 0 !important;
-}
-
-.sticky-features__text-item[data-hidden="true"] [data-sticky-feature-text] {
-  visibility: hidden !important;
-  opacity: 0 !important;
-}
-
-.sticky-feaures__col {
-  /* flex: 1; */
-  min-width: 0;
-  min-height: 0;
-  background: #0f0f0f;
-  border-radius: 12px;
-  padding: 128px 72px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 50%;
-  box-sizing: border-box;
-  position: relative;
-  z-index: 2;
-}
-
-.sticky-features__header {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: flex-start;
-  justify-content: center;
-  font-family: 'PP Neue Machina', sans-serif;
-  font-weight: 400;
-  font-size: 32px;
-  line-height: 0.9;
-  color: #fff;
-  text-transform: uppercase;
-  white-space: nowrap;
-  width: 100%;
-  overflow: hidden;
-  visibility: visible;
-  opacity: 1;
-}
-
-.sticky-features__number {
-  margin: 0;
-}
-
-.sticky-features__label {
-  margin: 0;
-}
-
-.sticky-features__heading {
-  margin: 0;
-  font-family: 'PP Neue Machina', sans-serif;
-  font-weight: 800;
-  font-size: clamp(56px, 8vw, 80px);
-  line-height: 0.9;
-  color: #fff;
-  text-transform: uppercase;
-  width: 100%;
-  overflow: hidden;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  visibility: visible;
-  opacity: 1;
-}
-
-/* Smaller font for last item if needed */
-.sticky-features__text-item:last-of-type .sticky-features__heading {
-  font-size: clamp(48px, 7vw, 56px);
-}
-
-.sticky-features__p {
-  color: #fff;
-  margin: 0;
-  font-family: 'PP Supply Mono', monospace;
-  font-weight: 200;
-  font-size: clamp(16px, 2vw, 18px);
-  line-height: 1.5;
-  white-space: pre-line;
-  width: 600px;
-  max-width: 100%;
-  overflow: hidden;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  visibility: visible;
-  opacity: 1;
-}
-
-@media screen and (max-width: 767px) {
-  .framework-section--title {
-    padding: 48px 24px;
-    height: auto;
-    min-height: auto;
+  .framework-section {
+    width: 100%;
+    padding: 48px;
+    background: #000;
+    min-height: 100vh;
   }
 
-  .framework-title {
-    font-size: 60px;
+  .framework-container {
+    display: flex;
+    gap: 18px;
+    height: 100vh;
     width: 100%;
   }
 
-  .sticky-features__wrap {
-    padding: 48px 24px;
+  .framework-col {
+    min-width: 0;
+    min-height: 0;
+    background: #0f0f0f;
+    border-radius: 12px;
   }
 
-  .sticky-features__scroll {
+  .framework-col--img {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .framework-col--text {
+    width: 50%;
+    padding: 128px 72px;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
-    align-items: center;
-    height: auto;
-    min-height: 100svh;
-    padding-top: 1.25em;
-    padding-bottom: 2.5em;
   }
 
-  .sticky-features__container {
-    grid-column-gap: 2em;
-    grid-row-gap: 2em;
-    flex-flow: column;
-    justify-content: flex-start;
-    align-items: stretch;
+  /* Images */
+  .framework-images {
+    width: 100%;
+    height: 100%;
+    position: relative;
   }
 
-  .sticky-features__img-list {
-    aspect-ratio: 1;
+  .framework-img-item {
+    position: absolute;
+    inset: 0;
+    clip-path: inset(50% round 12px);
   }
 
-  .sticky-features__text-list {
-    min-height: 20em;
-    max-height: none;
+  .framework-img-item:first-child {
+    clip-path: inset(0% round 12px);
   }
 
-  .sticky-features__text-item {
-    max-width: none;
+  .framework-img-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
   }
 
-  .sticky-feaures__col {
-    padding: 48px 24px;
-    gap: 32px;
+  /* Progress bar */
+  .framework-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    z-index: 10;
   }
 
-  .sticky-features__header {
-    font-size: 24px;
+  .framework-progress-bar {
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    transform: scaleX(0);
+    transform-origin: left;
   }
 
-  .sticky-features__heading {
-    font-size: 48px;
+  /* Text items */
+  .framework-text-list {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  .sticky-features__p {
-    font-size: 16px;
+  .framework-item {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    opacity: 0;
+    visibility: hidden;
   }
-}
+
+  .framework-item:first-child {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .framework-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 0.9;
+    color: #fff;
+    text-transform: uppercase;
+  }
+
+  .framework-number,
+  .framework-label {
+    margin: 0;
+  }
+
+  .framework-title {
+    margin: 0;
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: clamp(56px, 8vw, 80px);
+    line-height: 0.9;
+    color: #fff;
+    text-transform: uppercase;
+    word-wrap: break-word;
+  }
+
+  .framework-item:last-child .framework-title {
+    font-size: clamp(48px, 7vw, 56px);
+  }
+
+  .framework-description {
+    margin: 0;
+    font-family: 'PP Supply Mono', monospace;
+    font-weight: 200;
+    font-size: clamp(16px, 2vw, 18px);
+    line-height: 1.5;
+    color: #fff;
+    white-space: pre-line;
+    max-width: 600px;
+  }
+
+  /* SplitText word/char styles - inherit all font properties */
+  .framework-item .word,
+  .framework-item .char {
+    display: inline-block;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    text-transform: inherit;
+    color: inherit;
+  }
+
+  .framework-item .word {
+    white-space: pre;
+  }
+
+  /* Mobile */
+  @media (max-width: 767px) {
+    .framework-section {
+      padding: 24px;
+    }
+
+    .framework-container {
+      flex-direction: column;
+      gap: 24px;
+      height: auto;
+      min-height: 100svh;
+      padding: 24px 0;
+    }
+
+    .framework-col--img {
+      aspect-ratio: 1;
+      flex: none;
+    }
+
+    .framework-col--text {
+      width: 100%;
+      padding: 48px 24px;
+      min-height: 300px;
+    }
+
+    .framework-header {
+      font-size: 24px;
+    }
+
+    .framework-title {
+      font-size: 48px;
+    }
+
+    .framework-description {
+      font-size: 16px;
+    }
+  }
 </style>
-
