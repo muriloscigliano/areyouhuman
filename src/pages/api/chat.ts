@@ -1,442 +1,544 @@
+/**
+ * Chat API Endpoint
+ * Handles AI-powered conversations with lead qualification
+ */
+
 import type { APIRoute } from 'astro';
-import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { sql, isDatabaseConfigured, createLead, updateLead, createConversation, updateConversation } from '../../lib/db';
 import { getChatCompletion, extractLeadInfo, isOpenAIConfigured } from '../../lib/openai';
+import { triggerLeadProcessing, isAutomationConfigured } from '../../lib/automationTrigger';
 import { limitMessageLength, needsSummarization, createConversationSummary } from '../../utils/tokenManager';
-import { triggerN8NWebhook, isN8NConfigured } from '../../lib/n8nTrigger';
-import { validateAndCleanEmail, getEmailErrorMessage } from '../../utils/emailValidator';
-import { validateProjectQuality, hasEnoughDetail } from '../../utils/projectValidator';
-import { validateResponse, truncateToWordLimit, countWords } from '../../utils/responseGuardrails';
+import { validateAndCleanEmail } from '../../utils/emailValidator';
+import { validateProjectQuality } from '../../utils/projectValidator';
+import { validateResponse, truncateToWordLimit } from '../../utils/responseGuardrails';
 import { validateExtractedData, verifyDataCollection } from '../../utils/dataValidator';
+import { sanitizeInput } from '../../lib/security';
+import type {
+  ChatRequest,
+  ChatResponse,
+  LeadData,
+  Message,
+  ConversationContext,
+  ChatMessage,
+} from '../../types';
 
-interface ChatRequest {
-  message: string;
-  conversationHistory?: Array<{ text: string; isBot: boolean; timestamp?: Date }>;
-  leadId?: string;
-  conversationId?: string;
+// =============================================================================
+// CONSTANTS
+// =============================================================================
+
+const MAX_MESSAGE_LENGTH = 500;
+const EARLY_EXTRACTION_START = 1;
+const EARLY_EXTRACTION_END = 5;
+const REGULAR_EXTRACTION_START = 10;
+const REGULAR_EXTRACTION_INTERVAL = 3;
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/**
+ * Get time of day context for greetings
+ */
+function getTimeContext(): { timeOfDay: ConversationContext['timeOfDay']; isWeekend: boolean } {
+  const hour = new Date().getHours();
+  const day = new Date().getDay();
+
+  let timeOfDay: ConversationContext['timeOfDay'];
+  if (hour >= 5 && hour < 12) timeOfDay = 'morning';
+  else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+  else if (hour >= 17 && hour < 22) timeOfDay = 'evening';
+  else timeOfDay = 'night';
+
+  return {
+    timeOfDay,
+    isWeekend: day === 0 || day === 6,
+  };
 }
 
-interface ChatResponse {
-  reply: string;
-  leadId?: string;
-  conversationId?: string;
-  error?: string;
+/**
+ * Convert chat messages to OpenAI format
+ */
+function convertToOpenAIMessages(conversationHistory: ChatMessage[] | undefined): Message[] {
+  return (conversationHistory || []).map((msg) => ({
+    role: msg.isBot ? ('assistant' as const) : ('user' as const),
+    content: msg.text,
+  }));
 }
+
+/**
+ * Check if we should extract lead info at this message count
+ */
+function shouldExtractLeadInfo(messageCount: number): boolean {
+  if (messageCount >= EARLY_EXTRACTION_START && messageCount <= EARLY_EXTRACTION_END) {
+    return true;
+  }
+  if (messageCount > REGULAR_EXTRACTION_START && messageCount % REGULAR_EXTRACTION_INTERVAL === 0) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Process and validate extracted lead data
+ */
+async function processExtractedData(
+  messages: Message[],
+  messageCount: number
+): Promise<Partial<LeadData>> {
+  const extractedInfo = await extractLeadInfo(messages);
+
+  if (!extractedInfo) {
+    return {};
+  }
+
+  console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
+
+  // Validate for hallucinations during early extraction
+  if (messageCount <= EARLY_EXTRACTION_END) {
+    const dataValidation = validateExtractedData(extractedInfo, messages);
+
+    if (dataValidation.isHallucinated) {
+      console.warn('⚠️ HALLUCINATION DETECTED:', {
+        suspiciousFields: dataValidation.suspiciousFields,
+        warnings: dataValidation.warnings,
+        confidence: dataValidation.confidence,
+      });
+
+      for (const field of dataValidation.suspiciousFields) {
+        console.log(`🗑️ Removing hallucinated field: ${field}`);
+        delete extractedInfo[field as keyof typeof extractedInfo];
+      }
+    }
+
+    const verification = verifyDataCollection(messages, ['name', 'email', 'company']);
+    console.log('🔍 Data collection verification:', {
+      collected: verification.collected,
+      missing: verification.missing,
+      needsFollowUp: verification.needsFollowUp,
+    });
+  }
+
+  // Validate and clean email
+  if (extractedInfo.email) {
+    const validatedEmail = validateAndCleanEmail(extractedInfo.email);
+    if (validatedEmail) {
+      extractedInfo.email = validatedEmail;
+      console.log(`✅ Email validated: ${validatedEmail}`);
+    } else {
+      console.log(`❌ Invalid email format: "${extractedInfo.email}"`);
+      delete extractedInfo.email;
+    }
+  }
+
+  return extractedInfo;
+}
+
+/**
+ * Apply response guardrails
+ */
+function applyGuardrails(reply: string): string {
+  const validation = validateResponse(reply);
+
+  if (!validation.isValid) {
+    if (validation.isOffTopic && validation.redirectMessage) {
+      console.log('⚠️ Response off-topic, using redirect');
+      return validation.redirectMessage;
+    }
+
+    if (validation.wordCount > validation.maxWords) {
+      console.log(`⚠️ Response too long (${validation.wordCount} words), truncating`);
+      return truncateToWordLimit(reply, validation.maxWords);
+    }
+  }
+
+  console.log(`✅ Response validated: ${validation.wordCount} words, on-topic: ${!validation.isOffTopic}`);
+  return reply;
+}
+
+/**
+ * Check if lead is ready for quote
+ */
+function isLeadQualified(leadData: Partial<LeadData>, reply: string): boolean {
+  const projectValidation = validateProjectQuality({
+    problem_text: leadData.problem_text,
+    automation_area: leadData.automation_area,
+    tools_used: leadData.tools_used,
+    budget_range: leadData.budget_range,
+    timeline: leadData.timeline,
+  });
+
+  const hasRequiredData =
+    leadData.name &&
+    leadData.email &&
+    leadData.company &&
+    projectValidation.isValid;
+
+  if (!projectValidation.isValid && leadData.problem_text) {
+    console.log('⚠️ Project data exists but lacks quality:', {
+      missingFields: projectValidation.missingFields,
+      lowQualityFields: projectValidation.lowQualityFields,
+      suggestions: projectValidation.suggestions,
+    });
+  }
+
+  const replyLower = reply.toLowerCase();
+  const mentionsDelivery =
+    replyLower.includes('send') ||
+    replyLower.includes('email') ||
+    replyLower.includes('inbox') ||
+    replyLower.includes('proposal');
+
+  return Boolean(hasRequiredData && mentionsDelivery);
+}
+
+/**
+ * Generate rule-based fallback response
+ */
+function getRuleBasedResponse(
+  messageCount: number,
+  currentMessage: string,
+  history: ChatMessage[] | undefined
+): { reply: string; leadData: Partial<LeadData> } {
+  const leadData: Partial<LeadData> = {};
+
+  switch (messageCount) {
+    case 0:
+      return {
+        reply: `Nice to meet you, ${currentMessage}! What company do you work for?`,
+        leadData: { name: currentMessage },
+      };
+
+    case 2:
+      return {
+        reply: `Great! What's your role at ${currentMessage}?`,
+        leadData: { company: currentMessage },
+      };
+
+    case 4:
+      return {
+        reply: `Interesting! What's the biggest challenge you're facing that automation could help solve?`,
+        leadData: { role: currentMessage },
+      };
+
+    case 6:
+      return {
+        reply: `I understand. That's a common challenge. What tools or systems are you currently using?`,
+        leadData: { problem_text: currentMessage },
+      };
+
+    case 8:
+      return {
+        reply: `Thanks for sharing! On a scale of 1-10, how urgent is it to solve this problem?`,
+        leadData: { tools_used: currentMessage.split(',').map((t) => t.trim()) },
+      };
+
+    case 10:
+      return {
+        reply: `Got it. Based on what you've told me, I can see several automation opportunities. What's your budget range for automation solutions? (e.g., <$5k, $5k-$20k, $20k-$50k, >$50k)`,
+        leadData: { urgency: currentMessage },
+      };
+
+    case 12: {
+      return {
+        reply:
+          `Perfect! I'm analyzing your workflow and I can already see some great opportunities:\n\n` +
+          `🎯 **Automation Opportunities:**\n` +
+          `• Process automation for repetitive tasks\n` +
+          `• Data integration between your systems\n` +
+          `• AI-powered insights and reporting\n\n` +
+          `💰 **Estimated Impact:**\n` +
+          `• 15-25 hours saved per week\n` +
+          `• 40-60% reduction in manual errors\n` +
+          `• ROI in 3-6 months\n\n` +
+          `Our team will reach out within 24 hours with a personalized automation roadmap. Can I get your email?`,
+        leadData: { budget_range: currentMessage, interest_level: 8 },
+      };
+    }
+
+    case 14: {
+      const userName = history?.[0]?.text || 'there';
+      return {
+        reply:
+          `Excellent! Thanks ${userName}! 🎉\n\n` +
+          `I've sent your information to our team. You'll receive:\n` +
+          `1. A detailed automation analysis within 24 hours\n` +
+          `2. Custom recommendations for your workflow\n` +
+          `3. Estimated ROI projections\n\n` +
+          `We're excited to help you automate and scale! Talk soon! 🚀`,
+        leadData: { email: currentMessage, status: 'qualified' },
+      };
+    }
+
+    default:
+      return {
+        reply: `Thanks for the information! Could you tell me more about your automation needs?`,
+        leadData: {},
+      };
+  }
+}
+
+/**
+ * Save lead data to Neon PostgreSQL
+ */
+async function saveToDatabase(
+  leadData: Partial<LeadData>,
+  conversationHistory: ChatMessage[] | undefined,
+  currentMessage: string,
+  reply: string,
+  existingLeadId?: string,
+  existingConversationId?: string
+): Promise<{ leadId?: string; conversationId?: string; isNewLead?: boolean }> {
+  if (!isDatabaseConfigured()) {
+    console.warn('⚠️ Database not configured - skipping save');
+    return {};
+  }
+
+  let currentLeadId = existingLeadId;
+  let currentConversationId = existingConversationId;
+  let isNewLead = false;
+
+  try {
+    const fullLeadData = {
+      source: 'chat',
+      ...leadData,
+    };
+
+    // Create or update lead
+    if (currentLeadId) {
+      const updated = await updateLead(currentLeadId, fullLeadData);
+      if (!updated) {
+        console.error('Error updating lead');
+      }
+    } else {
+      const newLead = await createLead(fullLeadData);
+      if (newLead) {
+        currentLeadId = newLead.id;
+        isNewLead = true;
+        console.log('✅ New lead created:', currentLeadId);
+      } else {
+        console.error('Error creating lead');
+      }
+    }
+
+    // Save conversation
+    if (currentLeadId) {
+      const conversationMessages = [
+        ...(conversationHistory || []).map((msg) => ({
+          role: msg.isBot ? 'assistant' : 'user',
+          content: msg.text,
+          timestamp: msg.timestamp || new Date().toISOString(),
+        })),
+        {
+          role: 'user',
+          content: currentMessage,
+          timestamp: new Date().toISOString(),
+        },
+        {
+          role: 'assistant',
+          content: reply,
+          timestamp: new Date().toISOString(),
+        },
+      ];
+
+      if (currentConversationId) {
+        const success = await updateConversation(currentConversationId, conversationMessages);
+        if (!success) {
+          console.error('Error updating conversation');
+        }
+      } else {
+        const newConversation = await createConversation(currentLeadId, conversationMessages);
+        if (newConversation) {
+          currentConversationId = newConversation.id;
+          console.log('✅ New conversation created:', currentConversationId);
+        } else {
+          console.error('Error creating conversation');
+        }
+      }
+    }
+
+    return { leadId: currentLeadId, conversationId: currentConversationId, isNewLead };
+  } catch (err) {
+    console.error('Error saving to database:', err);
+    return { leadId: currentLeadId, conversationId: currentConversationId };
+  }
+}
+
+// =============================================================================
+// API ROUTE HANDLER
+// =============================================================================
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    // Check if Supabase is configured
-    if (!isSupabaseConfigured()) {
-      console.warn('Supabase not configured - running in demo mode');
+    if (!isDatabaseConfigured()) {
+      console.warn('⚠️ Database not configured - running in demo mode');
     }
 
-    const body: ChatRequest = await request.json();
+    const body = (await request.json()) as ChatRequest;
     let { message, conversationHistory = [], leadId, conversationId } = body;
 
-    // LIMIT MESSAGE LENGTH to prevent abuse
-    message = limitMessageLength(message, 500);
-    if (message.length >= 500) {
-      console.log('⚠️ Message truncated to 500 characters');
+    // Sanitize and limit message length
+    message = sanitizeInput(limitMessageLength(message, MAX_MESSAGE_LENGTH));
+    if (message.length >= MAX_MESSAGE_LENGTH) {
+      console.log('⚠️ Message truncated to max length');
     }
 
     let reply = '';
+    let leadData: Partial<LeadData> = {};
     let shouldSaveLead = false;
-    const leadData: any = {};
+    const messageCount = conversationHistory.length;
 
-    // Use OpenAI if configured, otherwise fall back to rule-based
+    // ==========================================================================
+    // AI-POWERED CONVERSATION
+    // ==========================================================================
     if (isOpenAIConfigured()) {
       console.log('🤖 Using OpenAI GPT-4o-mini');
-      // ==================================================
-      // AI-POWERED CONVERSATION (OpenAI)
-      // ==================================================
-      try {
-        // Convert conversation history to OpenAI format
-        const messages = conversationHistory.map((msg: any) => ({
-          role: msg.isBot ? 'assistant' as const : 'user' as const,
-          content: msg.text
-        }));
 
-        // Add current message
+      try {
+        const messages = convertToOpenAIMessages(conversationHistory);
         messages.push({ role: 'user', content: message });
 
-        // CHECK IF CONVERSATION NEEDS SUMMARIZATION
+        // Check if summarization is needed
         let conversationSummary: string | undefined;
         if (needsSummarization(messages)) {
           console.log('📝 Generating conversation summary...');
           conversationSummary = createConversationSummary(messages);
           console.log(`✅ Summary: ${conversationSummary}`);
-          
-          // TODO: Store summary in Supabase for future use
-          if (conversationId && isSupabaseConfigured()) {
-            await supabase
-              .from('conversations')
-              .update({ summary: conversationSummary })
-              .eq('id', conversationId);
-          }
+          // Summary is stored when conversation is updated
         }
 
-        // Get AI response with token optimization
-        // Pass context to indicate if we need to collect contact info first
-        const messageCount = conversationHistory.length;
+        // Build conversation context
+        const { timeOfDay, isWeekend } = getTimeContext();
         const needsContactInfo = !leadData.name || !leadData.email || !leadData.company;
-        
-        // Get current time for context-aware greetings
-        const hour = new Date().getHours();
-        let timeContext = '';
-        if (hour >= 5 && hour < 12) timeContext = 'morning';
-        else if (hour >= 12 && hour < 17) timeContext = 'afternoon';
-        else if (hour >= 17 && hour < 22) timeContext = 'evening';
-        else timeContext = 'night';
-        
-        const day = new Date().getDay();
-        const isWeekend = day === 0 || day === 6;
-        
-        const context = {
+
+        const context: ConversationContext = {
           isFirstMessage: messageCount === 0,
           needsContactInfo: needsContactInfo && messageCount < 5,
-          messageCount: messageCount,
-          shouldNotAskProject: needsContactInfo, // Don't ask about project until we have contact info
-          timeOfDay: timeContext, // For varied greetings
-          isWeekend: isWeekend // For varied greetings
+          messageCount,
+          shouldNotAskProject: needsContactInfo,
+          timeOfDay,
+          isWeekend,
         };
-        
+
         reply = await getChatCompletion(messages, 'briefing', context, conversationSummary);
-        
-        // Final guardrail check (double-check in case something slipped through)
-        const finalValidation = validateResponse(reply);
-        if (!finalValidation.isValid) {
-          if (finalValidation.isOffTopic && finalValidation.redirectMessage) {
-            console.log('⚠️ Final check: Response off-topic, using redirect');
-            reply = finalValidation.redirectMessage;
-          } else if (finalValidation.wordCount > finalValidation.maxWords) {
-            console.log(`⚠️ Final check: Response too long (${finalValidation.wordCount} words), truncating`);
-            reply = truncateToWordLimit(reply, finalValidation.maxWords);
-          }
-        }
-        
-        console.log(`✅ Response validated: ${finalValidation.wordCount} words, on-topic: ${!finalValidation.isOffTopic}`);
+        reply = applyGuardrails(reply);
 
-        // ⚠️ CRITICAL: Extract lead info IMMEDIATELY after greeting!
-        // Messages 1-4 collect Name, Email, Company - we need to extract IMMEDIATELY
-        // Start extracting from message 1 (after greeting)
-        if (messageCount >= 1 && messageCount <= 5) {
-          console.log(`🎯 CRITICAL PHASE: Extracting lead info at message ${messageCount}...`);
-          const extractedInfo = await extractLeadInfo(messages);
-          if (extractedInfo) {
-            console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
-            
-            // 🛡️ VALIDATE EXTRACTED DATA (prevent hallucinations)
-            const dataValidation = validateExtractedData(extractedInfo, messages);
-            
-            if (dataValidation.isHallucinated) {
-              console.warn('⚠️ HALLUCINATION DETECTED:', {
-                suspiciousFields: dataValidation.suspiciousFields,
-                warnings: dataValidation.warnings,
-                confidence: dataValidation.confidence
-              });
-              
-              // Remove hallucinated fields
-              dataValidation.suspiciousFields.forEach(field => {
-                console.log(`🗑️ Removing hallucinated field: ${field}`);
-                delete extractedInfo[field];
-              });
-            }
-            
-            // ✉️ VALIDATE EMAIL before accepting it
-            if (extractedInfo.email) {
-              const validatedEmail = validateAndCleanEmail(extractedInfo.email);
-              if (validatedEmail) {
-                extractedInfo.email = validatedEmail;
-                console.log(`✅ Email validated: ${validatedEmail}`);
-              } else {
-                console.log(`❌ Invalid email format: "${extractedInfo.email}"`);
-                // Don't save invalid email - Telos will re-ask
-                delete extractedInfo.email;
-              }
-            }
-            
-            // 🔍 VERIFY DATA COLLECTION (double-check what Telos actually collected)
-            const verification = verifyDataCollection(messages, ['name', 'email', 'company']);
-            console.log(`🔍 Data collection verification:`, {
-              collected: verification.collected,
-              missing: verification.missing,
-              needsFollowUp: verification.needsFollowUp
-            });
-            
-            // If Telos claims to have data but verification says it's missing, flag it
-            if (verification.needsFollowUp) {
-              verification.missing.forEach(field => {
-                if (extractedInfo[field]) {
-                  console.warn(`⚠️ Telos claims ${field}="${extractedInfo[field]}" but verification didn't find it in conversation`);
-                }
-              });
-            }
-            
-            Object.assign(leadData, extractedInfo);
-            shouldSaveLead = true;
-          }
-        }
-        // Continue regular extraction after message 10 (every 3 messages)
-        else if (messageCount > 10 && messageCount % 3 === 0) {
-          console.log(`📊 Regular extraction at message ${messageCount}...`);
-          const extractedInfo = await extractLeadInfo(messages);
-          if (extractedInfo) {
-            console.log('✅ Extracted data:', JSON.stringify(extractedInfo, null, 2));
-            
-            // ✉️ VALIDATE EMAIL before accepting it
-            if (extractedInfo.email) {
-              const validatedEmail = validateAndCleanEmail(extractedInfo.email);
-              if (validatedEmail) {
-                extractedInfo.email = validatedEmail;
-                console.log(`✅ Email validated: ${validatedEmail}`);
-              } else {
-                console.log(`❌ Invalid email format: "${extractedInfo.email}"`);
-                // Don't save invalid email - Telos will re-ask
-                delete extractedInfo.email;
-              }
-            }
-            
-            Object.assign(leadData, extractedInfo);
-            shouldSaveLead = true;
-          }
+        // Extract lead info if appropriate
+        if (shouldExtractLeadInfo(messageCount)) {
+          console.log(`🎯 Extracting lead info at message ${messageCount}...`);
+          const extractedData = await processExtractedData(messages, messageCount);
+          Object.assign(leadData, extractedData);
+          shouldSaveLead = Object.keys(extractedData).length > 0;
         }
 
-        // ALWAYS save if we have any lead data
+        // Always save if we have lead data
         if (Object.keys(leadData).length > 0) {
           console.log(`💾 Saving lead data (${Object.keys(leadData).length} fields)...`);
           shouldSaveLead = true;
         }
 
-        // ✅ VALIDATE PROJECT DATA QUALITY (not just presence!)
-        const projectValidation = validateProjectQuality({
-          problem_text: leadData.problem_text,
-          automation_area: leadData.automation_area,
-          tools_used: leadData.tools_used,
-          budget_range: leadData.budget_range,
-          timeline: leadData.timeline
-        });
-
-        // Check if we have all required data WITH enough quality
-        const hasRequiredData = leadData.name &&
-                                leadData.email &&
-                                leadData.company &&
-                                projectValidation.isValid;
-
-        if (!projectValidation.isValid && leadData.problem_text) {
-          console.log('⚠️ Project data exists but lacks quality:', {
-            missingFields: projectValidation.missingFields,
-            lowQualityFields: projectValidation.lowQualityFields,
-            suggestions: projectValidation.suggestions
-          });
-        }
-
-        // Mark lead as ready to save if we have complete data
-        // Note: n8n webhook will be triggered automatically by Supabase database trigger
-        if (hasRequiredData &&
-            (reply.toLowerCase().includes('send') ||
-             reply.toLowerCase().includes('email') ||
-             reply.toLowerCase().includes('inbox') ||
-             reply.toLowerCase().includes('proposal'))) {
-
-          console.log('🎯 Lead qualified! Will be saved to Supabase (n8n trigger will fire automatically)');
+        // Check if lead is qualified
+        if (isLeadQualified(leadData, reply)) {
+          console.log('🎯 Lead qualified! Saving to database');
           shouldSaveLead = true;
         }
-
-      } catch (error: any) {
-        console.error('OpenAI error, falling back to rule-based:', error.message || error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        // Fall through to rule-based system below
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('OpenAI error, falling back to rule-based:', errorMessage);
       }
     }
 
-    // ==================================================
-    // RULE-BASED FALLBACK (if OpenAI not configured or fails)
-    // ==================================================
+    // ==========================================================================
+    // RULE-BASED FALLBACK
+    // ==========================================================================
     if (!reply) {
       console.log('📋 Using rule-based responses');
-      const messageCount = conversationHistory.length;
-
-    // Conversation flow based on message count
-    if (messageCount === 0) {
-      reply = `Nice to meet you, ${message}! What company do you work for?`;
-      leadData.name = message;
-    } else if (messageCount === 2) {
-      reply = `Great! What's your role at ${message}?`;
-      leadData.company = message;
-    } else if (messageCount === 4) {
-      reply = `Interesting! What's the biggest challenge you're facing that automation could help solve?`;
-      leadData.role = message;
-    } else if (messageCount === 6) {
-      reply = `I understand. That's a common challenge. What tools or systems are you currently using?`;
-      leadData.problem_text = message;
-    } else if (messageCount === 8) {
-      reply = `Thanks for sharing! On a scale of 1-10, how urgent is it to solve this problem?`;
-      leadData.tools_used = message.split(',').map((tool: string) => tool.trim());
-    } else if (messageCount === 10) {
-      reply = `Got it. Based on what you've told me, I can see several automation opportunities. What's your budget range for automation solutions? (e.g., <$5k, $5k-$20k, $20k-$50k, >$50k)`;
-      leadData.urgency = message;
-    } else if (messageCount === 12) {
-      shouldSaveLead = true;
-      leadData.budget_range = message;
-      leadData.interest_level = 8;
-      
-      reply = `Perfect! I'm analyzing your workflow and I can already see some great opportunities:\n\n` +
-              `🎯 **Automation Opportunities:**\n` +
-              `• Process automation for repetitive tasks\n` +
-              `• Data integration between your systems\n` +
-              `• AI-powered insights and reporting\n\n` +
-              `💰 **Estimated Impact:**\n` +
-              `• 15-25 hours saved per week\n` +
-              `• 40-60% reduction in manual errors\n` +
-              `• ROI in 3-6 months\n\n` +
-              `Our team will reach out within 24 hours with a personalized automation roadmap. Can I get your email?`;
-    } else if (messageCount === 14) {
-      shouldSaveLead = true;
-      leadData.email = message;
-      leadData.status = 'qualified';
-      
-      reply = `Excellent! Thanks ${conversationHistory[0]?.text || 'there'}! 🎉\n\n` +
-              `I've sent your information to our team. You'll receive:\n` +
-              `1. A detailed automation analysis within 24 hours\n` +
-              `2. Custom recommendations for your workflow\n` +
-              `3. Estimated ROI projections\n\n` +
-              `We're excited to help you automate and scale! Talk soon! 🚀`;
-    } else {
-      reply = `Thanks for the information! Could you tell me more about your automation needs?`;
-      }
+      const fallback = getRuleBasedResponse(messageCount, message, conversationHistory);
+      reply = fallback.reply;
+      Object.assign(leadData, fallback.leadData);
+      shouldSaveLead = Object.keys(fallback.leadData).length > 0;
     }
 
-    // Save or update lead in Supabase (only if configured)
-    if (shouldSaveLead && Object.keys(leadData).length > 0 && isSupabaseConfigured()) {
-      try {
-        let currentLeadId = leadId;
-        let currentConversationId = conversationId;
+    // ==========================================================================
+    // SAVE TO DATABASE
+    // ==========================================================================
+    let isQualifiedLead = false;
+    if (shouldSaveLead && Object.keys(leadData).length > 0) {
+      const saved = await saveToDatabase(
+        leadData,
+        conversationHistory,
+        message,
+        reply,
+        leadId,
+        conversationId
+      );
 
-        // Collect all previous data from conversation
-        const fullLeadData = {
-          name: conversationHistory[0]?.text || leadData.name,
-          company: conversationHistory[2]?.text || leadData.company,
-          role: conversationHistory[4]?.text || leadData.role,
-          problem_text: conversationHistory[6]?.text || leadData.problem_text,
-          tools_used: conversationHistory[8]?.text?.split(',').map((t: string) => t.trim()) || leadData.tools_used,
-          urgency: conversationHistory[10]?.text || leadData.urgency,
-          budget_range: conversationHistory[12]?.text || leadData.budget_range,
-          email: leadData.email || null,
-          source: 'chat',
-          ...leadData
-        };
+      if (saved.leadId) leadId = saved.leadId;
+      if (saved.conversationId) conversationId = saved.conversationId;
 
-        // Create or update lead
-        if (currentLeadId) {
-          // Update existing lead
-          const { error } = await supabase
-            .from('leads')
-            .update(fullLeadData)
-            .eq('id', currentLeadId);
+      // Check if this is a qualified lead (has email, name, company, and problem)
+      isQualifiedLead = Boolean(
+        leadData.email &&
+        leadData.name &&
+        leadData.company &&
+        (leadData.problem_text || leadData.automation_area)
+      );
+    }
 
-          if (error) console.error('Error updating lead:', error);
+    // ==========================================================================
+    // TRIGGER AUTOMATION FOR QUALIFIED LEADS
+    // ==========================================================================
+    if (isQualifiedLead && leadId && isAutomationConfigured()) {
+      console.log('🚀 Triggering automation for qualified lead:', leadId);
+
+      // Fire and forget - don't block the chat response
+      triggerLeadProcessing({
+        leadId,
+        name: leadData.name,
+        email: leadData.email,
+        company: leadData.company,
+        project_summary: leadData.problem_text,
+        automation_area: leadData.automation_area,
+        tools_used: leadData.tools_used,
+        budget_range: leadData.budget_range,
+        timeline: leadData.timeline,
+        urgency: leadData.urgency,
+        interest_level: leadData.interest_level,
+        source: 'Telos Chat',
+      }).then(result => {
+        if (result.success) {
+          console.log('✅ Automation triggered successfully');
         } else {
-          // Create new lead
-          const { data, error } = await supabase
-            .from('leads')
-            .insert([fullLeadData])
-            .select('id')
-            .single();
-
-          if (error) {
-            console.error('Error creating lead:', error);
-          } else if (data) {
-            currentLeadId = data.id;
-          }
+          console.warn('⚠️ Automation trigger failed:', result.message);
         }
-
-        // Save conversation to conversations table
-        if (currentLeadId) {
-          const conversationMessages = [
-            ...conversationHistory.map((msg: any) => ({
-              role: msg.isBot ? 'assistant' : 'user',
-              content: msg.text,
-              timestamp: msg.timestamp || new Date()
-            })),
-            {
-              role: 'user',
-              content: message,
-              timestamp: new Date()
-            },
-            {
-              role: 'assistant',
-              content: reply,
-              timestamp: new Date()
-            }
-          ];
-
-          if (currentConversationId) {
-            // Update existing conversation
-            const { error } = await supabase
-              .from('conversations')
-              .update({
-                messages: conversationMessages,
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', currentConversationId);
-
-            if (error) console.error('Error updating conversation:', error);
-          } else {
-            // Create new conversation
-            const { data, error } = await supabase
-              .from('conversations')
-              .insert([{
-                lead_id: currentLeadId,
-                messages: conversationMessages,
-                model_used: isOpenAIConfigured() ? 'gpt-4o-mini' : 'rule-based',
-                status: 'active'
-              }])
-              .select('id')
-              .single();
-
-            if (error) {
-              console.error('Error creating conversation:', error);
-            } else if (data) {
-              currentConversationId = data.id;
-            }
-          }
-        }
-
-        const response: ChatResponse = { 
-          reply,
-          leadId: currentLeadId,
-          conversationId: currentConversationId
-        };
-
-        return new Response(
-          JSON.stringify(response),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
-      } catch (err) {
-        console.error('Error saving to database:', err);
-      }
+      }).catch(err => {
+        console.error('❌ Automation trigger error:', err);
+      });
     }
 
+    // ==========================================================================
+    // SEND RESPONSE
+    // ==========================================================================
     const response: ChatResponse = { reply };
     if (leadId) response.leadId = leadId;
     if (conversationId) response.conversationId = conversationId;
 
-    return new Response(
-      JSON.stringify(response),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Chat API error:', errorMessage);
 
-  } catch (error: any) {
-    console.error('Chat API error:', error);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: 'Failed to process message',
         reply: 'Sorry, I encountered an error. Please try again.',
-        debug: error.message
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
     );
   }
 };
-
