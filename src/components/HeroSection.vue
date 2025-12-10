@@ -66,7 +66,8 @@
           class="btn-magnetic__click"
           data-magnetic-strength="80"
           data-magnetic-strength-inner="40"
-          @click="openModal"
+          @click="handleCtaClick"
+          @mouseenter="playHover"
         >
           <div class="btn-magnetic__fill"></div>
           <div data-magnetic-inner-target class="btn-magnetic__content">
@@ -105,6 +106,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { gsap } from 'gsap';
 import { useContactModal } from '../composables/useContactModal';
+import { useSound } from '../composables/useSound';
 
 // ScrollTrigger for exit animation
 let ScrollTrigger: any = null;
@@ -140,6 +142,7 @@ const taglineKey = ref(Date.now());
 const ctaRef = ref<HTMLElement | null>(null);
 
 const { open: openModal } = useContactModal();
+const { playHover, playClick } = useSound();
 
 const scrambleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const scrambleIntervals = new Map<HTMLElement, NodeJS.Timeout>();
@@ -270,6 +273,7 @@ function animateLogo() {
 }
 
 function handleLogoHover() {
+  playHover();
   logoCharRefs.value.forEach((charEl, index) => {
     if (charEl && index < logoChars.value.length) {
       const char = logoChars.value[index];
@@ -281,10 +285,16 @@ function handleLogoHover() {
 }
 
 function handleNavHover(index: number) {
+  playHover();
   const navEl = navItemRefs.value[index];
   if (navEl) {
     scrambleText(navEl, navItems[index], 400);
   }
+}
+
+function handleCtaClick() {
+  playClick();
+  openModal();
 }
 
 function updateTitleWithScramble(newText: string) {
