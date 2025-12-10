@@ -347,9 +347,11 @@ const items = [
       
       if (ScrambleTextPlugin && SplitText) {
         gsap.registerPlugin(ScrambleTextPlugin, SplitText);
+        console.log('WhatWeBuildSection: ScrambleTextPlugin and SplitText loaded successfully');
         return { ScrambleTextPlugin, SplitText };
       }
-      
+
+      console.warn('WhatWeBuildSection: Plugins not available', { ScrambleTextPlugin: !!ScrambleTextPlugin, SplitText: !!SplitText });
       return { ScrambleTextPlugin: null, SplitText: null };
     } catch (error) {
       console.error('Failed to load scramble plugins', error);

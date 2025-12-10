@@ -4,7 +4,7 @@
 import PixelWorld from './PixelWorld.astro';
 ---
 
-<section class="statement-section" data-name="Statement Section" data-statement-section>
+<section class="statement-section" data-name="Statement Section" data-statement-section data-momentum-hover-init>
   <!-- PixelWorld shader background (bottom layer) -->
   <PixelWorld
     pixelSize={30}
@@ -22,7 +22,7 @@ import PixelWorld from './PixelWorld.astro';
     baseOpacity={0.25}
   /> -->
   <div class="statement-inner">
-    <ul>
+    <ul data-momentum-hover-element>
       <li class="statement-line" data-text="Humanity"></li>
       <li class="statement-line" data-text="Amplified"></li>
     </ul>
@@ -56,6 +56,8 @@ import PixelWorld from './PixelWorld.astro';
         const span = document.createElement('span');
         span.className = 'letter';
         span.textContent = char;
+        // Add momentum hover target attribute for the hover effect
+        span.setAttribute('data-momentum-hover-target', '');
         line.appendChild(span);
         allChars.push(span);
       });
@@ -110,6 +112,10 @@ import PixelWorld from './PixelWorld.astro';
         stagger: {
           each: 0.06,
           from: 'start'
+        },
+        onComplete: () => {
+          // Initialize momentum hover after entrance animation completes
+          initMomentumHover(section as HTMLElement, allChars, gsap);
         }
       });
     };
@@ -131,6 +137,87 @@ import PixelWorld from './PixelWorld.astro';
 
     observer.observe(section);
     console.log('StatementSection: IntersectionObserver set up');
+  }
+
+  // =============================================
+  // MOMENTUM HOVER EFFECT
+  // Letters react to mouse movement with GSAP InertiaPlugin
+  // =============================================
+  async function initMomentumHover(section: HTMLElement, letters: HTMLElement[], gsap: any) {
+    // Only enable on hover-capable devices with fine pointer
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      console.log('StatementSection: Momentum hover disabled (touch/coarse device)');
+      return;
+    }
+
+    // Load InertiaPlugin
+    // @ts-ignore
+    const { InertiaPlugin } = await import('gsap/InertiaPlugin');
+    gsap.registerPlugin(InertiaPlugin);
+
+    console.log('StatementSection: Initializing momentum hover with InertiaPlugin');
+
+    // Configuration (tweak these for feel)
+    const xyMultiplier = 30; // multiplies pointer velocity for x/y movement
+    const rotationMultiplier = 20; // multiplies normalized torque for rotation speed
+    const inertiaResistance = 200; // higher = stops sooner
+
+    // Pre-build clamp functions
+    const clampXY = gsap.utils.clamp(-1080, 1080);
+    const clampRot = gsap.utils.clamp(-60, 60);
+
+    // Track pointer velocity at the section level
+    let prevX = 0, prevY = 0;
+    let velX = 0, velY = 0;
+    let rafId: number | null = null;
+
+    // Track velocity via mousemove (throttled to RAF)
+    section.addEventListener('mousemove', (e: MouseEvent) => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        velX = e.clientX - prevX;
+        velY = e.clientY - prevY;
+        prevX = e.clientX;
+        prevY = e.clientY;
+        rafId = null;
+      });
+    });
+
+    // Each letter triggers inertia on mouseenter
+    letters.forEach((letter) => {
+      letter.addEventListener('mouseenter', (e: MouseEvent) => {
+        // Compute offset from center to pointer
+        const rect = letter.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const offsetX = e.clientX - centerX;
+        const offsetY = e.clientY - centerY;
+
+        // Compute raw torque (px²/frame)
+        const rawTorque = offsetX * velY - offsetY * velX;
+
+        // Normalize torque so rotation ∝ pointer speed
+        const leverDist = Math.hypot(offsetX, offsetY) || 1;
+        const angularForce = rawTorque / leverDist;
+
+        // Calculate and clamp velocities
+        const velocityX = clampXY(velX * xyMultiplier);
+        const velocityY = clampXY(velY * xyMultiplier);
+        const rotationVelocity = clampRot(angularForce * rotationMultiplier);
+
+        // Apply GSAP inertia tween
+        gsap.to(letter, {
+          inertia: {
+            x: { velocity: velocityX, end: 0 },
+            y: { velocity: velocityY, end: 0 },
+            rotation: { velocity: rotationVelocity, end: 0 },
+            resistance: inertiaResistance
+          }
+        });
+      });
+    });
+
+    console.log('StatementSection: Momentum hover initialized on', letters.length, 'letters');
   }
 
   // =============================================

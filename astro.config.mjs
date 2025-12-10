@@ -19,7 +19,7 @@ export default defineConfig({
       noExternal: ['gsap', '@neondatabase/serverless'],
     },
     optimizeDeps: {
-      include: ['gsap/ScrollTrigger', 'gsap/ScrambleTextPlugin', 'gsap/SplitText'],
+      include: ['gsap/ScrollTrigger', 'gsap/ScrambleTextPlugin', 'gsap/SplitText', 'gsap/InertiaPlugin'],
     },
   },
 });

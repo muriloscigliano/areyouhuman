@@ -100,16 +100,26 @@ Access to the Human-First Leaders Network.`,
         try {
           const scrambleModule = await import('gsap/ScrambleTextPlugin');
           ScrambleTextPlugin = scrambleModule.default || scrambleModule.ScrambleTextPlugin;
-          if (ScrambleTextPlugin) gsap.registerPlugin(ScrambleTextPlugin);
-        } catch (e) { /* Optional */ }
+          if (ScrambleTextPlugin) {
+            gsap.registerPlugin(ScrambleTextPlugin);
+            console.log('FrameworkAuditSection: ScrambleTextPlugin loaded successfully');
+          }
+        } catch (e) {
+          console.error('FrameworkAuditSection: Failed to load ScrambleTextPlugin', e);
+        }
       }
 
       if (!SplitText) {
         try {
           const splitModule = await import('gsap/SplitText');
           SplitText = splitModule.default || splitModule.SplitText;
-          if (SplitText) gsap.registerPlugin(SplitText);
-        } catch (e) { /* Optional */ }
+          if (SplitText) {
+            gsap.registerPlugin(SplitText);
+            console.log('FrameworkAuditSection: SplitText loaded successfully');
+          }
+        } catch (e) {
+          console.error('FrameworkAuditSection: Failed to load SplitText', e);
+        }
       }
 
       return true;
