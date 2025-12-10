@@ -1,0 +1,299 @@
+---
+interface Props {
+  dotColor?: string;
+  dotSize?: number;
+  spacing?: number;
+  maxDistance?: number;
+  pushStrength?: number;
+  baseOpacity?: number;
+  class?: string;
+}
+
+const {
+  dotColor = '255, 255, 255',
+  dotSize = 3,
+  spacing = 40,
+  maxDistance = 150,
+  pushStrength = 40,
+  baseOpacity = 0.3,
+  class: className = ''
+} = Astro.props;
+---
+
+<canvas
+  class={`dots-grid-canvas ${className}`}
+  data-dots-grid
+  data-dot-color={dotColor}
+  data-dot-size={dotSize}
+  data-spacing={spacing}
+  data-max-distance={maxDistance}
+  data-push-strength={pushStrength}
+  data-base-opacity={baseOpacity}
+></canvas>
+
+<script>
+  class DotsGrid {
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private dots: {
+      x: number;
+      y: number;
+      baseX: number;
+      baseY: number;
+      size: number;
+      opacity: number;
+      entranceDelay: number;  // Random delay for staggered entrance
+      entranceProgress: number; // 0 to 1 entrance animation progress
+    }[] = [];
+    private mouseX = -1000;
+    private mouseY = -1000;
+    private animationId: number | null = null;
+    private initialized = false;
+    private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Entrance animation state
+    private hasStartedEntrance = false;
+    private entranceStartTime = 0;
+
+    // Config from data attributes
+    private dotColor: string;
+    private dotSize: number;
+    private spacing: number;
+    private maxDistance: number;
+    private pushStrength: number;
+    private baseOpacity: number;
+    private returnSpeed = 0.08;
+
+    constructor(canvas: HTMLCanvasElement) {
+      this.canvas = canvas;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('DotsGrid: Could not get 2d context');
+        return;
+      }
+      this.ctx = ctx;
+
+      // Read config from data attributes
+      this.dotColor = canvas.dataset.dotColor || '255, 255, 255';
+      this.dotSize = parseFloat(canvas.dataset.dotSize || '3');
+      this.spacing = parseFloat(canvas.dataset.spacing || '40');
+      this.maxDistance = parseFloat(canvas.dataset.maxDistance || '150');
+      this.pushStrength = parseFloat(canvas.dataset.pushStrength || '40');
+      this.baseOpacity = parseFloat(canvas.dataset.baseOpacity || '0.3');
+
+      this.init();
+    }
+
+    private init() {
+      if (this.initialized) return;
+
+      const parent = this.canvas.parentElement;
+      if (!parent) {
+        setTimeout(() => this.init(), 100);
+        return;
+      }
+
+      const rect = parent.getBoundingClientRect();
+      if (rect.height < 50 || rect.width < 50) {
+        setTimeout(() => this.init(), 100);
+        return;
+      }
+
+      this.initialized = true;
+      this.resizeCanvas();
+
+      // Mouse tracking
+      document.addEventListener('mousemove', (e) => {
+        this.mouseX = e.clientX;
+        this.mouseY = e.clientY;
+      });
+
+      // Handle resize with debounce
+      window.addEventListener('resize', () => {
+        if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+        this.resizeTimeout = setTimeout(() => {
+          if (this.animationId) cancelAnimationFrame(this.animationId);
+          this.resizeCanvas();
+          this.render();
+        }, 200);
+      });
+
+      // Listen for custom event to start entrance animation (synced with text)
+      this.canvas.addEventListener('dots-grid-start', () => {
+        if (!this.hasStartedEntrance) {
+          this.hasStartedEntrance = true;
+          this.entranceStartTime = Date.now();
+          console.log('DotsGrid: Entrance animation started via event');
+        }
+      });
+
+      // Start animation loop
+      this.render();
+    }
+
+    private resizeCanvas() {
+      const parent = this.canvas.parentElement;
+      if (!parent) return;
+
+      const rect = parent.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      this.canvas.width = rect.width * dpr;
+      this.canvas.height = rect.height * dpr;
+      this.canvas.style.width = rect.width + 'px';
+      this.canvas.style.height = rect.height + 'px';
+
+      this.ctx.scale(dpr, dpr);
+      this.createDots(rect.width, rect.height);
+    }
+
+    private createDots(width: number, height: number) {
+      this.dots = [];
+
+      const cols = Math.ceil(width / this.spacing) + 1;
+      const rows = Math.ceil(height / this.spacing) + 1;
+
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = col * this.spacing;
+          const y = row * this.spacing;
+
+          this.dots.push({
+            x,
+            y,
+            baseX: x,
+            baseY: y,
+            size: this.dotSize,
+            opacity: 0, // Start invisible
+            entranceDelay: Math.random() * 3, // Random delay 0-3 seconds
+            entranceProgress: 0 // Will animate to 1
+          });
+        }
+      }
+    }
+
+    private render = () => {
+      if (!this.ctx || !this.canvas) return;
+
+      const parent = this.canvas.parentElement;
+      if (!parent) {
+        this.animationId = requestAnimationFrame(this.render);
+        return;
+      }
+
+      const rect = parent.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+
+      // Entrance animation is now triggered via custom event from StatementSection
+      // This syncs the dots with the text animation
+
+      // Calculate elapsed time since entrance started
+      const elapsed = this.hasStartedEntrance ? (Date.now() - this.entranceStartTime) / 1000 : 0;
+
+      // Clear canvas
+      this.ctx.clearRect(0, 0, width, height);
+
+      // Get mouse position relative to canvas
+      const canvasRect = this.canvas.getBoundingClientRect();
+      const relMouseX = this.mouseX - canvasRect.left;
+      const relMouseY = this.mouseY - canvasRect.top;
+
+      // Update and draw each dot
+      for (let i = 0; i < this.dots.length; i++) {
+        const dot = this.dots[i];
+
+        // Update entrance animation progress
+        if (dot.entranceProgress < 1 && this.hasStartedEntrance) {
+          const timeSinceDelay = elapsed - dot.entranceDelay;
+          if (timeSinceDelay > 0) {
+            // Ease out cubic for smooth entrance (1.2 second fade in)
+            const rawProgress = Math.min(1, timeSinceDelay / 1.2);
+            dot.entranceProgress = 1 - Math.pow(1 - rawProgress, 3);
+          }
+        }
+
+        // Skip drawing if not yet visible
+        if (dot.entranceProgress <= 0) continue;
+
+        // Calculate distance from mouse
+        const dx = relMouseX - dot.baseX;
+        const dy = relMouseY - dot.baseY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Target opacity based on entrance progress
+        const targetBaseOpacity = this.baseOpacity * dot.entranceProgress;
+
+        if (distance < this.maxDistance && distance > 0) {
+          // Mouse is near - push dot away
+          const angle = Math.atan2(dy, dx);
+          const force = (this.maxDistance - distance) / this.maxDistance;
+
+          const targetX = dot.baseX - Math.cos(angle) * this.pushStrength * force;
+          const targetY = dot.baseY - Math.sin(angle) * this.pushStrength * force;
+
+          dot.x += (targetX - dot.x) * 0.15;
+          dot.y += (targetY - dot.y) * 0.15;
+
+          // Scale up and brighten when near mouse (but respect entrance progress)
+          dot.size = this.dotSize * (1 + force * 1.5) * dot.entranceProgress;
+          dot.opacity = (targetBaseOpacity + force * 0.6) * dot.entranceProgress;
+        } else {
+          // Return to original position
+          dot.x += (dot.baseX - dot.x) * this.returnSpeed;
+          dot.y += (dot.baseY - dot.y) * this.returnSpeed;
+
+          // Fade back to normal (respecting entrance progress)
+          const targetSize = this.dotSize * dot.entranceProgress;
+          dot.size += (targetSize - dot.size) * this.returnSpeed;
+          dot.opacity += (targetBaseOpacity - dot.opacity) * this.returnSpeed;
+        }
+
+        // Draw the dot
+        this.ctx.beginPath();
+        this.ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(${this.dotColor}, ${dot.opacity})`;
+        this.ctx.fill();
+      }
+
+      this.animationId = requestAnimationFrame(this.render);
+    };
+
+    destroy() {
+      if (this.animationId) {
+        cancelAnimationFrame(this.animationId);
+      }
+      if (this.resizeTimeout) {
+        clearTimeout(this.resizeTimeout);
+      }
+    }
+  }
+
+  // Initialize all DotsGrid instances
+  function initDotsGrids() {
+    document.querySelectorAll('[data-dots-grid]').forEach((canvas) => {
+      if (canvas instanceof HTMLCanvasElement && !canvas.dataset.initialized) {
+        canvas.dataset.initialized = 'true';
+        new DotsGrid(canvas);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initDotsGrids, 300));
+  } else {
+    setTimeout(initDotsGrids, 300);
+  }
+</script>
+
+<style>
+  .dots-grid-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+</style>

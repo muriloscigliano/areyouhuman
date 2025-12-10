@@ -81,6 +81,25 @@
       :active="showTransition"
       @complete="onTransitionComplete"
     />
+
+    <!-- Sound Toggle Button - Modern equalizer bars -->
+    <button
+      class="sound-toggle"
+      :class="{
+        'sound-toggle--muted': isMuted,
+        'sound-toggle--playing': isPlaying
+      }"
+      @click.stop="toggleSound"
+      aria-label="Toggle sound"
+    >
+      <div class="eq-bars">
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+        <span class="eq-bar"></span>
+      </div>
+    </button>
   </section>
 </template>
 
@@ -195,6 +214,99 @@ let pulseAnimation = null;
 const scrambleIntervals = new Map();
 
 // =============================================================================
+// SOUND SYSTEM
+// =============================================================================
+
+const isMuted = ref(false);
+const isPlaying = ref(false);
+const accelerateSound = ref(null);
+const decelerateSound = ref(null);
+
+// Initialize audio elements
+function initAudio() {
+  if (typeof window === 'undefined') return;
+
+  // Create audio elements
+  accelerateSound.value = new Audio('/audio/accelerate-sound.mp3');
+  decelerateSound.value = new Audio('/audio/desaccelarete-sound.mp3');
+
+  // Set properties
+  accelerateSound.value.loop = true;
+  accelerateSound.value.volume = 0.5;
+  decelerateSound.value.volume = 0.6;
+
+  // Preload
+  accelerateSound.value.preload = 'auto';
+  decelerateSound.value.preload = 'auto';
+}
+
+function playAccelerateSound() {
+  if (isMuted.value || !accelerateSound.value) return;
+
+  // Reset and play
+  accelerateSound.value.currentTime = 0;
+  accelerateSound.value.play().catch(() => {
+    // Ignore autoplay errors
+  });
+  isPlaying.value = true;
+}
+
+function stopAccelerateSound() {
+  if (!accelerateSound.value) return;
+
+  isPlaying.value = false;
+
+  // Fade out
+  const fadeOut = () => {
+    if (accelerateSound.value.volume > 0.05) {
+      accelerateSound.value.volume -= 0.05;
+      requestAnimationFrame(fadeOut);
+    } else {
+      accelerateSound.value.pause();
+      accelerateSound.value.volume = 0.5; // Reset volume
+    }
+  };
+  fadeOut();
+}
+
+function playDecelerateSound() {
+  if (isMuted.value || !decelerateSound.value) return;
+
+  // Stop accelerate sound first
+  if (accelerateSound.value) {
+    accelerateSound.value.pause();
+    accelerateSound.value.volume = 0.5;
+  }
+
+  // Play decelerate
+  decelerateSound.value.currentTime = 0;
+  decelerateSound.value.play().catch(() => {
+    // Ignore autoplay errors
+  });
+  isPlaying.value = true;
+
+  // Stop playing state when decelerate ends
+  decelerateSound.value.onended = () => {
+    isPlaying.value = false;
+  };
+}
+
+function toggleSound(e) {
+  e.stopPropagation();
+  isMuted.value = !isMuted.value;
+
+  // If muting, stop all sounds
+  if (isMuted.value) {
+    if (accelerateSound.value) {
+      accelerateSound.value.pause();
+    }
+    if (decelerateSound.value) {
+      decelerateSound.value.pause();
+    }
+  }
+}
+
+// =============================================================================
 // HOLD INTERACTION
 // =============================================================================
 
@@ -213,6 +325,9 @@ function startHold(e) {
     pulseAnimation.kill();
     pulseAnimation = null;
   }
+
+  // Play accelerate sound (spaceship speeding up)
+  playAccelerateSound();
 
   // Start hold animation loop
   animateHold();
@@ -254,6 +369,9 @@ function endHold() {
     holdAnimationId = null;
   }
 
+  // Stop accelerate sound
+  stopAccelerateSound();
+
   // If not complete, animate back to start
   if (holdProgress.value < 1) {
     animateProgressReset();
@@ -288,6 +406,9 @@ function animateProgressReset() {
 function completeHold() {
   isHolding.value = false;
   isTransitioning.value = true;
+
+  // Play decelerate sound (spaceship slowing down / arriving)
+  playDecelerateSound();
 
   // Kill all animations
   if (pulseAnimation) {
@@ -911,6 +1032,7 @@ function onTransitionComplete() {
 
 onMounted(() => {
   checkPreferences();
+  initAudio(); // Initialize audio elements
 
   nextTick(() => {
     setTimeout(() => {
@@ -1122,5 +1244,134 @@ onUnmounted(() => {
     transition: none;
     animation: none;
   }
+}
+
+/* Sound Toggle Button - Modern Equalizer */
+.sound-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.sound-toggle:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.08);
+}
+
+.sound-toggle:active {
+  transform: scale(0.95);
+}
+
+/* Equalizer bars container */
+.eq-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  height: 14px;
+}
+
+/* Individual bars - thinner and more rounded */
+.eq-bar {
+  width: 2px;
+  background: #000;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+/* Default heights - sm md lg md sm pattern */
+.eq-bar:nth-child(1) { height: 5px; }
+.eq-bar:nth-child(2) { height: 9px; }
+.eq-bar:nth-child(3) { height: 14px; }
+.eq-bar:nth-child(4) { height: 9px; }
+.eq-bar:nth-child(5) { height: 5px; }
+
+/* Playing state - animate bars */
+.sound-toggle--playing .eq-bar {
+  animation: eqBounce 0.5s ease-in-out infinite;
+}
+
+.sound-toggle--playing .eq-bar:nth-child(1) {
+  animation-delay: 0s;
+}
+.sound-toggle--playing .eq-bar:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.sound-toggle--playing .eq-bar:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.sound-toggle--playing .eq-bar:nth-child(4) {
+  animation-delay: 0.1s;
+}
+.sound-toggle--playing .eq-bar:nth-child(5) {
+  animation-delay: 0s;
+}
+
+@keyframes eqBounce {
+  0%, 100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Muted state - bars collapse to line */
+.sound-toggle--muted .eq-bar {
+  height: 2px !important;
+  opacity: 0.35;
+  animation: none;
+}
+
+/* Dark mode */
+.intro--dark .sound-toggle {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.intro--dark .sound-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.intro--dark .eq-bar {
+  background: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sound-toggle {
+    bottom: 16px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .eq-bars {
+    gap: 2px;
+    height: 12px;
+  }
+
+  .eq-bar {
+    width: 1.5px;
+  }
+
+  .eq-bar:nth-child(1) { height: 4px; }
+  .eq-bar:nth-child(2) { height: 7px; }
+  .eq-bar:nth-child(3) { height: 12px; }
+  .eq-bar:nth-child(4) { height: 7px; }
+  .eq-bar:nth-child(5) { height: 4px; }
 }
 </style>

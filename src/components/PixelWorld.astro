@@ -1,0 +1,324 @@
+---
+/**
+ * PIXEL MOSAIC BACKGROUND
+ * WebGL shader with black/dark gray pixel grid + staggered entrance animation
+ */
+
+interface Props {
+  class?: string;
+  pixelSize?: number;
+  opacity?: number;
+  speed?: number;
+  staggerMode?: 'random' | 'center';
+}
+
+const {
+  class: className = '',
+  pixelSize = 30,
+  opacity = 0.25,
+  speed = 1.0,
+  staggerMode = 'random',
+} = Astro.props;
+---
+
+<canvas
+  class={`pixel-bg ${className}`}
+  data-pixel-bg
+  data-pixel-size={pixelSize.toString()}
+  data-opacity={opacity.toString()}
+  data-speed={speed.toString()}
+  data-stagger-mode={staggerMode}
+  data-trigger-on-scroll="true"
+></canvas>
+
+<script>
+  // =============================================
+  // PIXEL MOSAIC SHADER BACKGROUND
+  // =============================================
+  (function() {
+    const canvas = document.querySelector('[data-pixel-bg]') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    const gl = canvas.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: false });
+    if (!gl) {
+      console.warn('PixelBg: WebGL not supported');
+      return;
+    }
+
+    let startTime = Date.now();
+    let initialized = false;
+    let animationStarted = false;
+    let program: WebGLProgram | null = null;
+    let resolutionLocation: WebGLUniformLocation | null = null;
+    let timeLocation: WebGLUniformLocation | null = null;
+    let animationFrameId: number | null = null;
+
+    const pixelSize = parseFloat(canvas.dataset.pixelSize || '30');
+    const opacity = parseFloat(canvas.dataset.opacity || '0.25');
+    const speed = parseFloat(canvas.dataset.speed || '1.0');
+    const staggerMode = canvas.dataset.staggerMode || 'random'; // 'random' or 'center'
+    const triggerOnScroll = canvas.dataset.triggerOnScroll === 'true';
+
+    // Vertex shader - simple fullscreen quad
+    const vertexShaderSource = `
+      attribute vec2 a_position;
+      void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+
+    // Fragment shader - pixel mosaic with gray tones + staggered entrance
+    // staggerMode: 0 = random, 1 = center
+    const fragmentShaderSource = `
+      precision highp float;
+
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform float u_pixelSize;
+      uniform float u_opacity;
+      uniform float u_staggerMode; // 0 = random, 1 = center
+
+      float random(vec2 st) {
+        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+      }
+
+      void main() {
+        vec2 st = gl_FragCoord.xy / u_resolution.xy;
+        vec2 pixelCoord = st * u_resolution.xy / u_pixelSize;
+        vec2 ipos = floor(pixelCoord);
+
+        // Generate random value for this pixel block
+        float r = random(ipos);
+
+        // === STAGGERED ENTRANCE ANIMATION ===
+        float entranceDelay;
+
+        if (u_staggerMode > 0.5) {
+          // CENTER MODE: pixels appear from center outward
+          vec2 center = u_resolution.xy / u_pixelSize / 2.0;
+          float distFromCenter = length(ipos - center);
+          float maxDist = length(center); // max possible distance
+          entranceDelay = (distFromCenter / maxDist) * 2.0; // 0-2 seconds based on distance
+          // Add slight randomness to make it more organic
+          entranceDelay += r * 0.3;
+        } else {
+          // RANDOM MODE: each pixel has random delay
+          entranceDelay = r * 2.5; // Random delay 0-2.5 seconds
+        }
+
+        float entranceProgress = clamp((u_time - entranceDelay) / 0.6, 0.0, 1.0); // 0.6s fade in
+
+        // Ease out cubic for smooth entrance
+        entranceProgress = 1.0 - pow(1.0 - entranceProgress, 3.0);
+
+        // === CONTINUOUS SUBTLE ANIMATION ===
+        float timeOffset = sin(u_time * 1.5 * r + r * 6.28) * 0.5 + 0.5;
+
+        // === COLOR PALETTE: Visible gray tones on black background ===
+        vec3 color;
+        float selector = fract(r * 4.0 + timeOffset * 0.3);
+
+        if (selector < 0.4) {
+          // Dark gray
+          color = vec3(0.15, 0.15, 0.15);
+        } else if (selector < 0.7) {
+          // Medium gray
+          color = vec3(0.25, 0.25, 0.25);
+        } else if (selector < 0.9) {
+          // Light gray
+          color = vec3(0.4, 0.4, 0.4);
+        } else {
+          // White/very light (rare accent)
+          color = vec3(0.7, 0.7, 0.7);
+        }
+
+        // Apply entrance animation
+        float finalAlpha = entranceProgress * u_opacity;
+
+        gl_FragColor = vec4(color, finalAlpha);
+      }
+    `;
+
+    function createShader(type: number, source: string): WebGLShader | null {
+      const shader = gl!.createShader(type);
+      if (!shader) return null;
+
+      gl!.shaderSource(shader, source);
+      gl!.compileShader(shader);
+
+      if (!gl!.getShaderParameter(shader, gl!.COMPILE_STATUS)) {
+        console.error('PixelBg shader error:', gl!.getShaderInfoLog(shader));
+        gl!.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    function init() {
+      if (initialized) return;
+
+      const section = canvas.parentElement;
+      if (!section) {
+        setTimeout(init, 100);
+        return;
+      }
+
+      const rect = section.getBoundingClientRect();
+      if (rect.height < 50) {
+        setTimeout(init, 100);
+        return;
+      }
+
+      initialized = true;
+      console.log('PixelBg: Initializing with pixelSize:', pixelSize, 'opacity:', opacity, 'speed:', speed);
+
+      // Create shaders
+      const vertexShader = createShader(gl!.VERTEX_SHADER, vertexShaderSource);
+      const fragmentShader = createShader(gl!.FRAGMENT_SHADER, fragmentShaderSource);
+      if (!vertexShader || !fragmentShader) return;
+
+      // Create program
+      program = gl!.createProgram();
+      if (!program) return;
+
+      gl!.attachShader(program, vertexShader);
+      gl!.attachShader(program, fragmentShader);
+      gl!.linkProgram(program);
+
+      if (!gl!.getProgramParameter(program, gl!.LINK_STATUS)) {
+        console.error('PixelBg program error:', gl!.getProgramInfoLog(program));
+        return;
+      }
+
+      gl!.useProgram(program);
+
+      // Enable blending for transparency
+      gl!.enable(gl!.BLEND);
+      gl!.blendFunc(gl!.SRC_ALPHA, gl!.ONE_MINUS_SRC_ALPHA);
+
+      // Create fullscreen quad
+      const positionBuffer = gl!.createBuffer();
+      gl!.bindBuffer(gl!.ARRAY_BUFFER, positionBuffer);
+      gl!.bufferData(gl!.ARRAY_BUFFER, new Float32Array([
+        -1, -1, 1, -1, -1, 1,
+        -1, 1, 1, -1, 1, 1
+      ]), gl!.STATIC_DRAW);
+
+      const positionLocation = gl!.getAttribLocation(program, 'a_position');
+      gl!.enableVertexAttribArray(positionLocation);
+      gl!.vertexAttribPointer(positionLocation, 2, gl!.FLOAT, false, 0, 0);
+
+      // Get uniform locations
+      resolutionLocation = gl!.getUniformLocation(program, 'u_resolution');
+      timeLocation = gl!.getUniformLocation(program, 'u_time');
+      const pixelSizeLocation = gl!.getUniformLocation(program, 'u_pixelSize');
+      const opacityLocation = gl!.getUniformLocation(program, 'u_opacity');
+      const staggerModeLocation = gl!.getUniformLocation(program, 'u_staggerMode');
+
+      // Set static uniforms
+      if (pixelSizeLocation) gl!.uniform1f(pixelSizeLocation, pixelSize);
+      if (opacityLocation) gl!.uniform1f(opacityLocation, opacity);
+      if (staggerModeLocation) gl!.uniform1f(staggerModeLocation, staggerMode === 'center' ? 1.0 : 0.0);
+
+      console.log('PixelBg: Uniforms set - staggerMode:', staggerMode, '=', staggerMode === 'center' ? 1.0 : 0.0);
+
+      resize();
+      window.addEventListener('resize', resize);
+
+      // If trigger on scroll, wait for intersection observer
+      if (triggerOnScroll) {
+        console.log('PixelBg: Waiting for scroll trigger...');
+        setupScrollTrigger();
+      } else {
+        // Start immediately
+        startAnimation();
+      }
+    }
+
+    function startAnimation() {
+      if (animationStarted) return;
+      animationStarted = true;
+
+      // Reset start time for entrance animation
+      startTime = Date.now();
+      render();
+      console.log('PixelBg: Started rendering');
+    }
+
+    function setupScrollTrigger() {
+      const section = canvas.parentElement;
+      if (!section) return;
+
+      // Use IntersectionObserver to trigger when section is 50% visible (centered)
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              console.log('PixelBg: Section is centered, starting animation');
+              startAnimation();
+              observer.disconnect();
+            }
+          });
+        },
+        { threshold: 0.5 } // Trigger when 50% of section is visible
+      );
+
+      observer.observe(section);
+    }
+
+    function resize() {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+
+      const rect = parent.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+
+      gl!.viewport(0, 0, canvas.width, canvas.height);
+      if (resolutionLocation) {
+        gl!.uniform2f(resolutionLocation, canvas.width, canvas.height);
+      }
+    }
+
+    function render() {
+      // Apply speed multiplier to elapsed time
+      const elapsed = ((Date.now() - startTime) / 1000) * speed;
+
+      gl!.clearColor(0, 0, 0, 0);
+      gl!.clear(gl!.COLOR_BUFFER_BIT);
+
+      if (timeLocation) {
+        gl!.uniform1f(timeLocation, elapsed);
+      }
+
+      gl!.drawArrays(gl!.TRIANGLES, 0, 6);
+      requestAnimationFrame(render);
+    }
+
+    // Initialize
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(init, 300));
+    } else {
+      setTimeout(init, 300);
+    }
+  })();
+</script>
+
+<style>
+  /* =============================================
+     PIXEL MOSAIC BACKGROUND
+     ============================================= */
+  .pixel-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+</style>

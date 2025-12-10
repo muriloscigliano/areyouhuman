@@ -1,0 +1,405 @@
+---
+interface Props {
+  colorScheme?: 'original' | 'blue' | 'purple' | 'fire' | 'green' | 'rainbow';
+  intensity?: number;
+  class?: string;
+}
+
+const {
+  colorScheme = 'fire',
+  intensity = 1.09,
+  class: className = ''
+} = Astro.props;
+
+// Color palettes
+const colorPalettes: Record<string, { primary: number[], secondary: number[] }> = {
+  original: { primary: [0.3, 0.3, 0.6], secondary: [0.5, 0.4, 0.7] },
+  blue: { primary: [0.0, 0.0, 1.0], secondary: [0.4, 0.4, 1.0] },
+  purple: { primary: [0.6, 0.0, 0.8], secondary: [0.8, 0.3, 1.0] },
+  fire: { primary: [1.0, 0.3, 0.0], secondary: [1.0, 0.6, 0.2] },
+  green: { primary: [0.0, 1.0, 0.0], secondary: [0.4, 1.0, 0.4] },
+  rainbow: { primary: [1.0, 0.0, 1.0], secondary: [0.0, 1.0, 1.0] }
+};
+
+const palette = colorPalettes[colorScheme] || colorPalettes.fire;
+---
+
+<div
+  class={`lens-flare-container ${className}`}
+  data-lens-flare
+  data-intensity={intensity}
+  data-primary-r={palette.primary[0]}
+  data-primary-g={palette.primary[1]}
+  data-primary-b={palette.primary[2]}
+>
+  <canvas class="lens-flare-canvas"></canvas>
+</div>
+
+<script>
+  class LensFlareEffect {
+    private canvas: HTMLCanvasElement;
+    private gl: WebGLRenderingContext | null = null;
+    private program: WebGLProgram | null = null;
+    private animationId: number | null = null;
+    private isDestroyed = false;
+    private mouse = { x: 0.5, y: 0.5 };
+    private targetMouse = { x: 0.5, y: 0.5 };
+    private time = 0;
+
+    private uniforms: Record<string, WebGLUniformLocation | null> = {};
+    private settings = {
+      intensity: 1.09,
+      streakLength: 48,
+      streakHeight: 0.23,
+      glowPower: 2.75,
+      flareSize: 1.52,
+      colorIntensity: 0.5,
+      saturation: 2.0,
+      primaryColor: [1.0, 0.3, 0.0]
+    };
+
+    constructor(container: HTMLElement) {
+      this.canvas = container.querySelector('.lens-flare-canvas') as HTMLCanvasElement;
+
+      // Get settings from data attributes
+      this.settings.intensity = parseFloat(container.dataset.intensity || '1.09');
+      this.settings.primaryColor = [
+        parseFloat(container.dataset.primaryR || '1.0'),
+        parseFloat(container.dataset.primaryG || '0.3'),
+        parseFloat(container.dataset.primaryB || '0.0')
+      ];
+
+      const gl = this.canvas.getContext('webgl', {
+        alpha: true,
+        antialias: false,
+        premultipliedAlpha: false
+      });
+
+      if (!gl) {
+        return;
+      }
+
+      this.gl = gl;
+      console.log('LensFlare: WebGL context created');
+      this.init();
+    }
+
+    private init() {
+      if (!this.gl) return;
+      const gl = this.gl;
+
+      // Set canvas size
+      this.resizeCanvas();
+
+      // Create shaders
+      const vertexShader = this.createShader(gl.VERTEX_SHADER, `
+        attribute vec2 a_position;
+        varying vec2 vUv;
+        void main() {
+          vUv = a_position * 0.5 + 0.5;
+          gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+      `);
+
+      const fragmentShader = this.createShader(gl.FRAGMENT_SHADER, `
+        precision highp float;
+
+        uniform vec2 iResolution;
+        uniform float iTime;
+        uniform vec2 iMouse;
+        uniform float intensity;
+        uniform float streakLength;
+        uniform float streakHeight;
+        uniform float glowPower;
+        uniform float flareSize;
+        uniform float colorIntensity;
+        uniform vec3 primaryColor;
+        uniform float saturation;
+        varying vec2 vUv;
+
+        // Noise function for flare variation
+        float InterleavedGradientNoise(vec2 uv) {
+          const vec3 magic = vec3(0.06711056, 0.00583715, 52.9829189);
+          return fract(magic.z * fract(dot(uv, magic.xy)));
+        }
+
+        // Function to create glow effect
+        float Interglow(in vec2 uv, in vec2 pos, in vec3 flex, in float power) {
+          vec2 uvd = uv * (length(uv)) * flex.xy;
+          float edge = (1.0 / (1.0 + flex.z * pow(length(uvd - pos), power)));
+          return clamp(edge, 0.0, 1.0);
+        }
+
+        void main() {
+          vec2 uv = vUv;
+          vec2 fragCoord = vUv * iResolution;
+          vec2 mm = iMouse;
+
+          // Noise for variation
+          float inz = InterleavedGradientNoise(fragCoord);
+
+          // Output color
+          vec3 outcol = vec3(0.0);
+
+          // Vector from pixel to light source
+          vec2 delta = uv - mm;
+          float dist = length(delta);
+
+          // === ANAMORPHIC STREAK (from reference) ===
+          // Rotation matrix for streak angle
+          vec2 A = sin(vec2(0.0, 1.5708)); // sin(0) and sin(PI/2) = (0, 1)
+          mat2 rotMat = mat2(A.y, -A.x, A.x, A.y);
+
+          vec2 rotatedDelta = abs(delta * rotMat);
+          // Apply different scaling for horizontal vs vertical (anamorphic)
+          rotatedDelta.x *= streakHeight;  // horizontal falloff (small = wide streak)
+          rotatedDelta.y *= streakLength;  // vertical falloff (large = thin streak)
+
+          float streak = 0.08 / max(0.001, max(rotatedDelta.x, rotatedDelta.y));
+          streak = smoothstep(0.0, 1.0, streak);
+
+          // === CENTRAL GLOW ===
+          float glow = 1.0 / (1.0 + 50.0 * dist * dist);
+
+          // === SECONDARY GLOWS (lens artifacts) ===
+          float xr1 = Interglow(vec2(-0.5, -0.5) + uv, delta, vec3(2.2, 1.5, 24.0 + inz), 1.25);
+          float xr2 = Interglow(vec2(-0.45, -0.55) + uv, delta, vec3(4.2, 2.2, 28.0 + inz), 1.5);
+          float xr3 = Interglow(vec2(-0.53, -0.46) + uv, delta, vec3(1.4, 4.6, 16.0 + inz), 1.1);
+
+          // Combine all effects
+          outcol += vec3(1.0) * streak * intensity * 0.5;
+          outcol += vec3(1.0) * glow * intensity * 1.2;
+          outcol += vec3(1.0) * xr1 * xr1 * colorIntensity;
+          outcol += vec3(1.0) * xr2 * colorIntensity * 0.5;
+          outcol += vec3(1.0) * pow(xr3 + (inz * 0.2), glowPower) * colorIntensity * 0.8;
+
+          // Apply color tint
+          outcol *= primaryColor;
+
+          // Saturation
+          float lum = dot(outcol, vec3(0.299, 0.587, 0.114));
+          outcol = mix(vec3(lum), outcol, saturation);
+
+          outcol = clamp(outcol, 0.0, 1.0);
+          float alpha = max(outcol.r, max(outcol.g, outcol.b));
+          gl_FragColor = vec4(outcol, alpha);
+        }
+      `);
+
+      if (!vertexShader || !fragmentShader) return;
+
+      // Create program
+      this.program = gl.createProgram();
+      if (!this.program) return;
+
+      gl.attachShader(this.program, vertexShader);
+      gl.attachShader(this.program, fragmentShader);
+      gl.linkProgram(this.program);
+
+      if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+        return;
+      }
+
+      gl.useProgram(this.program);
+
+      // Get uniform locations
+      this.uniforms = {
+        iResolution: gl.getUniformLocation(this.program, 'iResolution'),
+        iTime: gl.getUniformLocation(this.program, 'iTime'),
+        iMouse: gl.getUniformLocation(this.program, 'iMouse'),
+        intensity: gl.getUniformLocation(this.program, 'intensity'),
+        streakLength: gl.getUniformLocation(this.program, 'streakLength'),
+        streakHeight: gl.getUniformLocation(this.program, 'streakHeight'),
+        glowPower: gl.getUniformLocation(this.program, 'glowPower'),
+        flareSize: gl.getUniformLocation(this.program, 'flareSize'),
+        colorIntensity: gl.getUniformLocation(this.program, 'colorIntensity'),
+        primaryColor: gl.getUniformLocation(this.program, 'primaryColor'),
+        saturation: gl.getUniformLocation(this.program, 'saturation')
+      };
+
+      // Create geometry
+      const positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1, 1, -1, -1, 1,
+        -1, 1, 1, -1, 1, 1
+      ]), gl.STATIC_DRAW);
+
+      const positionLocation = gl.getAttribLocation(this.program, 'a_position');
+      gl.enableVertexAttribArray(positionLocation);
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+      // Set initial uniforms
+      this.updateUniforms();
+
+      // Event listeners
+      this.setupEvents();
+      window.addEventListener('resize', this.handleResize);
+
+      // Start render loop
+      console.log('LensFlare: Starting render loop, canvas size:', this.canvas.width, 'x', this.canvas.height);
+      this.render();
+    }
+
+    private createShader(type: number, source: string): WebGLShader | null {
+      if (!this.gl) return null;
+      const gl = this.gl;
+
+      const shader = gl.createShader(type);
+      if (!shader) return null;
+
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error('LensFlare: Shader compile error', gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+      }
+
+      return shader;
+    }
+
+    private updateUniforms() {
+      if (!this.gl || !this.program) return;
+      const gl = this.gl;
+      const s = this.settings;
+
+      gl.uniform2f(this.uniforms.iResolution, this.canvas.width, this.canvas.height);
+      gl.uniform1f(this.uniforms.intensity, s.intensity);
+      gl.uniform1f(this.uniforms.streakLength, s.streakLength);
+      gl.uniform1f(this.uniforms.streakHeight, s.streakHeight);
+      gl.uniform1f(this.uniforms.glowPower, s.glowPower);
+      gl.uniform1f(this.uniforms.flareSize, s.flareSize);
+      gl.uniform1f(this.uniforms.colorIntensity, s.colorIntensity);
+      gl.uniform3f(this.uniforms.primaryColor, s.primaryColor[0], s.primaryColor[1], s.primaryColor[2]);
+      gl.uniform1f(this.uniforms.saturation, s.saturation);
+    }
+
+    private resizeCanvas() {
+      const container = this.canvas.parentElement;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+
+      // Skip if container has no size yet
+      if (rect.width < 10 || rect.height < 10) {
+        setTimeout(() => this.resizeCanvas(), 100);
+        return;
+      }
+
+      const dpr = Math.min(window.devicePixelRatio, 2);
+
+      this.canvas.width = rect.width * dpr;
+      this.canvas.height = rect.height * dpr;
+
+      if (this.gl) {
+        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        this.updateUniforms();
+      }
+    }
+
+    private handleResize = () => {
+      this.resizeCanvas();
+    };
+
+    private setupEvents() {
+      // Track mouse globally on document for better responsiveness
+      const container = this.canvas.parentElement;
+      if (!container) return;
+
+      // Use document-level mouse tracking for smoother experience
+      document.addEventListener('mousemove', (e) => {
+        const rect = container.getBoundingClientRect();
+        // Check if mouse is within or near the container
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = 1.0 - (e.clientY - rect.top) / rect.height;
+
+        // Clamp values but still track outside for smooth transitions
+        this.targetMouse.x = Math.max(0, Math.min(1, x));
+        this.targetMouse.y = Math.max(0, Math.min(1, y));
+      });
+    }
+
+    private render = () => {
+      if (this.isDestroyed || !this.gl) return;
+      const gl = this.gl;
+
+      this.time += 0.01;
+
+      // Smooth mouse interpolation - faster for more responsive feel
+      this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.12;
+      this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.12;
+
+      gl.uniform1f(this.uniforms.iTime, this.time);
+      gl.uniform2f(this.uniforms.iMouse, this.mouse.x, this.mouse.y);
+
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);  // Additive blending for glow
+
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      this.animationId = requestAnimationFrame(this.render);
+    };
+
+    destroy() {
+      this.isDestroyed = true;
+      if (this.animationId) {
+        cancelAnimationFrame(this.animationId);
+      }
+      window.removeEventListener('resize', this.handleResize);
+    }
+  }
+
+  // Initialize all lens flare instances
+  function initLensFlares() {
+    document.querySelectorAll('[data-lens-flare]').forEach((container) => {
+      if (container instanceof HTMLElement && !container.dataset.initialized) {
+        container.dataset.initialized = 'true';
+        new LensFlareEffect(container);
+      }
+    });
+  }
+
+  // Wait for intro animation to complete before initializing
+  function waitForIntroAndInit() {
+    const mainContent = document.getElementById('main-content');
+
+    // If main content is already visible (intro complete), initialize
+    if (mainContent && !mainContent.classList.contains('landing--hidden')) {
+      setTimeout(initLensFlares, 100);
+      return;
+    }
+
+    // Otherwise wait for intro-complete event
+    window.addEventListener('intro-complete', () => {
+      setTimeout(initLensFlares, 600); // Wait for opacity transition
+    }, { once: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', waitForIntroAndInit);
+  } else {
+    waitForIntroAndInit();
+  }
+</script>
+
+<style>
+  .lens-flare-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .lens-flare-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>

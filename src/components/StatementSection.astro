@@ -1,100 +1,146 @@
 ---
-// import PixelCanvas from './PixelCanvas.astro';
+// Statement Section with DotsGrid and PixelWorld backgrounds
+// import DotsGrid from './DotsGrid.astro';
+import PixelWorld from './PixelWorld.astro';
 ---
 
 <section class="statement-section" data-name="Statement Section" data-statement-section>
-  <div class="statement-inner">
-  <!-- <PixelCanvas
-    colors="#808080,#fff,#a0a0a0"
-    gap={6}
-    speed={35}
-    shimmerIntensity={0.4}
-    noFocus={true}
-    class="statement-pixel-canvas"
+  <!-- PixelWorld shader background (bottom layer) -->
+  <PixelWorld
+    pixelSize={30}
+    opacity={0.5}
+    speed={0.5}
+    staggerMode="center"
+  />
+  <!-- DotsGrid on top of PixelWorld -->
+  <!-- <DotsGrid
+    dotColor="255, 255, 255"
+    dotSize={2}
+    spacing={50}
+    maxDistance={120}
+    pushStrength={35}
+    baseOpacity={0.25}
   /> -->
-  <ul>
-    <li>
-      <span class="letter">
-        <span>H</span>
-        <span>H</span>
-      </span>
-      <span class="letter">
-        <span>u</span>
-        <span>u</span>
-      </span>
-      <span class="letter">
-        <span>m</span>
-        <span>m</span>
-      </span>
-      <span class="letter">
-        <span>a</span>
-        <span>a</span>
-      </span>
-      <span class="letter">
-        <span>n</span>
-        <span>n</span>
-      </span>
-      <span class="letter">
-        <span>i</span>
-        <span>i</span>
-      </span>
-      <span class="letter">
-        <span>t</span>
-        <span>t</span>
-      </span>
-      <span class="letter">
-        <span>y</span>
-        <span>y</span>
-      </span>
-    </li>
-    <li>
-      <span class="letter">
-        <span>A</span>
-        <span>A</span>
-      </span>
-      <span class="letter">
-        <span>m</span>
-        <span>m</span>
-      </span>
-      <span class="letter">
-        <span>p</span>
-        <span>p</span>
-      </span>
-      <span class="letter">
-        <span>l</span>
-        <span>l</span>
-      </span>
-      <span class="letter">
-        <span>i</span>
-        <span>i</span>
-      </span>
-      <span class="letter">
-        <span>f</span>
-        <span>f</span>
-      </span>
-      <span class="letter">
-        <span>i</span>
-        <span>i</span>
-      </span>
-      <span class="letter">
-        <span>e</span>
-        <span>e</span>
-      </span>
-      <span class="letter">
-        <span>d</span>
-        <span>d</span>
-      </span>
-    </li>
-  </ul>
+  <div class="statement-inner">
+    <ul>
+      <li class="statement-line" data-text="Humanity"></li>
+      <li class="statement-line" data-text="Amplified"></li>
+    </ul>
   </div>
 </section>
 
 <script>
+  // =============================================
+  // BLUR ENTRANCE ANIMATION (like Hero)
+  // =============================================
+  async function initBlurEntrance() {
+    const section = document.querySelector('[data-statement-section]');
+    if (!section) {
+      console.error('StatementSection: Section not found');
+      return;
+    }
+
+    const lines = section.querySelectorAll('.statement-line');
+    if (lines.length === 0) {
+      console.error('StatementSection: Statement lines not found');
+      return;
+    }
+
+    // First, create all the character spans from data-text attribute
+    const allChars: HTMLElement[] = [];
+
+    lines.forEach((line) => {
+      const text = (line as HTMLElement).dataset.text || '';
+
+      text.split('').forEach((char) => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = char;
+        line.appendChild(span);
+        allChars.push(span);
+      });
+    });
+
+    if (allChars.length === 0) {
+      console.error('StatementSection: No characters created');
+      return;
+    }
+
+    console.log('StatementSection: Created', allChars.length, 'character spans');
+
+    // Now load GSAP and animate
+    const [{ gsap }, { default: ScrollTrigger }] = await Promise.all([
+      import('gsap'),
+      // @ts-ignore
+      import('gsap/ScrollTrigger.js')
+    ]);
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Set initial state - letters start hidden via CSS, GSAP sets blur/transform
+    // Like Hero: come from left with blur
+    gsap.set(allChars, {
+      opacity: 0,
+      filter: 'blur(60px)',
+      x: -100,
+      scale: 1
+    });
+
+    console.log('StatementSection: Initial GSAP state set');
+
+    // Function to animate the letters in
+    const animateIn = () => {
+      console.log('StatementSection: Animating in now!');
+
+      // Trigger the DotsGrid animation at the same time
+      const dotsCanvas = section.querySelector('[data-dots-grid]');
+      if (dotsCanvas) {
+        dotsCanvas.dispatchEvent(new CustomEvent('dots-grid-start'));
+        console.log('StatementSection: Triggered DotsGrid animation');
+      }
+
+      gsap.to(allChars, {
+        opacity: 1,
+        filter: 'blur(0px)',
+        x: 0,
+        y: 0,
+        scale: 1,
+        duration: 1.0,
+        ease: 'power3.out',
+        stagger: {
+          each: 0.06,
+          from: 'start'
+        }
+      });
+    };
+
+    // Use Intersection Observer to trigger animation when section is visible
+    // threshold: 0.5 means 50% of the section must be visible before triggering
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            console.log('StatementSection: Section is now visible via IntersectionObserver');
+            animateIn();
+            observer.disconnect(); // Only trigger once
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(section);
+    console.log('StatementSection: IntersectionObserver set up');
+  }
+
+  // =============================================
+  // LETTER SCRAMBLE ANIMATION (disabled for now)
+  // =============================================
+  /*
   async function initStatementAnimation() {
     const section = document.querySelector('[data-statement-section]');
     if (!section) return;
 
-    // Lazy load GSAP plugins
     const [{ gsap }, { default: ScrollTrigger }] = await Promise.all([
       import('gsap'),
       // @ts-ignore
@@ -111,7 +157,6 @@
       return;
     }
 
-    // Letter scramble animation
     gsap.to(letterElements, {
       yPercent: 100,
       ease: 'power1.inOut',
@@ -128,19 +173,19 @@
       }
     });
 
-    // Refresh after setup
     setTimeout(() => {
       ScrollTrigger.refresh();
     }, 100);
   }
+  */
 
-  // Initialize when DOM is ready
+  // Initialize blur entrance animation
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(initStatementAnimation, 800);
+      setTimeout(initBlurEntrance, 300);
     });
   } else {
-    setTimeout(initStatementAnimation, 800);
+    setTimeout(initBlurEntrance, 300);
   }
 </script>
 
@@ -148,7 +193,7 @@
   .statement-section {
     padding: 0;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
     background-color: #000;
   }
 
@@ -156,18 +201,11 @@
     padding: 50vh 48px;
     width: 100%;
     min-height: 100%;
-    background-color: #000;
+    background-color: transparent;
     will-change: transform;
-  }
-
-  .statement-pixel-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    opacity: 0.75;
+    position: relative;
+    overflow: visible;
+    z-index: 2;
   }
 
   .statement-section ul {
@@ -179,30 +217,26 @@
     margin: 0;
     gap: 0;
     position: relative;
-    z-index: 1;
+    z-index: 3;
   }
 
-  .statement-section li {
+  .statement-section li,
+  .statement-line {
     font-family: 'PP Neue Machina', sans-serif;
     font-weight: 800;
     font-size: clamp(86px, 12vw, 300px);
     line-height: 0.95;
     color: #fff;
     text-transform: uppercase;
-    overflow: hidden;
     display: flex;
     position: relative;
   }
 
+  /* Letters start hidden - like Hero's .title-char { opacity: 0 } */
   .statement-section .letter {
-    position: relative;
     display: inline-block;
-  }
-
-  .statement-section .letter span:last-child {
-    position: absolute;
-    bottom: 100%;
-    left: 0;
+    opacity: 0;
+    will-change: transform, filter, opacity;
   }
 
   @media (max-width: 768px) {

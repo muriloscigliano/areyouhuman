@@ -403,15 +403,15 @@ onUnmounted(() => {
 }
 
 .what-we-do-section--default .section-inner {
-  background: #0f0f0f;
+  background: #000;
 }
 
 .what-we-do-section--dark .section-inner {
-  background: #131313;
+  background: #0f0f0f;
 }
 
 .what-we-do-section--darker .section-inner {
-  background: #161616;
+  background: #131313; /* #161616; */
 }
 
 .what-we-do-section--title-only {

@@ -8,6 +8,7 @@ interface Props {
   disabled?: boolean;
   triggerSelector?: string;
   debug?: boolean;
+  autoStart?: boolean;
   class?: string;
 }
 
@@ -20,6 +21,7 @@ const {
   disabled = false,
   triggerSelector = '',
   debug = false,
+  autoStart = false,
   class: className = '',
 } = Astro.props;
 ---
@@ -34,6 +36,7 @@ const {
       data-no-focus={noFocus ? '' : undefined}
       data-debug={debug ? '' : undefined}
       data-trigger-selector={triggerSelector}
+      data-auto-start={autoStart ? '' : undefined}
     />
   </div>
 )}
@@ -318,14 +321,29 @@ const {
       if (this.pixels.length > 0) {
         this.ctx.clearRect(0, 0, width, height);
 
-        this.pixels.forEach(pixel => {
-          pixel.size = 0;
-          pixel.isShimmer = false;
-          pixel.isIdle = true;
-          pixel.counter = 0;
-        });
+        // Check if autoStart is enabled
+        const autoStart = this.hasAttribute('data-auto-start');
 
-        if (debug) console.log('PixelCanvas: Pixels initialized for entrance animation');
+        if (autoStart) {
+          // Start with pixels visible and shimmering immediately
+          this.pixels.forEach(pixel => {
+            pixel.size = pixel.maxSize;
+            pixel.isShimmer = true;
+            pixel.isIdle = false;
+            pixel.counter = pixel.delay + 1;
+          });
+          if (debug) console.log('PixelCanvas: AutoStart enabled - starting shimmer immediately');
+          // Start shimmer animation right away
+          this.handleAnimation('shimmer');
+        } else {
+          this.pixels.forEach(pixel => {
+            pixel.size = 0;
+            pixel.isShimmer = false;
+            pixel.isIdle = true;
+            pixel.counter = 0;
+          });
+          if (debug) console.log('PixelCanvas: Pixels initialized for entrance animation');
+        }
       } else {
         console.error('PixelCanvas: No pixels created!', { width, height, gap: this.gap });
       }
@@ -377,6 +395,7 @@ const {
 
   // Register custom element
   if (typeof window !== 'undefined' && 'customElements' in window) {
+    console.log('PixelCanvas: Registering custom element');
     PixelCanvas.register();
   }
 
