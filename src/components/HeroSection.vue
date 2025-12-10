@@ -122,7 +122,7 @@ const logoCharRefs = ref<(HTMLElement | null)[]>([]);
 const logoKey = ref(Date.now());
 
 const navRef = ref<HTMLElement | null>(null);
-const navItems = ['Services', 'Framework', 'Contact'];
+const navItems = ['Services', 'Framework', 'Team'];
 const navItemRefs = ref<(HTMLElement | null)[]>([]);
 
 const stayTitleRef = ref<HTMLElement | null>(null);
@@ -297,19 +297,13 @@ function handleNavHover(index: number) {
 const navTargets: Record<string, string> = {
   'Services': '#services',
   'Framework': '#framework',
-  'Contact': '#contact'
+  'Team': '#team'
 };
 
 function handleNavClick(index: number) {
   playClick();
   const item = navItems[index];
   const target = navTargets[item];
-
-  if (item === 'Contact') {
-    // Open contact modal instead of scrolling
-    openModal();
-    return;
-  }
 
   if (target) {
     const element = document.querySelector(target);
