@@ -26,6 +26,7 @@
           :ref="el => { if (el) navItemRefs[index] = el as HTMLElement }"
           class="nav-item"
           @mouseenter="handleNavHover(index)"
+          @click="handleNavClick(index)"
         >{{ item }}</p>
       </nav>
     </header>
@@ -289,6 +290,33 @@ function handleNavHover(index: number) {
   const navEl = navItemRefs.value[index];
   if (navEl) {
     scrambleText(navEl, navItems[index], 400);
+  }
+}
+
+// Map nav items to section IDs
+const navTargets: Record<string, string> = {
+  'Services': '#services',
+  'Solutions': '#services', // Solutions is part of services section
+  'Framework': '#framework',
+  'Contact': '#contact'
+};
+
+function handleNavClick(index: number) {
+  playClick();
+  const item = navItems[index];
+  const target = navTargets[item];
+
+  if (item === 'Contact') {
+    // Open contact modal instead of scrolling
+    openModal();
+    return;
+  }
+
+  if (target) {
+    const element = document.querySelector(target);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 }
 

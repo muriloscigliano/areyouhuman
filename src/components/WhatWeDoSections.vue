@@ -1,5 +1,5 @@
 <template>
-  <section class="what-we-do-sections">
+  <section id="services" class="what-we-do-sections">
     <section
       v-for="(section, index) in sections"
       :key="index"
