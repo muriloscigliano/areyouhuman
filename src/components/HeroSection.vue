@@ -20,11 +20,12 @@
         >{{ char === ' ' ? '\u00A0' : char }}</span>
       </p>
       <nav class="nav" ref="navRef">
-        <p 
+        <p
           v-for="(item, index) in navItems"
           :key="index"
           :ref="el => { if (el) navItemRefs[index] = el as HTMLElement }"
           class="nav-item"
+          @mouseenter="handleNavHover(index)"
         >{{ item }}</p>
       </nav>
     </header>
@@ -277,6 +278,13 @@ function handleLogoHover() {
       }
     }
   });
+}
+
+function handleNavHover(index: number) {
+  const navEl = navItemRefs.value[index];
+  if (navEl) {
+    scrambleText(navEl, navItems[index], 400);
+  }
 }
 
 function updateTitleWithScramble(newText: string) {

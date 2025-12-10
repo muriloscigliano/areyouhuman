@@ -46,7 +46,14 @@
       "Bash(git reset:*)",
       "Bash(git rm:*)",
       "Bash(git pull:*)",
-      "Bash(open http://localhost:4321/)"
+      "Bash(open http://localhost:4321/)",
+      "Bash(git checkout:*)",
+      "Bash(grep:*)",
+      "Bash(lsof:*)",
+      "Bash(npx astro check:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(git merge:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []
