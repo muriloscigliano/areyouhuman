@@ -13,8 +13,8 @@ function getAudioContext(): AudioContext {
   return audioContext;
 }
 
-// Generate a subtle click/tick sound
-function playTick(frequency: number = 3500, duration: number = 0.03) {
+// Generate a subtle tick sound
+function playTick(frequency: number, duration: number) {
   if (!isEnabled.value) return;
 
   try {
@@ -54,53 +54,11 @@ function playClick() {
   playTick(2800, 0.04);
 }
 
-// Soft whoosh for transitions (using noise)
-function playWhoosh() {
-  if (!isEnabled.value) return;
-
-  try {
-    const ctx = getAudioContext();
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
-
-    const bufferSize = ctx.sampleRate * 0.08; // 80ms
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-    }
-
-    const source = ctx.createBufferSource();
-    const gainNode = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-
-    source.buffer = buffer;
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(2000, ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 0.08);
-
-    source.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    gainNode.gain.setValueAtTime(volume.value * 0.5, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-
-    source.start();
-  } catch (e) {
-    // Silently fail
-  }
-}
-
 export function useSound() {
   return {
     isEnabled,
     volume,
     playHover,
-    playClick,
-    playWhoosh,
-    playTick
+    playClick
   };
 }

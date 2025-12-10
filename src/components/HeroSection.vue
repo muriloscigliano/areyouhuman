@@ -122,7 +122,7 @@ const logoCharRefs = ref<(HTMLElement | null)[]>([]);
 const logoKey = ref(Date.now());
 
 const navRef = ref<HTMLElement | null>(null);
-const navItems = ['Services', 'Solutions', 'Framework', 'Contact'];
+const navItems = ['Services', 'Framework', 'Contact'];
 const navItemRefs = ref<(HTMLElement | null)[]>([]);
 
 const stayTitleRef = ref<HTMLElement | null>(null);
@@ -296,7 +296,6 @@ function handleNavHover(index: number) {
 // Map nav items to section IDs
 const navTargets: Record<string, string> = {
   'Services': '#services',
-  'Solutions': '#services', // Solutions is part of services section
   'Framework': '#framework',
   'Contact': '#contact'
 };
