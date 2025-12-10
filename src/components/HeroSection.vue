@@ -56,17 +56,30 @@
           >{{ char === ' ' ? '\u00A0' : char }}</span>
         </span>
       </h1>
-      <div class="hero-buttons">
-        <button class="btn-secondary" @click="openModal">
-          <span ref="btnSecondaryTextRef" class="btn-text">
-            <span
-              v-for="(char, index) in btnSecondaryChars"
-              :key="`btn-secondary-${btnSecondaryKey}-${index}`"
-              :ref="el => { if (el) btnSecondaryCharRefs[index] = el as HTMLElement }"
-              class="btn-char"
-              :class="{ 'btn-space': char === ' ' }"
-            >{{ char === ' ' ? '\u00A0' : char }}</span>
-          </span>
+    </div>
+
+    <!-- Magnetic Button - Bottom Left -->
+    <div ref="ctaRef" class="hero-cta">
+      <div class="btn-magnetic">
+        <button
+          class="btn-magnetic__click"
+          data-magnetic-strength="80"
+          data-magnetic-strength-inner="40"
+          @click="openModal"
+        >
+          <div class="btn-magnetic__fill"></div>
+          <div data-magnetic-inner-target class="btn-magnetic__content">
+            <svg class="btn-magnetic__icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <!-- AI Sparkles Icon -->
+              <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 16L19.75 18.25L22 19L19.75 19.75L19 22L18.25 19.75L16 19L18.25 18.25L19 16Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 2L5.5 3.5L7 4L5.5 4.5L5 6L4.5 4.5L3 4L4.5 3.5L5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="btn-magnetic__text">
+              <p class="btn-magnetic__text-p">Talk to an Expert</p>
+              <p class="btn-magnetic__text-p is--duplicate">Talk to an Expert</p>
+            </div>
+          </div>
         </button>
       </div>
     </div>
@@ -123,10 +136,7 @@ const taglineChars = ref('The AI studio that helps leaders win with AI. Without 
 const taglineCharRefs = ref<(HTMLElement | null)[]>([]);
 const taglineKey = ref(Date.now());
 
-const btnSecondaryTextRef = ref<HTMLElement | null>(null);
-const btnSecondaryChars = ref('Talk to an Expert'.split(''));
-const btnSecondaryCharRefs = ref<(HTMLElement | null)[]>([]);
-const btnSecondaryKey = ref(Date.now());
+const ctaRef = ref<HTMLElement | null>(null);
 
 const { open: openModal } = useContactModal();
 
@@ -518,48 +528,82 @@ function animateNav() {
   });
 }
 
-function animateButtonText() {
-  nextTick(() => {
-    const processButtonChars = (charRefs: (HTMLElement | null)[], chars: string[], retryCount = 0) => {
-      const allReady = chars.every((char, index) => {
-        return charRefs[index] !== undefined && charRefs[index] !== null;
-      });
+function animateCta() {
+  if (!ctaRef.value) return;
 
-      if (allReady || retryCount >= 5) {
-        gsap.set(charRefs.slice(0, chars.length), {
-          opacity: 0,
-          y: 10,
-          filter: 'blur(8px)'
-        });
+  // Set initial state - hidden, blurred, from bottom-left
+  gsap.set(ctaRef.value, {
+    opacity: 0,
+    x: -50,
+    y: 50,
+    filter: 'blur(20px)',
+    scale: 0.9
+  });
 
-        gsap.to(charRefs.slice(0, chars.length), {
-          opacity: 1,
-          y: 0,
-          filter: 'blur(0px)',
-          duration: 0.5,
-          ease: 'power2.out',
-          stagger: {
-            each: 0.02,
-            from: 'start'
-          }
-        });
+  // Animate in with a slight delay to coordinate with tagline
+  gsap.to(ctaRef.value, {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    filter: 'blur(0px)',
+    scale: 1,
+    duration: 1.2,
+    delay: 0.3,
+    ease: 'power3.out'
+  });
+}
 
-        charRefs.forEach((charEl, index) => {
-          if (charEl && index < chars.length) {
-            const char = chars[index];
-            if (char !== ' ') {
-              scrambleText(charEl, char, 400);
-            } else {
-              charEl.textContent = '\u00A0';
-            }
-          }
-        });
-      } else {
-        setTimeout(() => processButtonChars(charRefs, chars, retryCount + 1), 50);
-      }
-    };
+function initMagneticEffect() {
+  const magnets = document.querySelectorAll('[data-magnetic-strength]');
+  if (window.innerWidth <= 991) return;
 
-    processButtonChars(btnSecondaryCharRefs.value, btnSecondaryChars.value);
+  const resetEl = (el: Element | null, immediate: boolean) => {
+    if (!el) return;
+    gsap.killTweensOf(el);
+    if (immediate) {
+      gsap.set(el, { x: '0em', y: '0em', rotate: '0deg', clearProps: 'all' });
+    } else {
+      gsap.to(el, { x: '0em', y: '0em', rotate: '0deg', clearProps: 'all', ease: 'elastic.out(1, 0.3)', duration: 1.6 });
+    }
+  };
+
+  const resetOnEnter = (e: Event) => {
+    const m = e.currentTarget as HTMLElement;
+    resetEl(m, true);
+    resetEl(m.querySelector('[data-magnetic-inner-target]'), true);
+  };
+
+  const moveMagnet = (e: MouseEvent) => {
+    const m = e.currentTarget as HTMLElement;
+    const b = m.getBoundingClientRect();
+    const strength = parseFloat(m.getAttribute('data-magnetic-strength') || '25');
+    const inner = m.querySelector('[data-magnetic-inner-target]');
+    const innerStrength = parseFloat(m.getAttribute('data-magnetic-strength-inner') || String(strength));
+    const offsetX = ((e.clientX - b.left) / m.offsetWidth - 0.5) * (strength / 16);
+    const offsetY = ((e.clientY - b.top) / m.offsetHeight - 0.5) * (strength / 16);
+
+    gsap.to(m, { x: offsetX + 'em', y: offsetY + 'em', rotate: '0.001deg', ease: 'power4.out', duration: 1.6 });
+
+    if (inner) {
+      const innerOffsetX = ((e.clientX - b.left) / m.offsetWidth - 0.5) * (innerStrength / 16);
+      const innerOffsetY = ((e.clientY - b.top) / m.offsetHeight - 0.5) * (innerStrength / 16);
+      gsap.to(inner, { x: innerOffsetX + 'em', y: innerOffsetY + 'em', rotate: '0.001deg', ease: 'power4.out', duration: 2 });
+    }
+  };
+
+  const resetMagnet = (e: Event) => {
+    const m = e.currentTarget as HTMLElement;
+    const inner = m.querySelector('[data-magnetic-inner-target]');
+    gsap.to(m, { x: '0em', y: '0em', ease: 'elastic.out(1, 0.3)', duration: 1.6, clearProps: 'all' });
+    if (inner) {
+      gsap.to(inner, { x: '0em', y: '0em', ease: 'elastic.out(1, 0.3)', duration: 2, clearProps: 'all' });
+    }
+  };
+
+  magnets.forEach(m => {
+    m.addEventListener('mouseenter', resetOnEnter);
+    m.addEventListener('mousemove', moveMagnet as EventListener);
+    m.addEventListener('mouseleave', resetMagnet);
   });
 }
 
@@ -567,9 +611,10 @@ function startAnimations() {
   animateLogo();
   animateNav();
   animateTagline();
-  animateButtonText();
+  animateCta();
   animateStay();
   initTitleAnimation();
+  initMagneticEffect();
 
   setTimeout(() => {
     startTitleCycle();
@@ -689,8 +734,7 @@ onUnmounted(() => {
     navItemRefs.value,
     stayCharRefs.value,
     titleCharRefs.value,
-    taglineCharRefs.value,
-    btnSecondaryCharRefs.value
+    taglineCharRefs.value
   ]);
 });
 </script>
@@ -840,68 +884,116 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-.hero-buttons {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
+/* CTA Button - Bottom Left */
+.hero-cta {
+  position: absolute;
+  bottom: 72px;
+  right: 72px;
+  z-index: 10;
+  opacity: 0; /* Hidden initially, animated in by JS */
 }
 
-.btn-secondary {
-  font-family: 'PP Neue Machina', sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 1.1;
-  color: #fff;
-  padding: 16px 18px;
-  border-radius: 500px;
-  white-space: nowrap;
+/* Magnetic Button */
+.btn-magnetic {
+  font-size: 18px;
+  position: relative;
+}
+
+.btn-magnetic__click {
   cursor: pointer;
-  border: none;
-  display: flex;
-  align-items: center;
+  border-radius: 4em;
   justify-content: center;
-  background: transparent;
-}
-
-.btn-text {
-  display: inline-block;
-}
-
-.btn-char {
-  display: inline-block;
-  opacity: 0;
-}
-
-.btn-space {
-  width: 0.3em;
-  min-width: 0.3em;
-  opacity: 0;
-}
-
-.btn-primary {
-  background: #c85508;
-  border: 1px solid #fb6400;
-}
-
-.btn-secondary {
-  background: transparent;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
   border: 1px solid #fff;
+  background: transparent;
+}
+
+.btn-magnetic__fill {
+  background-color: #fff;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.4s cubic-bezier(0.625, 0.05, 0, 1);
+}
+
+.btn-magnetic__click:hover .btn-magnetic__fill {
+  transform: scaleY(1);
+}
+
+.btn-magnetic__content {
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 1.2em 2.4em;
+  gap: 0.7em;
+  display: flex;
+  position: relative;
+}
+
+.btn-magnetic__icon {
+  color: #fff;
+  flex-shrink: 0;
+  transition: color 0.6s cubic-bezier(0.625, 0.05, 0, 1);
+}
+
+.btn-magnetic__click:hover .btn-magnetic__icon {
+  color: #000;
+}
+
+.btn-magnetic__text {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-magnetic__text-p {
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  font-family: 'PP Neue Machina', sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  position: relative;
+  white-space: nowrap;
+  transition: all 0.6s cubic-bezier(0.625, 0.05, 0, 1);
+  transform: translateY(0%) rotate(0.001deg);
+}
+
+.btn-magnetic__text-p.is--duplicate {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  color: #000;
+}
+
+.btn-magnetic__click:hover .btn-magnetic__text-p {
+  transform: translateY(-100%) rotate(0.001deg);
 }
 
 
 .hero-tagline {
   position: absolute;
   bottom: 72px;
-  right: 72px;
+  left: 72px;
   font-family: 'PP Supply Mono', monospace;
   font-size: 40px;
   line-height: 1.2;
   color: #fff;
   max-width: 1010px;
-  text-align: right;
+  text-align: left;
   z-index: 10;
   font-weight: 200;
   will-change: filter, opacity;
+  text-wrap: balance;
   /* Paragraph indent effect for right-aligned split text */
 }
 
@@ -929,16 +1021,23 @@ onUnmounted(() => {
     max-width: 100%;
   }
   
-  .hero-buttons {
-    flex-direction: column;
-    width: 100%;
+  .hero-cta {
+    bottom: auto;
+    left: 24px;
+    right: 24px;
+    top: auto;
+    position: relative;
+    margin-top: 24px;
   }
-  
-  .btn-primary,
-  .btn-secondary {
-    width: 100%;
+
+  .btn-magnetic {
+    font-size: 16px;
   }
-  
+
+  .btn-magnetic__content {
+    padding: 1em 2em;
+  }
+
   .hero-tagline {
     font-size: 20px;
     max-width: 100%;

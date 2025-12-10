@@ -4,7 +4,7 @@
     <div ref="sidebarRef" class="sidebar">
       <!-- Close Button -->
       <div class="close-button-wrapper">
-        <button 
+        <button
           @click="close"
           class="close-button"
           aria-label="close button"
@@ -35,8 +35,8 @@
         <div class="welcome-bottom">
           <!-- Quick Actions -->
           <div class="quick-actions">
-            <button 
-              v-for="action in quickActions" 
+            <button
+              v-for="action in quickActions"
               :key="action.id"
               @click="handleQuickAction(action.text)"
               class="action-button"
@@ -52,7 +52,7 @@
           <div class="input-container">
             <div class="input-wrapper">
               <div class="input-content">
-                <input 
+                <input
                   ref="inputRef"
                   v-model="userInput"
                   @keydown.enter="handleSendMessage"
@@ -75,7 +75,7 @@
                       </svg>
                     </button>
                   </div>
-                  <button 
+                  <button
                     @click="handleSendMessage"
                     :disabled="!userInput.trim()"
                     class="send-button"
@@ -111,10 +111,10 @@ const telosEase = (t: number): number => {
   const cy = 3 * p2;
   const by = 3 * (p4 - p2) - cy;
   const ay = 1 - cy - by;
-  
+
   const sampleCurveX = (t: number) => ((ax * t + bx) * t + cx) * t;
   const sampleCurveY = (t: number) => ((ay * t + by) * t + cy) * t;
-  
+
   let t2 = t;
   for (let i = 0; i < 8; i++) {
     const x = sampleCurveX(t2) - t;
@@ -123,7 +123,7 @@ const telosEase = (t: number): number => {
     if (Math.abs(d) < 0.000001) break;
     t2 -= x / d;
   }
-  
+
   return sampleCurveY(t2);
 };
 
@@ -155,10 +155,10 @@ const startChat = async (message: string) => {
   const messageToSend = message;
   userInput.value = '';
   isChatting.value = true;
-  
+
   // Wait for next tick to ensure AiChat component is mounted
   await nextTick();
-  
+
   // Send the initial message to the chat
   if (aiChatRef.value && typeof aiChatRef.value.sendInitialMessage === 'function') {
     aiChatRef.value.sendInitialMessage(messageToSend);
@@ -577,4 +577,3 @@ onUnmounted(() => {
   }
 }
 </style>
-
