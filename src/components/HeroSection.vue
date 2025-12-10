@@ -1,57 +1,50 @@
 <template>
   <section ref="heroSectionRef" class="hero-section" data-name="Hero Section">
-    <!-- Using global starfield from index.astro - no embedded starfield needed -->
-
-    <!-- Noise overlay for film grain effect -->
-    <!-- <div class="noise-overlay"></div> -->
-
     <header class="hero-header" data-name="Header">
-      <p 
+      <button
         ref="logoRef"
         class="logo"
         @mouseenter="handleLogoHover"
+        aria-label="Are You Human - Home"
+        type="button"
       >
         <span
           v-for="(char, index) in logoChars"
-          :key="`logo-${logoKey}-${index}`"
+          :key="`logo-${index}`"
           :ref="el => { if (el) logoCharRefs[index] = el as HTMLElement }"
           class="logo-char"
           :class="{ 'logo-space': char === ' ' }"
+          aria-hidden="true"
         >{{ char === ' ' ? '\u00A0' : char }}</span>
-      </p>
-      <nav class="nav" ref="navRef">
-        <p
+      </button>
+      <nav class="nav" ref="navRef" aria-label="Main navigation">
+        <button
           v-for="(item, index) in navItems"
           :key="index"
           :ref="el => { if (el) navItemRefs[index] = el as HTMLElement }"
           class="nav-item"
           @mouseenter="handleNavHover(index)"
           @click="handleNavClick(index)"
-        >{{ item }}</p>
+          type="button"
+        >{{ item }}</button>
       </nav>
     </header>
-    
+
     <div class="hero-content">
       <h1 class="hero-title">
-        <span 
-          ref="stayTitleRef"
-          class="title-fixed"
-        >
+        <span ref="stayTitleRef" class="title-fixed">
           <span
             v-for="(char, index) in stayChars"
-            :key="`stay-${stayKey}-${index}`"
+            :key="`stay-${index}`"
             :ref="el => { if (el) stayCharRefs[index] = el as HTMLElement }"
             class="title-char"
             :class="{ 'title-space': char === ' ' }"
           >{{ char === ' ' ? '\u00A0' : char }}</span>
         </span>
-        <span 
-          ref="dynamicTitleRef"
-          class="title-dynamic"
-        >
+        <span ref="dynamicTitleRef" class="title-dynamic">
           <span
             v-for="(char, index) in dynamicTitleChars"
-            :key="`${titleKey}-${index}`"
+            :key="`title-${titleKey}-${index}`"
             :ref="el => { if (el) titleCharRefs[index] = el as HTMLElement }"
             class="title-char"
             :class="{ 'title-space': char === ' ' }"
@@ -60,7 +53,7 @@
       </h1>
     </div>
 
-    <!-- Magnetic Button - Bottom Left -->
+    <!-- Magnetic Button -->
     <div ref="ctaRef" class="hero-cta">
       <div class="btn-magnetic">
         <button
@@ -69,124 +62,134 @@
           data-magnetic-strength-inner="40"
           @click="handleCtaClick"
           @mouseenter="playHover"
+          type="button"
+          aria-label="Talk to an Expert - Open contact form"
         >
-          <div class="btn-magnetic__fill"></div>
+          <div class="btn-magnetic__fill" aria-hidden="true"></div>
           <div data-magnetic-inner-target class="btn-magnetic__content">
-            <svg class="btn-magnetic__icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <!-- AI Sparkles Icon -->
+            <svg class="btn-magnetic__icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M19 16L19.75 18.25L22 19L19.75 19.75L19 22L18.25 19.75L16 19L18.25 18.25L19 16Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M5 2L5.5 3.5L7 4L5.5 4.5L5 6L4.5 4.5L3 4L4.5 3.5L5 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <div class="btn-magnetic__text">
-              <p class="btn-magnetic__text-p">Talk to an Expert</p>
-              <p class="btn-magnetic__text-p is--duplicate">Talk to an Expert</p>
+              <span class="btn-magnetic__text-p">Talk to an Expert</span>
+              <span class="btn-magnetic__text-p is--duplicate" aria-hidden="true">Talk to an Expert</span>
             </div>
           </div>
         </button>
       </div>
     </div>
-    
-    <p 
-      ref="taglineRef"
-      class="hero-tagline"
-    >
+
+    <p ref="taglineRef" class="hero-tagline">
       <span
         v-for="(char, index) in taglineChars"
-        :key="`tagline-${taglineKey}-${index}`"
+        :key="`tagline-${index}`"
         :ref="el => { if (el) taglineCharRefs[index] = el as HTMLElement }"
         class="tagline-char"
         :class="{ 'tagline-space': char === ' ' }"
+        aria-hidden="true"
       >{{ char === ' ' ? '\u00A0' : char }}</span>
     </p>
-
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { gsap } from 'gsap';
+import type { ScrollTrigger as ScrollTriggerType } from 'gsap/ScrollTrigger';
 import { useContactModal } from '../composables/useContactModal';
 import { useSound } from '../composables/useSound';
 
-// ScrollTrigger for exit animation
-let ScrollTrigger: any = null;
-let heroExitTrigger: any = null;
+// ScrollTrigger for exit animation (lazy loaded)
+let ScrollTrigger: typeof ScrollTriggerType | null = null;
+let heroExitTrigger: ScrollTriggerType | null = null;
 
-// No embedded starfield - using global one from index.astro
-
+// Element refs
 const heroSectionRef = ref<HTMLElement | null>(null);
 const logoRef = ref<HTMLElement | null>(null);
-const logoChars = ref('Are You Human?'.split(''));
-const logoCharRefs = ref<(HTMLElement | null)[]>([]);
-const logoKey = ref(Date.now());
-
 const navRef = ref<HTMLElement | null>(null);
-const navItems = ['Services', 'Framework', 'Team'];
-const navItemRefs = ref<(HTMLElement | null)[]>([]);
-
 const stayTitleRef = ref<HTMLElement | null>(null);
-const stayChars = ref('Stay'.split(''));
-const stayCharRefs = ref<(HTMLElement | null)[]>([]);
-const stayKey = ref(Date.now());
-
 const dynamicTitleRef = ref<HTMLElement | null>(null);
-const dynamicTitleChars = ref('Human'.split(''));
-const titleCharRefs = ref<(HTMLElement | null)[]>([]);
-const titleKey = ref(Date.now());
-
 const taglineRef = ref<HTMLElement | null>(null);
-const taglineChars = ref('The AI studio that helps leaders win with AI. Without losing what makes them irreplaceable'.split(''));
-const taglineCharRefs = ref<(HTMLElement | null)[]>([]);
-const taglineKey = ref(Date.now());
-
 const ctaRef = ref<HTMLElement | null>(null);
 
+// Character refs for animations
+const logoCharRefs = ref<(HTMLElement | null)[]>([]);
+const navItemRefs = ref<(HTMLElement | null)[]>([]);
+const stayCharRefs = ref<(HTMLElement | null)[]>([]);
+const titleCharRefs = ref<(HTMLElement | null)[]>([]);
+const taglineCharRefs = ref<(HTMLElement | null)[]>([]);
+
+// Static data
+const logoChars = 'Are You Human?'.split('');
+const navItems = ['Services', 'Framework', 'Team'] as const;
+const stayChars = 'Stay'.split('');
+const taglineChars = 'The AI studio that helps leaders win with AI. Without losing what makes them irreplaceable'.split('');
+const titleTexts = ['Human', 'Ahead'] as const;
+const scrambleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+// Reactive state
+const dynamicTitleChars = ref('Human'.split(''));
+const titleKey = ref(0);
+
+// Animation state
+const scrambleIntervals = new Map<HTMLElement, ReturnType<typeof setInterval>>();
+let titleCycleInterval: ReturnType<typeof setInterval> | null = null;
+let isTitleTransitioning = false;
+let currentTitleIndex = 0;
+
+// Magnetic effect cleanup
+const magneticCleanup: (() => void)[] = [];
+
+// Composables
 const { open: openModal } = useContactModal();
 const { playHover, playClick } = useSound();
 
-const scrambleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-const scrambleIntervals = new Map<HTMLElement, NodeJS.Timeout>();
+// Nav targets mapping
+const navTargets: Record<typeof navItems[number], string> = {
+  'Services': '#services',
+  'Framework': '#framework',
+  'Team': '#team'
+};
 
-let titleCycleInterval: NodeJS.Timeout | null = null;
-let isTitleTransitioning = false;
-const titleTexts = ['Human', 'Ahead'];
-let currentTitleIndex = 0;
-
-function scrambleText(element: HTMLElement, finalText: string, duration: number = 800, onComplete?: () => void) {
+// Scramble text animation
+function scrambleText(element: HTMLElement, finalText: string, duration = 800, onComplete?: () => void) {
   if (!element) return;
 
-  if (scrambleIntervals.has(element)) {
-    clearInterval(scrambleIntervals.get(element)!);
+  // Clear existing interval
+  const existing = scrambleIntervals.get(element);
+  if (existing) {
+    clearInterval(existing);
     scrambleIntervals.delete(element);
   }
 
-  const originalText = finalText;
-  const textLength = originalText.length;
-  
+  const textLength = finalText.length;
+  const specialChars = [' ', '.', ',', '?', '!', "'"];
+
+  // Single character optimization
   if (textLength === 1) {
-    const char = originalText[0];
-    if (char === ' ' || char === '.' || char === ',' || char === '?' || char === '!' || char === "'") {
-      element.textContent = char;
-      if (onComplete) onComplete();
+    if (specialChars.includes(finalText[0])) {
+      element.textContent = finalText;
+      onComplete?.();
       return;
     }
-    
+
     let frame = 0;
     const totalFrames = Math.max(5, duration / 30);
-    
+
     const interval = setInterval(() => {
       if (frame < totalFrames - 1) {
         element.textContent = scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
       } else {
-        element.textContent = originalText;
+        element.textContent = finalText;
         clearInterval(interval);
         scrambleIntervals.delete(element);
-        if (onComplete) onComplete();
+        onComplete?.();
       }
       frame++;
     }, 30);
-    
+
     scrambleIntervals.set(element, interval);
     return;
   }
@@ -199,16 +202,11 @@ function scrambleText(element: HTMLElement, finalText: string, duration: number 
     let scrambledText = '';
 
     for (let i = 0; i < textLength; i++) {
-      if (originalText[i] === ' ') {
+      const char = finalText[i];
+      if (char === ' ') {
         scrambledText += ' ';
-      } else if (originalText[i] === '.' || originalText[i] === ',' || originalText[i] === '?' || originalText[i] === '!' || originalText[i] === "'") {
-        if (progress > i / textLength) {
-          scrambledText += originalText[i];
-        } else {
-          scrambledText += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
-        }
-      } else if (progress > i / textLength) {
-        scrambledText += originalText[i];
+      } else if (specialChars.includes(char) || progress > i / textLength) {
+        scrambledText += char;
       } else {
         scrambledText += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
       }
@@ -220,349 +218,104 @@ function scrambleText(element: HTMLElement, finalText: string, duration: number 
     if (frame >= totalFrames) {
       clearInterval(interval);
       scrambleIntervals.delete(element);
-      element.textContent = originalText;
-      if (onComplete) onComplete();
+      element.textContent = finalText;
+      onComplete?.();
     }
   }, 30);
-  
+
   scrambleIntervals.set(element, interval);
 }
 
-function animateLogo() {
-  if (!logoRef.value) return;
+// Generic character animation helper
+function animateCharsIn(
+  chars: string[],
+  charRefs: (HTMLElement | null)[],
+  options: { blur?: number; x?: number; y?: number; duration?: number; scramble?: boolean } = {}
+) {
+  const { blur = 60, x = -100, y = 0, duration = 1.0, scramble = false } = options;
 
-  nextTick(() => {
-    const processChars = (retryCount = 0) => {
-      const allReady = logoChars.value.every((char, index) => {
-        return logoCharRefs.value[index] !== undefined && logoCharRefs.value[index] !== null;
+  const processChars = (retryCount = 0) => {
+    const allReady = chars.every((_, index) => charRefs[index] != null);
+
+    if (allReady || retryCount >= 5) {
+      gsap.set(charRefs, {
+        opacity: 0,
+        x,
+        y,
+        filter: `blur(${blur}px)`,
+        visibility: 'visible',
+        display: 'inline-block'
       });
 
-      if (allReady || retryCount >= 5) {
-        gsap.set(logoCharRefs.value, {
-          opacity: 0,
-          filter: 'blur(10px)'
-        });
+      gsap.to(charRefs, {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        filter: 'blur(0px)',
+        duration,
+        ease: 'power3.out',
+        stagger: { each: 0.06, from: 'start' }
+      });
 
-        gsap.to(logoCharRefs.value, {
-          opacity: 1,
-          filter: 'blur(0px)',
-          duration: 0.6,
-          ease: 'power2.out',
-          stagger: {
-            each: 0.02,
-            from: 'start'
+      if (scramble) {
+        charRefs.forEach((el, index) => {
+          if (el && chars[index] !== ' ') {
+            scrambleText(el, chars[index], 600);
+          } else if (el) {
+            el.textContent = '\u00A0';
           }
         });
-
-        logoCharRefs.value.forEach((charEl, index) => {
-          if (charEl && index < logoChars.value.length) {
-            const char = logoChars.value[index];
-            if (char !== ' ') {
-              scrambleText(charEl, char, 600);
-            } else {
-              charEl.textContent = '\u00A0';
-            }
-          }
-        });
-      } else {
-        setTimeout(() => processChars(retryCount + 1), 50);
       }
-    };
-
-    processChars();
-  });
-}
-
-function handleLogoHover() {
-  playHover();
-  logoCharRefs.value.forEach((charEl, index) => {
-    if (charEl && index < logoChars.value.length) {
-      const char = logoChars.value[index];
-      if (char !== ' ') {
-        scrambleText(charEl, char, 400);
-      }
+    } else {
+      setTimeout(() => processChars(retryCount + 1), 50);
     }
-  });
+  };
+
+  nextTick(() => processChars());
 }
 
-function handleNavHover(index: number) {
-  playHover();
-  const navEl = navItemRefs.value[index];
-  if (navEl) {
-    scrambleText(navEl, navItems[index], 400);
-  }
-}
-
-// Map nav items to section IDs
-const navTargets: Record<string, string> = {
-  'Services': '#services',
-  'Framework': '#framework',
-  'Team': '#team'
-};
-
-function handleNavClick(index: number) {
-  playClick();
-  const item = navItems[index];
-  const target = navTargets[item];
-
-  if (target) {
-    const element = document.querySelector(target);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-}
-
-function handleCtaClick() {
-  playClick();
-  openModal();
-}
-
-function updateTitleWithScramble(newText: string) {
-  if (isTitleTransitioning || !dynamicTitleRef.value) return;
-  
-  isTitleTransitioning = true;
-  
-  titleCharRefs.value.forEach((charEl) => {
-    if (charEl && scrambleIntervals.has(charEl)) {
-      clearInterval(scrambleIntervals.get(charEl)!);
-      scrambleIntervals.delete(charEl);
-    }
-  });
-
-  gsap.killTweensOf(titleCharRefs.value);
-
-  if (titleCharRefs.value.length > 0) {
-    gsap.to(titleCharRefs.value, {
-      opacity: 0,
-      x: 100,
-      filter: 'blur(60px)',
-      duration: 0.6,
-      ease: 'power3.out',
-      stagger: {
-        each: 0.06,
-        from: 'start'
-      },
-      onComplete: () => {
-        dynamicTitleChars.value = newText.split('');
-        titleKey.value = Date.now();
-        titleCharRefs.value = [];
-
-        nextTick(() => {
-          setTimeout(() => {
-            const processChars = (retryCount = 0) => {
-              const allReady = dynamicTitleChars.value.every((char, index) => {
-                return titleCharRefs.value[index] !== undefined && titleCharRefs.value[index] !== null;
-              });
-
-              if (allReady || retryCount >= 5) {
-                gsap.set(titleCharRefs.value.slice(0, newText.length), {
-                  opacity: 0,
-                  x: -100,
-                  filter: 'blur(60px)',
-                  visibility: 'visible',
-                  display: 'inline-block'
-                });
-
-                gsap.to(titleCharRefs.value.slice(0, newText.length), {
-                  opacity: 1,
-                  x: 0,
-                  filter: 'blur(0px)',
-                  duration: 1.0,
-                  ease: 'power3.out',
-                  stagger: {
-                    each: 0.06,
-                    from: 'start'
-                  },
-                  onComplete: () => {
-                    isTitleTransitioning = false;
-                  }
-                });
-              } else {
-                setTimeout(() => processChars(retryCount + 1), 50);
-              }
-            };
-
-            processChars();
-          }, 50);
-        });
-      }
-    });
-  } else {
-    dynamicTitleChars.value = newText.split('');
-    titleKey.value = Date.now();
-    titleCharRefs.value = [];
-    isTitleTransitioning = false;
-  }
+// Animation functions
+function animateLogo() {
+  if (!logoRef.value) return;
+  animateCharsIn(logoChars, logoCharRefs.value, { blur: 10, x: 0, duration: 0.6, scramble: true });
 }
 
 function animateStay() {
   if (!stayTitleRef.value) return;
-
-  nextTick(() => {
-    const processChars = (retryCount = 0) => {
-      const allReady = stayChars.value.every((char, index) => {
-        return stayCharRefs.value[index] !== undefined && stayCharRefs.value[index] !== null;
-      });
-
-      if (allReady || retryCount >= 5) {
-        gsap.set(stayCharRefs.value.slice(0, stayChars.value.length), {
-          opacity: 0,
-          x: -100,
-          filter: 'blur(60px)',
-          visibility: 'visible',
-          display: 'inline-block'
-        });
-
-        gsap.to(stayCharRefs.value.slice(0, stayChars.value.length), {
-          opacity: 1,
-          x: 0,
-          filter: 'blur(0px)',
-          duration: 1.0,
-          ease: 'power3.out',
-          stagger: {
-            each: 0.06,
-            from: 'start'
-          }
-        });
-      } else {
-        setTimeout(() => processChars(retryCount + 1), 50);
-      }
-    };
-
-    processChars();
-  });
+  animateCharsIn(stayChars, stayCharRefs.value);
 }
 
 function initTitleAnimation() {
   if (!dynamicTitleRef.value) return;
-
-  nextTick(() => {
-    const processChars = (retryCount = 0) => {
-      const allReady = dynamicTitleChars.value.every((char, index) => {
-        return titleCharRefs.value[index] !== undefined && titleCharRefs.value[index] !== null;
-      });
-
-      if (allReady || retryCount >= 5) {
-        gsap.set(titleCharRefs.value.slice(0, dynamicTitleChars.value.length), {
-          opacity: 0,
-          x: -100,
-          filter: 'blur(60px)',
-          visibility: 'visible',
-          display: 'inline-block'
-        });
-
-        gsap.to(titleCharRefs.value.slice(0, dynamicTitleChars.value.length), {
-          opacity: 1,
-          x: 0,
-          filter: 'blur(0px)',
-          duration: 1.0,
-          ease: 'power3.out',
-          stagger: {
-            each: 0.06,
-            from: 'start'
-          }
-        });
-      } else {
-        setTimeout(() => processChars(retryCount + 1), 50);
-      }
-    };
-
-    processChars();
-  });
-}
-
-function startTitleCycle() {
-  const cycleDuration = 3000;
-  
-  titleCycleInterval = setInterval(() => {
-    if (!isTitleTransitioning) {
-      currentTitleIndex = (currentTitleIndex + 1) % titleTexts.length;
-      updateTitleWithScramble(titleTexts[currentTitleIndex]);
-    }
-  }, cycleDuration);
+  animateCharsIn(dynamicTitleChars.value, titleCharRefs.value);
 }
 
 function animateTagline() {
   if (!taglineRef.value) return;
-
-  nextTick(() => {
-    const processChars = (retryCount = 0) => {
-      const allReady = taglineChars.value.every((char, index) => {
-        return taglineCharRefs.value[index] !== undefined && taglineCharRefs.value[index] !== null;
-      });
-
-      if (allReady || retryCount >= 5) {
-        gsap.set(taglineCharRefs.value, {
-          opacity: 0,
-          y: 10,
-          filter: 'blur(10px)'
-        });
-
-        gsap.to(taglineCharRefs.value, {
-          opacity: 1,
-          y: 0,
-          filter: 'blur(0px)',
-          duration: 0.5,
-          ease: 'power2.out',
-          stagger: {
-            each: 0.02,
-            from: 'start'
-          }
-        });
-
-        taglineCharRefs.value.forEach((charEl, index) => {
-          if (charEl && index < taglineChars.value.length) {
-            const char = taglineChars.value[index];
-            if (char !== ' ') {
-              scrambleText(charEl, char, 400);
-            } else {
-              charEl.textContent = '\u00A0';
-            }
-          }
-        });
-      } else {
-        setTimeout(() => processChars(retryCount + 1), 50);
-      }
-    };
-
-    processChars();
-  });
+  animateCharsIn(taglineChars, taglineCharRefs.value, { blur: 10, x: 0, y: 10, duration: 0.5, scramble: true });
 }
-
 
 function animateNav() {
   if (!navRef.value || navItemRefs.value.length === 0) return;
 
   nextTick(() => {
     const processItems = (retryCount = 0) => {
-      const allReady = navItems.every((item, index) => {
-        return navItemRefs.value[index] !== undefined && navItemRefs.value[index] !== null;
-      });
+      const allReady = navItems.every((_, index) => navItemRefs.value[index] != null);
 
       if (allReady || retryCount >= 5) {
-        gsap.set(navItemRefs.value, {
-          opacity: 0,
-          x: -100,
-          filter: 'blur(60px)'
-        });
-
+        gsap.set(navItemRefs.value, { opacity: 0, x: -100, filter: 'blur(60px)' });
         gsap.to(navItemRefs.value, {
           opacity: 1,
           x: 0,
           filter: 'blur(0px)',
           duration: 1.0,
           ease: 'power3.out',
-          stagger: {
-            each: 0.1,
-            from: 'start'
-          }
+          stagger: { each: 0.1, from: 'start' }
         });
       } else {
         setTimeout(() => processItems(retryCount + 1), 50);
       }
     };
-
     processItems();
   });
 }
@@ -570,7 +323,6 @@ function animateNav() {
 function animateCta() {
   if (!ctaRef.value) return;
 
-  // Set initial state - hidden, blurred, from bottom-left
   gsap.set(ctaRef.value, {
     opacity: 0,
     x: -50,
@@ -579,7 +331,6 @@ function animateCta() {
     scale: 0.9
   });
 
-  // Animate in with a slight delay to coordinate with tagline
   gsap.to(ctaRef.value, {
     opacity: 1,
     x: 0,
@@ -592,60 +343,190 @@ function animateCta() {
   });
 }
 
-function initMagneticEffect() {
-  const magnets = document.querySelectorAll('[data-magnetic-strength]');
-  if (window.innerWidth <= 991) return;
-
-  const resetEl = (el: Element | null, immediate: boolean) => {
-    if (!el) return;
-    gsap.killTweensOf(el);
-    if (immediate) {
-      gsap.set(el, { x: '0em', y: '0em', rotate: '0deg', clearProps: 'all' });
-    } else {
-      gsap.to(el, { x: '0em', y: '0em', rotate: '0deg', clearProps: 'all', ease: 'elastic.out(1, 0.3)', duration: 1.6 });
+// Event handlers
+function handleLogoHover() {
+  playHover();
+  logoCharRefs.value.forEach((el, index) => {
+    if (el && logoChars[index] !== ' ') {
+      scrambleText(el, logoChars[index], 400);
     }
-  };
-
-  const resetOnEnter = (e: Event) => {
-    const m = e.currentTarget as HTMLElement;
-    resetEl(m, true);
-    resetEl(m.querySelector('[data-magnetic-inner-target]'), true);
-  };
-
-  const moveMagnet = (e: MouseEvent) => {
-    const m = e.currentTarget as HTMLElement;
-    const b = m.getBoundingClientRect();
-    const strength = parseFloat(m.getAttribute('data-magnetic-strength') || '25');
-    const inner = m.querySelector('[data-magnetic-inner-target]');
-    const innerStrength = parseFloat(m.getAttribute('data-magnetic-strength-inner') || String(strength));
-    const offsetX = ((e.clientX - b.left) / m.offsetWidth - 0.5) * (strength / 16);
-    const offsetY = ((e.clientY - b.top) / m.offsetHeight - 0.5) * (strength / 16);
-
-    gsap.to(m, { x: offsetX + 'em', y: offsetY + 'em', rotate: '0.001deg', ease: 'power4.out', duration: 1.6 });
-
-    if (inner) {
-      const innerOffsetX = ((e.clientX - b.left) / m.offsetWidth - 0.5) * (innerStrength / 16);
-      const innerOffsetY = ((e.clientY - b.top) / m.offsetHeight - 0.5) * (innerStrength / 16);
-      gsap.to(inner, { x: innerOffsetX + 'em', y: innerOffsetY + 'em', rotate: '0.001deg', ease: 'power4.out', duration: 2 });
-    }
-  };
-
-  const resetMagnet = (e: Event) => {
-    const m = e.currentTarget as HTMLElement;
-    const inner = m.querySelector('[data-magnetic-inner-target]');
-    gsap.to(m, { x: '0em', y: '0em', ease: 'elastic.out(1, 0.3)', duration: 1.6, clearProps: 'all' });
-    if (inner) {
-      gsap.to(inner, { x: '0em', y: '0em', ease: 'elastic.out(1, 0.3)', duration: 2, clearProps: 'all' });
-    }
-  };
-
-  magnets.forEach(m => {
-    m.addEventListener('mouseenter', resetOnEnter);
-    m.addEventListener('mousemove', moveMagnet as EventListener);
-    m.addEventListener('mouseleave', resetMagnet);
   });
 }
 
+function handleNavHover(index: number) {
+  playHover();
+  const el = navItemRefs.value[index];
+  if (el) scrambleText(el, navItems[index], 400);
+}
+
+function handleNavClick(index: number) {
+  playClick();
+  const target = navTargets[navItems[index]];
+  const element = document.querySelector(target);
+  element?.scrollIntoView({ behavior: 'smooth' });
+}
+
+function handleCtaClick() {
+  playClick();
+  openModal();
+}
+
+// Title cycling
+function updateTitleWithScramble(newText: string) {
+  if (isTitleTransitioning || !dynamicTitleRef.value) return;
+
+  isTitleTransitioning = true;
+
+  // Clear existing scramble intervals
+  titleCharRefs.value.forEach((el) => {
+    if (el && scrambleIntervals.has(el)) {
+      clearInterval(scrambleIntervals.get(el)!);
+      scrambleIntervals.delete(el);
+    }
+  });
+
+  gsap.killTweensOf(titleCharRefs.value);
+
+  if (titleCharRefs.value.length > 0) {
+    gsap.to(titleCharRefs.value, {
+      opacity: 0,
+      x: 100,
+      filter: 'blur(60px)',
+      duration: 0.6,
+      ease: 'power3.out',
+      stagger: { each: 0.06, from: 'start' },
+      onComplete: () => {
+        dynamicTitleChars.value = newText.split('');
+        titleKey.value++;
+        titleCharRefs.value = [];
+
+        nextTick(() => {
+          setTimeout(() => {
+            animateCharsIn(dynamicTitleChars.value, titleCharRefs.value);
+            setTimeout(() => { isTitleTransitioning = false; }, 1000);
+          }, 50);
+        });
+      }
+    });
+  } else {
+    dynamicTitleChars.value = newText.split('');
+    titleKey.value++;
+    titleCharRefs.value = [];
+    isTitleTransitioning = false;
+  }
+}
+
+function startTitleCycle() {
+  titleCycleInterval = setInterval(() => {
+    if (!isTitleTransitioning) {
+      currentTitleIndex = (currentTitleIndex + 1) % titleTexts.length;
+      updateTitleWithScramble(titleTexts[currentTitleIndex]);
+    }
+  }, 3000);
+}
+
+// Magnetic effect
+function initMagneticEffect() {
+  if (window.innerWidth <= 991) return;
+
+  const magnets = document.querySelectorAll<HTMLElement>('[data-magnetic-strength]');
+
+  magnets.forEach(m => {
+    const resetOnEnter = () => {
+      gsap.killTweensOf(m);
+      gsap.set(m, { x: '0em', y: '0em', rotate: '0deg', clearProps: 'all' });
+      const inner = m.querySelector('[data-magnetic-inner-target]');
+      if (inner) {
+        gsap.killTweensOf(inner);
+        gsap.set(inner, { x: '0em', y: '0em', rotate: '0deg', clearProps: 'all' });
+      }
+    };
+
+    const moveMagnet = (e: MouseEvent) => {
+      const b = m.getBoundingClientRect();
+      const strength = parseFloat(m.dataset.magneticStrength || '25');
+      const innerStrength = parseFloat(m.dataset.magneticStrengthInner || String(strength));
+      const offsetX = ((e.clientX - b.left) / m.offsetWidth - 0.5) * (strength / 16);
+      const offsetY = ((e.clientY - b.top) / m.offsetHeight - 0.5) * (strength / 16);
+
+      gsap.to(m, { x: `${offsetX}em`, y: `${offsetY}em`, rotate: '0.001deg', ease: 'power4.out', duration: 1.6 });
+
+      const inner = m.querySelector('[data-magnetic-inner-target]');
+      if (inner) {
+        const innerOffsetX = ((e.clientX - b.left) / m.offsetWidth - 0.5) * (innerStrength / 16);
+        const innerOffsetY = ((e.clientY - b.top) / m.offsetHeight - 0.5) * (innerStrength / 16);
+        gsap.to(inner, { x: `${innerOffsetX}em`, y: `${innerOffsetY}em`, rotate: '0.001deg', ease: 'power4.out', duration: 2 });
+      }
+    };
+
+    const resetMagnet = () => {
+      gsap.to(m, { x: '0em', y: '0em', ease: 'elastic.out(1, 0.3)', duration: 1.6, clearProps: 'all' });
+      const inner = m.querySelector('[data-magnetic-inner-target]');
+      if (inner) {
+        gsap.to(inner, { x: '0em', y: '0em', ease: 'elastic.out(1, 0.3)', duration: 2, clearProps: 'all' });
+      }
+    };
+
+    m.addEventListener('mouseenter', resetOnEnter);
+    m.addEventListener('mousemove', moveMagnet);
+    m.addEventListener('mouseleave', resetMagnet);
+
+    // Store cleanup function
+    magneticCleanup.push(() => {
+      m.removeEventListener('mouseenter', resetOnEnter);
+      m.removeEventListener('mousemove', moveMagnet);
+      m.removeEventListener('mouseleave', resetMagnet);
+    });
+  });
+}
+
+// Hero exit animation on scroll
+async function initHeroExitAnimation() {
+  if (!heroSectionRef.value) return;
+
+  try {
+    if (!ScrollTrigger) {
+      const stModule = await import('gsap/ScrollTrigger.js');
+      ScrollTrigger = stModule.default;
+      gsap.registerPlugin(ScrollTrigger as unknown as object);
+    }
+
+    const heroContent = heroSectionRef.value.querySelector('.hero-content');
+    const heroHeader = heroSectionRef.value.querySelector('.hero-header');
+    const heroTagline = heroSectionRef.value.querySelector('.hero-tagline');
+    const starfieldContainer = document.getElementById('starfield-container');
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: heroSectionRef.value,
+        start: 'top top',
+        end: '+=60%',
+        scrub: 1.5,
+        invalidateOnRefresh: true,
+      }
+    });
+
+    if (heroContent) {
+      tl.to(heroContent, { scale: 0.92, filter: 'blur(10px)', opacity: 0.2, ease: 'none' }, 0);
+    }
+    if (heroHeader) {
+      tl.to(heroHeader, { filter: 'blur(6px)', opacity: 0, ease: 'none' }, 0);
+    }
+    if (heroTagline) {
+      tl.to(heroTagline, { filter: 'blur(6px)', opacity: 0, ease: 'none' }, 0);
+    }
+    if (starfieldContainer) {
+      tl.to(starfieldContainer, { opacity: 0.25, ease: 'none' }, 0);
+    }
+
+    heroExitTrigger = tl.scrollTrigger as ScrollTriggerType;
+    setTimeout(() => ScrollTrigger?.refresh(), 100);
+  } catch (error) {
+    console.error('HeroSection: Failed to initialize exit animation', error);
+  }
+}
+
+// Start all animations
 function startAnimations() {
   animateLogo();
   animateNav();
@@ -655,98 +536,15 @@ function startAnimations() {
   initTitleAnimation();
   initMagneticEffect();
 
-  setTimeout(() => {
-    startTitleCycle();
-  }, 1200);
-
-  // Initialize hero exit animation after a short delay
-  setTimeout(() => {
-    initHeroExitAnimation();
-  }, 500);
-}
-
-async function initHeroExitAnimation() {
-  if (!heroSectionRef.value) return;
-
-  try {
-    // Load ScrollTrigger
-    if (!ScrollTrigger) {
-      const stModule = await import('gsap/ScrollTrigger.js');
-      ScrollTrigger = stModule.default;
-      gsap.registerPlugin(ScrollTrigger);
-    }
-
-    // Get elements to animate
-    const heroContent = heroSectionRef.value.querySelector('.hero-content');
-    const heroHeader = heroSectionRef.value.querySelector('.hero-header');
-    const heroTagline = heroSectionRef.value.querySelector('.hero-tagline');
-    const starfieldContainer = document.getElementById('starfield-container');
-
-    // Create the exit animation timeline
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: heroSectionRef.value,
-        start: 'top top',
-        end: '+=60%', // Animation completes over 60% of viewport scroll
-        scrub: 1.5, // Smoother, more delayed follow (higher = smoother)
-        invalidateOnRefresh: true,
-      }
-    });
-
-    // Animate hero content: blur + scale down
-    if (heroContent) {
-      tl.to(heroContent, {
-        scale: 0.92,
-        filter: 'blur(10px)',
-        opacity: 0.2,
-        ease: 'none' // Linear for scroll-scrubbed animations
-      }, 0);
-    }
-
-    // Animate header: blur + fade
-    if (heroHeader) {
-      tl.to(heroHeader, {
-        filter: 'blur(6px)',
-        opacity: 0,
-        ease: 'none'
-      }, 0);
-    }
-
-    // Animate tagline: blur + fade
-    if (heroTagline) {
-      tl.to(heroTagline, {
-        filter: 'blur(6px)',
-        opacity: 0,
-        ease: 'none'
-      }, 0);
-    }
-
-    // Fade the starfield slightly
-    if (starfieldContainer) {
-      tl.to(starfieldContainer, {
-        opacity: 0.25,
-        ease: 'none'
-      }, 0);
-    }
-
-    // Store reference for cleanup
-    heroExitTrigger = tl.scrollTrigger;
-
-    // Refresh ScrollTrigger after setup
-    setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 100);
-
-  } catch (error) {
-    console.error('HeroSection: Failed to initialize exit animation', error);
-  }
+  setTimeout(startTitleCycle, 1200);
+  setTimeout(initHeroExitAnimation, 500);
 }
 
 function handleTransitionComplete() {
-  // Global starfield continues from intro - no need to show separate one
   startAnimations();
 }
 
+// Lifecycle
 onMounted(() => {
   window.addEventListener('intro-complete', handleTransitionComplete);
 });
@@ -754,9 +552,8 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('intro-complete', handleTransitionComplete);
 
-  if (titleCycleInterval) {
-    clearInterval(titleCycleInterval);
-  }
+  // Clear title cycle
+  if (titleCycleInterval) clearInterval(titleCycleInterval);
 
   // Kill hero exit trigger
   if (heroExitTrigger) {
@@ -764,10 +561,15 @@ onUnmounted(() => {
     heroExitTrigger = null;
   }
 
-  scrambleIntervals.forEach((interval) => {
-    clearInterval(interval);
-  });
+  // Clear scramble intervals
+  scrambleIntervals.forEach(clearInterval);
   scrambleIntervals.clear();
+
+  // Clean up magnetic effect listeners
+  magneticCleanup.forEach(cleanup => cleanup());
+  magneticCleanup.length = 0;
+
+  // Kill all GSAP tweens
   gsap.killTweensOf([
     logoCharRefs.value,
     navItemRefs.value,
@@ -780,7 +582,7 @@ onUnmounted(() => {
 
 <style scoped>
 .hero-section {
-  background: transparent; /* Transparent so global starfield shows through */
+  background: transparent;
   width: 100vw;
   height: 100vh;
   min-height: 100vh;
@@ -791,34 +593,6 @@ onUnmounted(() => {
   align-items: center;
   overflow: hidden;
   position: relative;
-}
-
-/* Noise overlay for film grain effect */
-.noise-overlay {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  animation: noise-shift 0.5s steps(10) infinite;
-}
-
-@keyframes noise-shift {
-  0% { transform: translate(0, 0); }
-  10% { transform: translate(-2%, -2%); }
-  20% { transform: translate(1%, 3%); }
-  30% { transform: translate(-3%, 1%); }
-  40% { transform: translate(3%, -1%); }
-  50% { transform: translate(-1%, 2%); }
-  60% { transform: translate(2%, -3%); }
-  70% { transform: translate(-2%, 3%); }
-  80% { transform: translate(1%, -2%); }
-  90% { transform: translate(-1%, 1%); }
-  100% { transform: translate(0, 0); }
 }
 
 .hero-header {
@@ -840,6 +614,10 @@ onUnmounted(() => {
   width: 130px;
   cursor: pointer;
   text-transform: uppercase;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
 }
 
 .logo-char {
@@ -868,6 +646,12 @@ onUnmounted(() => {
 .nav-item {
   cursor: pointer;
   opacity: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
 }
 
 .hero-content {
@@ -898,12 +682,7 @@ onUnmounted(() => {
   gap: 0;
 }
 
-.title-fixed {
-  display: block;
-  white-space: nowrap;
-  width: 100%;
-}
-
+.title-fixed,
 .title-dynamic {
   display: block;
   white-space: nowrap;
@@ -923,16 +702,15 @@ onUnmounted(() => {
   opacity: 0;
 }
 
-/* CTA Button - Bottom Left */
+/* CTA Button */
 .hero-cta {
   position: absolute;
   bottom: 72px;
   right: 72px;
   z-index: 10;
-  opacity: 0; /* Hidden initially, animated in by JS */
+  opacity: 0;
 }
 
-/* Magnetic Button */
 .btn-magnetic {
   font-size: 18px;
   position: relative;
@@ -1018,7 +796,6 @@ onUnmounted(() => {
   transform: translateY(-100%) rotate(0.001deg);
 }
 
-
 .hero-tagline {
   position: absolute;
   bottom: 72px;
@@ -1033,7 +810,6 @@ onUnmounted(() => {
   font-weight: 200;
   will-change: filter, opacity;
   text-wrap: balance;
-  /* Paragraph indent effect for right-aligned split text */
 }
 
 .tagline-char {
@@ -1053,13 +829,13 @@ onUnmounted(() => {
     height: 100vh;
     min-height: 100vh;
   }
-  
+
   .hero-title {
     font-size: 80px;
     width: auto;
     max-width: 100%;
   }
-  
+
   .hero-cta {
     bottom: auto;
     left: 24px;
@@ -1084,11 +860,10 @@ onUnmounted(() => {
     right: 24px;
     left: 24px;
     text-align: left;
-    /* Paragraph indent effect for left-aligned split text on mobile */
     padding-right: 0;
     padding-left: 2em;
   }
-  
+
   .nav {
     font-size: 14px;
     gap: 12px;
