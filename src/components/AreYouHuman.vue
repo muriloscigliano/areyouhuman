@@ -117,7 +117,6 @@ const WebGLPortalTransition = defineAsyncComponent(() =>
 // =============================================================================
 
 const HOLD_DURATION = 2500; // 2.5 seconds to complete
-const DARK_MODE_THRESHOLD = 0.55; // Switch to dark at 55%
 const BASE_STAR_COUNT = 400;
 const MAX_STAR_COUNT = 800; // Increase particles during hold
 
@@ -341,11 +340,8 @@ function animateHold() {
 
   holdProgress.value = progress;
 
-  // Update dark mode based on threshold
-  if (progress >= DARK_MODE_THRESHOLD && !isDarkMode.value) {
-    isDarkMode.value = true;
-    animateColorInversion();
-  }
+  // Dark mode transition removed - now happens when WebGL portal starts
+  // Starfield stays in light mode (white bg, black stars) during entire hold
 
   // Update dynamic text based on progress
   updateHoldText(progress);
@@ -384,14 +380,6 @@ function animateProgressReset() {
     value: 0,
     duration: 0.5,
     ease: 'power2.out',
-    onUpdate: () => {
-      // Reset dark mode if we go below threshold
-      if (holdProgress.value < DARK_MODE_THRESHOLD && isDarkMode.value) {
-        isDarkMode.value = false;
-        showTransition.value = false;
-        animateColorInversion(true);
-      }
-    },
     onComplete: () => {
       // Reset text to initial
       currentHoldTextIndex = 0;
@@ -441,6 +429,10 @@ function completeHold() {
 
   // Start WebGL transition immediately - seamlessly with the starfield
   showTransition.value = true;
+
+  // Switch to dark mode NOW - starfield goes from white bg/black stars to black bg/white stars
+  isDarkMode.value = true;
+  animateColorInversion();
 
   // Animate slowdown - stars decelerate as if arriving at destination
   // Use a dedicated animation object to control the starfield speed
@@ -1060,7 +1052,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: transparent; /* Transparent so global starfield shows through */
+  background: transparent; /* Transparent - starfield shows through */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1073,7 +1065,7 @@ onUnmounted(() => {
 }
 
 .intro--dark {
-  /* No background change - starfield handles the dark mode */
+  /* No change needed - starfield handles the dark mode */
 }
 
 .intro--transitioning {
@@ -1180,21 +1172,12 @@ onUnmounted(() => {
 
 .progress-ring-bg {
   stroke: rgba(0, 0, 0, 0.15);
-  transition: stroke 0.6s ease;
-}
-
-.intro--dark .progress-ring-bg {
-  stroke: rgba(255, 255, 255, 0.15);
 }
 
 .progress-ring-progress {
   stroke: #000;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.1s ease-out, stroke 0.6s ease;
-}
-
-.intro--dark .progress-ring-progress {
-  stroke: #fff;
+  transition: stroke-dashoffset 0.1s ease-out;
 }
 
 /* Icon inside ring */
@@ -1202,12 +1185,8 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   color: #000;
-  transition: color 0.6s ease, transform 0.2s ease;
+  transition: transform 0.2s ease;
   z-index: 2;
-}
-
-.intro--dark .hold-icon {
-  color: #fff;
 }
 
 /* Responsive */
@@ -1335,19 +1314,6 @@ onUnmounted(() => {
   height: 2px !important;
   opacity: 0.35;
   animation: none;
-}
-
-/* Dark mode */
-.intro--dark .sound-toggle {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.intro--dark .sound-toggle:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.intro--dark .eq-bar {
-  background: #fff;
 }
 
 /* Responsive */
