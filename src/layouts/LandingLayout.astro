@@ -69,15 +69,12 @@ const {
       }
     </style>
   </head>
-  <body data-barba="wrapper">
-    <!-- PageTransition MUST be outside the Barba container so it persists across transitions -->
+  <body>
+    <!-- WebGL Page Transition overlay -->
     <PageTransition client:load />
 
-    <div data-barba="container" data-barba-namespace="page">
-      <slot />
-    </div>
+    <slot />
 
-    <!-- These also need to persist across transitions -->
     <ContactModal client:load />
     <LenisInit client:only="vue" />
   </body>

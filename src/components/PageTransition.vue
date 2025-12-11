@@ -15,7 +15,6 @@ let scene: THREE.Scene | null = null;
 let camera: THREE.OrthographicCamera | null = null;
 let material: THREE.ShaderMaterial | null = null;
 let animationId: number | null = null;
-let barbaInitialized = false;
 
 const vertexShader = `
   varying vec2 vUv;
@@ -27,16 +26,9 @@ const vertexShader = `
 
 const fragmentShader = `
   uniform sampler2D uTexture1;
-  uniform sampler2D uTexture2;
   uniform float uProgress;
   uniform vec2 uResolution;
   varying vec2 vUv;
-
-  vec2 getDistortedUv(vec2 uv, vec2 direction, float factor) {
-    vec2 scaledDirection = direction;
-    scaledDirection.y *= 2.5;
-    return uv - scaledDirection * factor;
-  }
 
   void main() {
     vec2 center = vec2(0.5, 0.5);
@@ -48,62 +40,50 @@ const fragmentShader = `
 
     float dist = length(sphereCenter - p);
 
-    // Lens distortion calculation - INCREASED strength
+    // Lens distortion calculation
     vec2 distortionDirection = normalize(p - sphereCenter);
     float focusFactor = 0.3;
     float focusRadius = bubbleRadius * focusFactor;
-    float focusStrength = bubbleRadius / 1800.0; // More distortion (was 3000)
+    float focusStrength = bubbleRadius / 1800.0;
     float focusSdf = length(sphereCenter - p) - focusRadius;
     float sphereSdf = length(sphereCenter - p) - bubbleRadius;
     float inside = smoothstep(0.0, 1.0, -sphereSdf / (bubbleRadius * 0.001 + 0.001));
 
     float magnifierFactor = focusSdf / (bubbleRadius - focusRadius + 0.001);
     float mFactor = clamp(magnifierFactor * inside, 0.0, 1.0);
-    mFactor = pow(mFactor, 4.0); // Slightly less sharp falloff for wider effect
+    mFactor = pow(mFactor, 4.0);
 
     float distortionFactor = mFactor * focusStrength;
 
-    // Base distorted UV
-    vec2 baseDistortedUV = getDistortedUv(vUv, distortionDirection / uResolution, distortionFactor * uResolution.x);
-
     // Glass chromatic aberration - RGB split
-    float chromaStrength = mFactor * 0.025; // Chromatic aberration amount
-    vec2 chromaDir = distortionDirection / uResolution;
+    float chromaStrength = mFactor * 0.025;
 
-    // Offset each color channel differently for prismatic glass effect
-    vec2 redOffset = chromaDir * chromaStrength * uResolution.x * 1.2;
-    vec2 greenOffset = chromaDir * chromaStrength * uResolution.x * 0.0;
-    vec2 blueOffset = chromaDir * chromaStrength * uResolution.x * -1.2;
+    vec2 uvRed = vUv - distortionDirection / uResolution * (distortionFactor + chromaStrength * 0.8) * uResolution.x;
+    vec2 uvGreen = vUv - distortionDirection / uResolution * distortionFactor * uResolution.x;
+    vec2 uvBlue = vUv - distortionDirection / uResolution * (distortionFactor - chromaStrength * 0.8) * uResolution.x;
 
-    vec2 uvRed = getDistortedUv(vUv, distortionDirection / uResolution, (distortionFactor + chromaStrength * 0.8) * uResolution.x);
-    vec2 uvGreen = baseDistortedUV;
-    vec2 uvBlue = getDistortedUv(vUv, distortionDirection / uResolution, (distortionFactor - chromaStrength * 0.8) * uResolution.x);
-
-    // Clamp UVs to prevent edge artifacts
+    // Clamp UVs
     uvRed = clamp(uvRed, 0.001, 0.999);
     uvGreen = clamp(uvGreen, 0.001, 0.999);
     uvBlue = clamp(uvBlue, 0.001, 0.999);
 
-    // Sample new image with chromatic aberration
-    float newR = texture2D(uTexture2, uvRed).r;
-    float newG = texture2D(uTexture2, uvGreen).g;
-    float newB = texture2D(uTexture2, uvBlue).b;
-    vec4 newImg = vec4(newR, newG, newB, 1.0);
+    // Sample with chromatic aberration
+    float r = texture2D(uTexture1, uvRed).r;
+    float g = texture2D(uTexture1, uvGreen).g;
+    float b = texture2D(uTexture1, uvBlue).b;
 
-    // Mask for circle reveal
-    float mask = step(bubbleRadius, dist);
+    // Inside the bubble = black (new page will show through)
+    // Outside = old page with distortion
+    float alpha = 1.0 - inside;
 
-    vec4 currentImg = texture2D(uTexture1, vUv);
-
-    float finalMask = max(mask, 1.0 - inside);
-    vec4 color = mix(newImg, currentImg, finalMask);
-
-    // Add subtle edge glow at the lens boundary
+    // Edge glow
     float edgeDist = abs(dist - bubbleRadius);
-    float edgeGlow = smoothstep(bubbleRadius * 0.08, 0.0, edgeDist) * inside * (1.0 - finalMask);
-    color.rgb += vec3(0.15, 0.18, 0.22) * edgeGlow * 0.5;
+    float edgeGlow = smoothstep(bubbleRadius * 0.08, 0.0, edgeDist) * inside;
 
-    gl_FragColor = color;
+    vec3 color = vec3(r, g, b);
+    color += vec3(0.15, 0.18, 0.22) * edgeGlow * 0.5;
+
+    gl_FragColor = vec4(color, alpha + edgeGlow * 0.3);
   }
 `;
 
@@ -117,6 +97,7 @@ const initWebGL = () => {
     canvas: canvas.value,
     antialias: true,
     alpha: true,
+    premultipliedAlpha: false,
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -124,7 +105,6 @@ const initWebGL = () => {
   material = new THREE.ShaderMaterial({
     uniforms: {
       uTexture1: { value: null },
-      uTexture2: { value: null },
       uProgress: { value: 0 },
       uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
     },
@@ -149,25 +129,10 @@ const capturePageAsTexture = async (): Promise<THREE.Texture> => {
     height: window.innerHeight,
     windowWidth: window.innerWidth,
     windowHeight: window.innerHeight,
-  });
-
-  const texture = new THREE.CanvasTexture(captureCanvas);
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  return texture;
-};
-
-const captureContainerAsTexture = async (container: HTMLElement): Promise<THREE.Texture> => {
-  const captureCanvas = await html2canvas(container, {
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: '#000000',
-    scale: 1,
-    logging: false,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    windowWidth: window.innerWidth,
-    windowHeight: window.innerHeight,
+    ignoreElements: (element) => {
+      // Ignore the transition canvas itself
+      return element.classList.contains('page-transition-canvas');
+    },
   });
 
   const texture = new THREE.CanvasTexture(captureCanvas);
@@ -200,194 +165,151 @@ const stopRenderLoop = () => {
   }
 };
 
-const initBarba = async () => {
-  // Prevent multiple initializations
-  if (barbaInitialized) return;
-  barbaInitialized = true;
+// Handle link clicks for page transitions
+const handleLinkClick = async (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  const link = target.closest('a');
 
-  // Dynamic import to avoid SSR issues
-  const barba = (await import('@barba/core')).default;
+  if (!link) return;
 
-  barba.init({
-    preventRunning: true,
-    // Home page has complex Vue components that need full hydration
-    // Use full page load for home, but ensure intro is skipped
-    prevent: ({ href }: { href: string }) => {
-      const url = new URL(href, window.location.origin);
-      if (url.pathname === '/' || url.pathname === '') {
-        // Set flag so home page skips intro on full page load
-        sessionStorage.setItem('introCompleted', 'true');
-        return true; // Prevent Barba, use full page load
-      }
-      return false;
-    },
-    transitions: [
-      {
-        name: 'webgl-lens-transition',
+  const href = link.getAttribute('href');
+  if (!href) return;
 
-        async leave(data) {
-          if (!material || !canvas.value) return;
+  // Only handle internal navigation links
+  if (href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:')) return;
 
-          // Hide the current container immediately so it doesn't show behind our transition
-          const currentContainer = data.current.container as HTMLElement;
-          currentContainer.style.position = 'fixed';
-          currentContainer.style.top = '0';
-          currentContainer.style.left = '0';
-          currentContainer.style.width = '100%';
-          currentContainer.style.zIndex = '1';
+  // Skip if it's the current page
+  const currentPath = window.location.pathname;
+  const targetPath = href.startsWith('/') ? href : `/${href}`;
+  if (currentPath === targetPath) return;
 
-          // Capture current page BEFORE hiding
-          const currentTexture = await capturePageAsTexture();
-          material.uniforms.uTexture1.value = currentTexture;
-          material.uniforms.uProgress.value = 0;
+  // Skip if modifier keys are pressed
+  if (e.metaKey || e.ctrlKey || e.shiftKey) return;
 
-          // Now hide the current container - we have its screenshot
-          currentContainer.style.visibility = 'hidden';
+  // Prevent default navigation
+  e.preventDefault();
 
-          // Show canvas and start rendering
-          canvas.value.style.opacity = '1';
-          canvas.value.style.pointerEvents = 'auto';
-          startRenderLoop();
-        },
+  // If going to home, set the intro completed flag
+  if (targetPath === '/' || targetPath === '') {
+    sessionStorage.setItem('introCompleted', 'true');
+  }
 
-        async enter(data) {
-          if (!material || !canvas.value) return;
+  if (!material || !canvas.value) {
+    // Fallback to normal navigation if WebGL isn't ready
+    window.location.href = href;
+    return;
+  }
 
-          // Position the new container but keep it hidden initially
-          const nextContainer = data.next.container as HTMLElement;
-          nextContainer.style.position = 'fixed';
-          nextContainer.style.top = '0';
-          nextContainer.style.left = '0';
-          nextContainer.style.width = '100%';
-          nextContainer.style.zIndex = '2';
-          nextContainer.style.visibility = 'hidden';
+  // Capture current page
+  const texture = await capturePageAsTexture();
+  material.uniforms.uTexture1.value = texture;
+  material.uniforms.uProgress.value = 0;
 
-          // Inject styles from the new page
-          const newDoc = new DOMParser().parseFromString(data.next.html, 'text/html');
-          const newStyles = newDoc.querySelectorAll('style');
-          newStyles.forEach(style => {
-            const styleContent = style.textContent || '';
-            const existingStyles = document.querySelectorAll('style');
-            let exists = false;
-            existingStyles.forEach(existing => {
-              if (existing.textContent === styleContent) exists = true;
-            });
-            if (!exists && styleContent.trim()) {
-              const newStyle = document.createElement('style');
-              newStyle.textContent = styleContent;
-              document.head.appendChild(newStyle);
+  // Show canvas and start rendering
+  canvas.value.style.opacity = '1';
+  canvas.value.style.pointerEvents = 'auto';
+  startRenderLoop();
+
+  // Store the texture data in sessionStorage for the next page
+  try {
+    const dataURL = (await html2canvas(document.body, {
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#000000',
+      scale: 0.5, // Lower resolution for storage
+      logging: false,
+      width: window.innerWidth,
+      height: window.innerHeight,
+      ignoreElements: (element) => element.classList.contains('page-transition-canvas'),
+    })).toDataURL('image/jpeg', 0.7);
+
+    sessionStorage.setItem('pageTransitionTexture', dataURL);
+    sessionStorage.setItem('pageTransitionActive', 'true');
+  } catch (err) {
+    console.warn('Failed to store transition texture:', err);
+  }
+
+  // Navigate to the new page
+  window.location.href = href;
+};
+
+// Check if we're coming from a transition and should animate in
+const checkIncomingTransition = async () => {
+  const isTransitionActive = sessionStorage.getItem('pageTransitionActive') === 'true';
+  const textureData = sessionStorage.getItem('pageTransitionTexture');
+
+  // Clear the flags
+  sessionStorage.removeItem('pageTransitionActive');
+  sessionStorage.removeItem('pageTransitionTexture');
+
+  if (!isTransitionActive || !textureData || !material || !canvas.value) return;
+
+  // Load the texture from the previous page
+  const img = new Image();
+  img.onload = () => {
+    const texture = new THREE.Texture(img);
+    texture.needsUpdate = true;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+
+    material!.uniforms.uTexture1.value = texture;
+    material!.uniforms.uProgress.value = 0;
+
+    // Show canvas and start rendering
+    canvas.value!.style.opacity = '1';
+    canvas.value!.style.pointerEvents = 'auto';
+    startRenderLoop();
+
+    // Animate the transition
+    gsap.to(material!.uniforms.uProgress, {
+      value: 1,
+      duration: 1.8,
+      ease: 'expo.inOut',
+      onComplete: () => {
+        // Fade out canvas
+        gsap.to(canvas.value, {
+          opacity: 0,
+          duration: 0.3,
+          ease: 'power2.out',
+          onComplete: () => {
+            if (canvas.value) {
+              canvas.value.style.pointerEvents = 'none';
             }
-          });
+            stopRenderLoop();
 
-          // Update document title
-          document.title = newDoc.title;
-
-          // Wait for styles to apply, then capture new page
-          await new Promise(r => setTimeout(r, 100));
-
-          // Temporarily show to capture, then hide again
-          nextContainer.style.visibility = 'visible';
-          const nextTexture = await captureContainerAsTexture(nextContainer);
-          material.uniforms.uTexture2.value = nextTexture;
-          nextContainer.style.visibility = 'hidden';
-
-          // Animate the WebGL transition
-          await new Promise<void>((resolve) => {
-            gsap.to(material!.uniforms.uProgress, {
-              value: 1,
-              duration: 2.2,
-              ease: 'expo.inOut',
-              onComplete: resolve,
-            });
-          });
-
-          // IMPORTANT: Remove old container BEFORE showing new one
-          // This prevents any flash of old content
-          const oldContainer = data.current.container as HTMLElement;
-          if (oldContainer && oldContainer.parentNode) {
-            oldContainer.parentNode.removeChild(oldContainer);
-          }
-
-          // Scroll to top before showing new content
-          window.scrollTo(0, 0);
-
-          // Reset container styles and show the new page
-          nextContainer.style.position = '';
-          nextContainer.style.top = '';
-          nextContainer.style.left = '';
-          nextContainer.style.width = '';
-          nextContainer.style.zIndex = '';
-          nextContainer.style.visibility = 'visible';
-
-          // Fade out canvas
-          await new Promise<void>((resolve) => {
-            gsap.to(canvas.value, {
-              opacity: 0,
-              duration: 0.3,
-              ease: 'power2.out',
-              onComplete: () => {
-                if (canvas.value) {
-                  canvas.value.style.pointerEvents = 'none';
-                }
-                stopRenderLoop();
-
-                // Clean up textures for next transition
-                if (material) {
-                  if (material.uniforms.uTexture1.value) {
-                    material.uniforms.uTexture1.value.dispose();
-                    material.uniforms.uTexture1.value = null;
-                  }
-                  if (material.uniforms.uTexture2.value) {
-                    material.uniforms.uTexture2.value.dispose();
-                    material.uniforms.uTexture2.value = null;
-                  }
-                  material.uniforms.uProgress.value = 0;
-                }
-
-                resolve();
-              },
-            });
-          });
-        },
-      },
-    ],
-    // Re-run scripts after page transition
-    hooks: {
-      after: () => {
-        // Re-run inline scripts from the new page
-        const scripts = document.querySelectorAll('[data-barba="container"] script');
-        scripts.forEach(oldScript => {
-          const newScript = document.createElement('script');
-          if (oldScript.src) {
-            newScript.src = oldScript.src;
-          } else {
-            newScript.textContent = oldScript.textContent;
-          }
-          oldScript.parentNode?.replaceChild(newScript, oldScript);
+            // Clean up texture
+            if (material && material.uniforms.uTexture1.value) {
+              material.uniforms.uTexture1.value.dispose();
+              material.uniforms.uTexture1.value = null;
+            }
+          },
         });
-
-        // Dispatch event that page has changed
-        window.dispatchEvent(new CustomEvent('barba-after'));
       },
-    },
-  });
+    });
+  };
+
+  img.src = textureData;
 };
 
 onMounted(() => {
   initWebGL();
-  initBarba();
+
+  // Add click listener for all links
+  document.addEventListener('click', handleLinkClick);
+
+  // Check for incoming transition after a brief delay to ensure page is rendered
+  setTimeout(checkIncomingTransition, 100);
+
   window.addEventListener('resize', handleResize);
 });
 
-onUnmounted(async () => {
+onUnmounted(() => {
+  document.removeEventListener('click', handleLinkClick);
   window.removeEventListener('resize', handleResize);
   stopRenderLoop();
   if (renderer) {
     renderer.dispose();
   }
-  // Dynamic import for cleanup
-  const barba = (await import('@barba/core')).default;
-  barba.destroy();
 });
 </script>
 
