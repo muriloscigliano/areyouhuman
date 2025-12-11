@@ -1,7 +1,7 @@
 ---
 import ContactModal from '../components/ContactModal.vue';
 import LenisInit from '../components/LenisInit.vue';
-import PageTransition from '../components/PageTransition.vue';
+import PageTransition from '../components/PageTransition.astro';
 
 interface Props {
   title?: string;
@@ -71,7 +71,7 @@ const {
   </head>
   <body>
     <!-- WebGL Page Transition overlay -->
-    <PageTransition client:load />
+    <PageTransition />
 
     <slot />
 
