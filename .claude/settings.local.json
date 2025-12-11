@@ -55,7 +55,8 @@
       "Bash(git merge:*)",
       "Bash(pkill:*)",
       "Bash(xargs kill:*)",
-      "Bash(open http://localhost:4321/services)"
+      "Bash(open http://localhost:4321/services)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

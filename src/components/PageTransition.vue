@@ -205,22 +205,39 @@ const initBarba = async () => {
 
   barba.init({
     preventRunning: true,
-    // Skip Barba for home page - it has complex Vue components that need full hydration
+    // Home page has complex Vue components that need full hydration
+    // Use full page load for home, but ensure intro is skipped
     prevent: ({ href }: { href: string }) => {
       const url = new URL(href, window.location.origin);
-      // Force full page load for home page
-      return url.pathname === '/' || url.pathname === '';
+      if (url.pathname === '/' || url.pathname === '') {
+        // Set flag so home page skips intro on full page load
+        sessionStorage.setItem('introCompleted', 'true');
+        return true; // Prevent Barba, use full page load
+      }
+      return false;
     },
     transitions: [
       {
         name: 'webgl-lens-transition',
+
         async leave(data) {
           if (!material || !canvas.value) return;
 
-          // Capture current page
+          // Hide the current container immediately so it doesn't show behind our transition
+          const currentContainer = data.current.container as HTMLElement;
+          currentContainer.style.position = 'fixed';
+          currentContainer.style.top = '0';
+          currentContainer.style.left = '0';
+          currentContainer.style.width = '100%';
+          currentContainer.style.zIndex = '1';
+
+          // Capture current page BEFORE hiding
           const currentTexture = await capturePageAsTexture();
           material.uniforms.uTexture1.value = currentTexture;
           material.uniforms.uProgress.value = 0;
+
+          // Now hide the current container - we have its screenshot
+          currentContainer.style.visibility = 'hidden';
 
           // Show canvas and start rendering
           canvas.value.style.opacity = '1';
@@ -231,11 +248,19 @@ const initBarba = async () => {
         async enter(data) {
           if (!material || !canvas.value) return;
 
+          // Position the new container but keep it hidden initially
+          const nextContainer = data.next.container as HTMLElement;
+          nextContainer.style.position = 'fixed';
+          nextContainer.style.top = '0';
+          nextContainer.style.left = '0';
+          nextContainer.style.width = '100%';
+          nextContainer.style.zIndex = '2';
+          nextContainer.style.visibility = 'hidden';
+
           // Inject styles from the new page
           const newDoc = new DOMParser().parseFromString(data.next.html, 'text/html');
           const newStyles = newDoc.querySelectorAll('style');
           newStyles.forEach(style => {
-            // Check if this style already exists to avoid duplicates
             const styleContent = style.textContent || '';
             const existingStyles = document.querySelectorAll('style');
             let exists = false;
@@ -252,16 +277,16 @@ const initBarba = async () => {
           // Update document title
           document.title = newDoc.title;
 
-          // Capture the new page content
-          const nextContainer = data.next.container;
-          if (nextContainer) {
-            // Wait a bit for styles to apply
-            await new Promise(r => setTimeout(r, 50));
-            const nextTexture = await captureContainerAsTexture(nextContainer);
-            material.uniforms.uTexture2.value = nextTexture;
-          }
+          // Wait for styles to apply, then capture new page
+          await new Promise(r => setTimeout(r, 100));
 
-          // Animate the transition
+          // Temporarily show to capture, then hide again
+          nextContainer.style.visibility = 'visible';
+          const nextTexture = await captureContainerAsTexture(nextContainer);
+          material.uniforms.uTexture2.value = nextTexture;
+          nextContainer.style.visibility = 'hidden';
+
+          // Animate the WebGL transition
           await new Promise<void>((resolve) => {
             gsap.to(material!.uniforms.uProgress, {
               value: 1,
@@ -271,8 +296,23 @@ const initBarba = async () => {
             });
           });
 
-          // Scroll to top
+          // IMPORTANT: Remove old container BEFORE showing new one
+          // This prevents any flash of old content
+          const oldContainer = data.current.container as HTMLElement;
+          if (oldContainer && oldContainer.parentNode) {
+            oldContainer.parentNode.removeChild(oldContainer);
+          }
+
+          // Scroll to top before showing new content
           window.scrollTo(0, 0);
+
+          // Reset container styles and show the new page
+          nextContainer.style.position = '';
+          nextContainer.style.top = '';
+          nextContainer.style.left = '';
+          nextContainer.style.width = '';
+          nextContainer.style.zIndex = '';
+          nextContainer.style.visibility = 'visible';
 
           // Fade out canvas
           await new Promise<void>((resolve) => {
