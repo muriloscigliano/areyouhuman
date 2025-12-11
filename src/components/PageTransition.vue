@@ -15,6 +15,7 @@ let scene: THREE.Scene | null = null;
 let camera: THREE.OrthographicCamera | null = null;
 let material: THREE.ShaderMaterial | null = null;
 let animationId: number | null = null;
+let barbaInitialized = false;
 
 const vertexShader = `
   varying vec2 vUv;
@@ -200,6 +201,10 @@ const stopRenderLoop = () => {
 };
 
 const initBarba = async () => {
+  // Prevent multiple initializations
+  if (barbaInitialized) return;
+  barbaInitialized = true;
+
   // Dynamic import to avoid SSR issues
   const barba = (await import('@barba/core')).default;
 
@@ -325,6 +330,20 @@ const initBarba = async () => {
                   canvas.value.style.pointerEvents = 'none';
                 }
                 stopRenderLoop();
+
+                // Clean up textures for next transition
+                if (material) {
+                  if (material.uniforms.uTexture1.value) {
+                    material.uniforms.uTexture1.value.dispose();
+                    material.uniforms.uTexture1.value = null;
+                  }
+                  if (material.uniforms.uTexture2.value) {
+                    material.uniforms.uTexture2.value.dispose();
+                    material.uniforms.uTexture2.value = null;
+                  }
+                  material.uniforms.uProgress.value = 0;
+                }
+
                 resolve();
               },
             });
