@@ -1,6 +1,7 @@
 ---
 import ContactModal from '../components/ContactModal.vue';
 import LenisInit from '../components/LenisInit.vue';
+import PageTransition from '../components/PageTransition.vue';
 
 interface Props {
   title?: string;
@@ -9,7 +10,7 @@ interface Props {
 
 const {
   title = "Are You Human? | AI-Powered Automation Consulting",
-  description = "Transform your business with intelligent automation. We help companies identify and implement automation opportunities that actually work."
+  description = "Transform your business with intelligent automation. We help companies identify and implement automation opportunities that actually work.",
 } = Astro.props;
 ---
 
@@ -21,14 +22,14 @@ const {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    
+
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    
+
     <title>{title}</title>
-    
+
     <!-- Custom Fonts -->
     <style>
       @font-face {
@@ -68,11 +69,14 @@ const {
       }
     </style>
   </head>
-  <body>
-    <slot />
+  <body data-barba="wrapper">
+    <div data-barba="container" data-barba-namespace="page">
+      <slot />
+    </div>
 
     <ContactModal client:load />
     <LenisInit client:only="vue" />
+    <PageTransition client:load />
   </body>
 </html>
 

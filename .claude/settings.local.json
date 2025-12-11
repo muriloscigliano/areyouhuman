@@ -53,7 +53,9 @@
       "Bash(npx astro check:*)",
       "Bash(ffmpeg:*)",
       "Bash(git merge:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(xargs kill:*)",
+      "Bash(open http://localhost:4321/services)"
     ],
     "deny": [],
     "ask": []

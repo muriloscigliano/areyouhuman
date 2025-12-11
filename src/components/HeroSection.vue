@@ -18,15 +18,15 @@
         >{{ char === ' ' ? '\u00A0' : char }}</span>
       </button>
       <nav class="nav" ref="navRef" aria-label="Main navigation">
-        <button
+        <a
           v-for="(item, index) in navItems"
           :key="index"
           :ref="el => { if (el) navItemRefs[index] = el as HTMLElement }"
+          :href="navTargets[item]"
           class="nav-item"
           @mouseenter="handleNavHover(index)"
           @click="handleNavClick(index)"
-          type="button"
-        >{{ item }}</button>
+        >{{ item }}</a>
       </nav>
     </header>
 
@@ -123,7 +123,7 @@ const taglineCharRefs = ref<(HTMLElement | null)[]>([]);
 
 // Static data
 const logoChars = 'Are You Human?'.split('');
-const navItems = ['Services', 'Framework', 'Team'] as const;
+const navItems = ['Services', 'Framework', 'About'] as const;
 const stayChars = 'Stay'.split('');
 const taglineChars = 'The AI studio that helps leaders win with AI. Without losing what makes them irreplaceable'.split('');
 const titleTexts = ['Human', 'Ahead'] as const;
@@ -146,11 +146,11 @@ const magneticCleanup: (() => void)[] = [];
 const { open: openModal } = useContactModal();
 const { playHover, playClick } = useSound();
 
-// Nav targets mapping
+// Nav targets mapping - page URLs for Barba.js transitions
 const navTargets: Record<typeof navItems[number], string> = {
-  'Services': '#services',
-  'Framework': '#framework',
-  'Team': '#team'
+  'Services': '/services',
+  'Framework': '/framework',
+  'About': '/about'
 };
 
 // Scramble text animation
@@ -359,11 +359,9 @@ function handleNavHover(index: number) {
   if (el) scrambleText(el, navItems[index], 400);
 }
 
-function handleNavClick(index: number) {
+function handleNavClick(_index: number) {
   playClick();
-  const target = navTargets[navItems[index]];
-  const element = document.querySelector(target);
-  element?.scrollIntoView({ behavior: 'smooth' });
+  // Barba.js will intercept the anchor click and handle the transition
 }
 
 function handleCtaClick() {

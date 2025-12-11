@@ -152,7 +152,9 @@ const webglRef = ref(null);
 // REFS - STATE
 // =============================================================================
 
-const showIntro = ref(true);
+// Check if user has already completed the intro (returning from another page)
+const hasSeenIntro = typeof window !== 'undefined' && sessionStorage.getItem('introCompleted') === 'true';
+const showIntro = ref(!hasSeenIntro);
 const showTransition = ref(false);
 const isTransitioning = ref(false);
 const isHolding = ref(false);
@@ -1014,6 +1016,8 @@ function onTransitionComplete() {
   emit('complete');
 
   if (typeof window !== 'undefined') {
+    // Mark intro as completed so it's skipped on return visits
+    sessionStorage.setItem('introCompleted', 'true');
     window.dispatchEvent(new CustomEvent('intro-complete'));
   }
 }
@@ -1023,6 +1027,34 @@ function onTransitionComplete() {
 // =============================================================================
 
 onMounted(() => {
+  // If intro was already seen, emit complete immediately
+  if (hasSeenIntro) {
+    emit('complete');
+    if (typeof window !== 'undefined') {
+      // Reset starfield to dark mode (black bg, white stars) for the main site
+      window.dispatchEvent(new CustomEvent('starfield-speed', {
+        detail: {
+          speed: 1,
+          isDark: true,
+          starCount: 400
+        }
+      }));
+      window.dispatchEvent(new CustomEvent('intro-complete'));
+    }
+    return;
+  }
+
+  // First visit - reset starfield to light mode (white bg, black stars) for intro
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('starfield-speed', {
+      detail: {
+        speed: 1,
+        isDark: false,
+        starCount: 400
+      }
+    }));
+  }
+
   checkPreferences();
   initAudio(); // Initialize audio elements
 

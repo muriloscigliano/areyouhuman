@@ -1,0 +1,183 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import FooterSection from '../components/FooterSection.astro';
+import SiteHeader from '../components/SiteHeader.vue';
+import '../styles/global.css';
+---
+
+<LandingLayout
+  title="Services | Are You Human?"
+  description="Our AI automation services help businesses streamline operations and boost productivity."
+>
+  <main class="page-content">
+    <section class="page-hero">
+      <SiteHeader client:load />
+
+      <div class="hero-content">
+        <h1 class="page-title">
+          <span class="title-line">Our</span>
+          <span class="title-line title-line--accent">Services</span>
+        </h1>
+        <p class="page-subtitle">
+          We help companies identify and implement automation opportunities that actually work.
+        </p>
+      </div>
+    </section>
+
+    <section class="services-grid">
+      <div class="container">
+        <div class="service-card">
+          <div class="service-number">01</div>
+          <h3 class="service-title">AI Strategy Consulting</h3>
+          <p class="service-description">
+            We analyze your business processes and identify high-impact automation opportunities tailored to your specific needs.
+          </p>
+        </div>
+
+        <div class="service-card">
+          <div class="service-number">02</div>
+          <h3 class="service-title">Custom AI Development</h3>
+          <p class="service-description">
+            From chatbots to predictive analytics, we build AI solutions that integrate seamlessly with your existing systems.
+          </p>
+        </div>
+
+        <div class="service-card">
+          <div class="service-number">03</div>
+          <h3 class="service-title">Process Automation</h3>
+          <p class="service-description">
+            We automate repetitive tasks, freeing your team to focus on high-value work that requires human creativity.
+          </p>
+        </div>
+
+        <div class="service-card">
+          <div class="service-number">04</div>
+          <h3 class="service-title">AI Integration</h3>
+          <p class="service-description">
+            Connect AI capabilities to your existing tools and workflows without disrupting your current operations.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <FooterSection />
+  </main>
+</LandingLayout>
+
+<style>
+  .page-content {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    background: #000;
+  }
+
+  .page-hero {
+    min-height: 100vh;
+    padding: 72px;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+  }
+
+  .hero-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .page-title {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: clamp(3rem, 10vw, 8rem);
+    line-height: 1;
+    margin-bottom: 2rem;
+  }
+
+  .title-line {
+    display: block;
+    color: #fff;
+  }
+
+  .title-line--accent {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .page-subtitle {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  .services-grid {
+    padding: 72px;
+    background: #000;
+  }
+
+  .services-grid .container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+
+  .service-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 3rem;
+    transition: all 0.3s ease;
+  }
+
+  .service-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .service-number {
+    font-family: 'PP Supply Mono', monospace;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 1.5rem;
+  }
+
+  .service-title {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .service-description {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .page-hero {
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .nav {
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .services-grid {
+      padding: 24px;
+    }
+
+    .services-grid .container {
+      grid-template-columns: 1fr;
+    }
+
+    .service-card {
+      padding: 2rem;
+    }
+  }
+</style>

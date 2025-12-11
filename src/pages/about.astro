@@ -1,0 +1,236 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import FooterSection from '../components/FooterSection.astro';
+import SiteHeader from '../components/SiteHeader.vue';
+import '../styles/global.css';
+---
+
+<LandingLayout
+  title="About | Are You Human?"
+  description="Who we are - the humans behind the automation. Our mission and values."
+>
+  <main class="page-content">
+    <section class="page-hero">
+      <SiteHeader client:load />
+
+      <div class="hero-content">
+        <h1 class="page-title">
+          <span class="title-line">Who</span>
+          <span class="title-line title-line--accent">We Are</span>
+        </h1>
+        <p class="page-subtitle">
+          We're humans who believe in the power of AI to amplify human potential, not replace it.
+        </p>
+      </div>
+    </section>
+
+    <section class="team-section">
+      <div class="container">
+        <div class="team-intro">
+          <p class="intro-text">
+            Our team combines deep technical expertise with real-world business experience.
+            We've built and scaled AI systems for startups and enterprises alike.
+          </p>
+        </div>
+
+        <div class="values-grid">
+          <div class="value-card">
+            <h3 class="value-title">Human-First</h3>
+            <p class="value-description">
+              We design AI that empowers people, not replaces them. Every solution starts with understanding human needs.
+            </p>
+          </div>
+
+          <div class="value-card">
+            <h3 class="value-title">Results-Driven</h3>
+            <p class="value-description">
+              We measure success by business impact, not technical complexity. If it doesn't move the needle, we don't build it.
+            </p>
+          </div>
+
+          <div class="value-card">
+            <h3 class="value-title">Transparent</h3>
+            <p class="value-description">
+              No black boxes. We explain what we build, why we build it, and how it works. Your team learns alongside us.
+            </p>
+          </div>
+        </div>
+
+        <div class="cta-section">
+          <p class="cta-text">Ready to work with us?</p>
+          <button class="cta-button" data-contact-trigger>Talk to an Expert</button>
+        </div>
+      </div>
+    </section>
+
+    <FooterSection />
+  </main>
+</LandingLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const contactTrigger = document.querySelector('[data-contact-trigger]');
+    if (contactTrigger) {
+      contactTrigger.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('open-contact-modal'));
+      });
+    }
+  });
+</script>
+
+<style>
+  .page-content {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    background: #000;
+  }
+
+  .page-hero {
+    min-height: 100vh;
+    padding: 72px;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+  }
+
+  .hero-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .page-title {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: clamp(3rem, 10vw, 8rem);
+    line-height: 1;
+    margin-bottom: 2rem;
+  }
+
+  .title-line {
+    display: block;
+    color: #fff;
+  }
+
+  .title-line--accent {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .page-subtitle {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  .team-section {
+    padding: 72px;
+    background: #000;
+  }
+
+  .team-intro {
+    margin-bottom: 4rem;
+  }
+
+  .intro-text {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    max-width: 800px;
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .value-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2.5rem;
+  }
+
+  .value-title {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .value-description {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.6;
+  }
+
+  .cta-section {
+    text-align: center;
+    padding: 4rem 0;
+  }
+
+  .cta-text {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-button {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #000;
+    background: #fff;
+    border: none;
+    padding: 1rem 2.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .cta-button:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 768px) {
+    .page-hero {
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .nav {
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .team-section {
+      padding: 24px;
+    }
+
+    .intro-text {
+      font-size: 1.25rem;
+    }
+
+    .values-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .value-card {
+      padding: 2rem;
+    }
+  }
+</style>

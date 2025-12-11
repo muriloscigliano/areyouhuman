@@ -1,0 +1,242 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import FooterSection from '../components/FooterSection.astro';
+import SiteHeader from '../components/SiteHeader.vue';
+import '../styles/global.css';
+---
+
+<LandingLayout
+  title="Framework | Are You Human?"
+  description="Our proven framework for implementing AI automation in your business."
+>
+  <main class="page-content">
+    <section class="page-hero">
+      <SiteHeader client:load />
+
+      <div class="hero-content">
+        <h1 class="page-title">
+          <span class="title-line">Our</span>
+          <span class="title-line title-line--accent">Framework</span>
+        </h1>
+        <p class="page-subtitle">
+          A systematic approach to AI implementation that ensures measurable results.
+        </p>
+      </div>
+    </section>
+
+    <section class="framework-steps">
+      <div class="container">
+        <div class="step">
+          <div class="step-indicator">
+            <span class="step-number">01</span>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Discovery</h3>
+            <p class="step-description">
+              We immerse ourselves in your business to understand workflows, pain points, and opportunities. No generic solutions - only what works for you.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-indicator">
+            <span class="step-number">02</span>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Analysis</h3>
+            <p class="step-description">
+              We evaluate each potential automation against impact, feasibility, and ROI. Only the highest-value opportunities make the cut.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-indicator">
+            <span class="step-number">03</span>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Implementation</h3>
+            <p class="step-description">
+              We build and deploy solutions iteratively, ensuring each automation works flawlessly before moving to the next.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-indicator">
+            <span class="step-number">04</span>
+            <div class="step-line step-line--hidden"></div>
+          </div>
+          <div class="step-content">
+            <h3 class="step-title">Optimization</h3>
+            <p class="step-description">
+              We continuously monitor, refine, and scale your automations. As your business evolves, so do your AI solutions.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <FooterSection />
+  </main>
+</LandingLayout>
+
+<style>
+  .page-content {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    background: #000;
+  }
+
+  .page-hero {
+    min-height: 100vh;
+    padding: 72px;
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+  }
+
+  .hero-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .page-title {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: clamp(3rem, 10vw, 8rem);
+    line-height: 1;
+    margin-bottom: 2rem;
+  }
+
+  .title-line {
+    display: block;
+    color: #fff;
+  }
+
+  .title-line--accent {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .page-subtitle {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+    line-height: 1.6;
+  }
+
+  .framework-steps {
+    padding: 72px;
+    background: #000;
+  }
+
+  .step {
+    display: flex;
+    gap: 3rem;
+    margin-bottom: 0;
+  }
+
+  .step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 60px;
+  }
+
+  .step-number {
+    font-family: 'PP Supply Mono', monospace;
+    font-size: 1rem;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .step-line {
+    width: 1px;
+    flex-grow: 1;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    min-height: 100px;
+  }
+
+  .step-line--hidden {
+    opacity: 0;
+  }
+
+  .step-content {
+    padding-bottom: 4rem;
+  }
+
+  .step-title {
+    font-family: 'PP Neue Machina', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  .step-description {
+    font-family: 'PP Supply Sans', sans-serif;
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.7;
+    max-width: 600px;
+  }
+
+  @media (max-width: 768px) {
+    .page-hero {
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .nav {
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .framework-steps {
+      padding: 24px;
+    }
+
+    .step {
+      gap: 1.5rem;
+    }
+
+    .step-indicator {
+      width: 40px;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      font-size: 0.875rem;
+    }
+
+    .step-title {
+      font-size: 1.5rem;
+    }
+
+    .step-content {
+      padding-bottom: 2rem;
+    }
+  }
+</style>
