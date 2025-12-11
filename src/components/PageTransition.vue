@@ -33,7 +33,7 @@ const fragmentShader = `
 
   vec2 getDistortedUv(vec2 uv, vec2 direction, float factor) {
     vec2 scaledDirection = direction;
-    scaledDirection.y *= 2.0;
+    scaledDirection.y *= 2.5;
     return uv - scaledDirection * factor;
   }
 
@@ -47,31 +47,60 @@ const fragmentShader = `
 
     float dist = length(sphereCenter - p);
 
-    // Lens distortion calculation
+    // Lens distortion calculation - INCREASED strength
     vec2 distortionDirection = normalize(p - sphereCenter);
-    float focusFactor = 0.25;
+    float focusFactor = 0.3;
     float focusRadius = bubbleRadius * focusFactor;
-    float focusStrength = bubbleRadius / 3000.0;
+    float focusStrength = bubbleRadius / 1800.0; // More distortion (was 3000)
     float focusSdf = length(sphereCenter - p) - focusRadius;
     float sphereSdf = length(sphereCenter - p) - bubbleRadius;
     float inside = smoothstep(0.0, 1.0, -sphereSdf / (bubbleRadius * 0.001 + 0.001));
 
     float magnifierFactor = focusSdf / (bubbleRadius - focusRadius + 0.001);
     float mFactor = clamp(magnifierFactor * inside, 0.0, 1.0);
-    mFactor = pow(mFactor, 5.0);
+    mFactor = pow(mFactor, 4.0); // Slightly less sharp falloff for wider effect
 
     float distortionFactor = mFactor * focusStrength;
 
-    vec2 distortedUV = getDistortedUv(vUv, distortionDirection / uResolution, distortionFactor * uResolution.x);
+    // Base distorted UV
+    vec2 baseDistortedUV = getDistortedUv(vUv, distortionDirection / uResolution, distortionFactor * uResolution.x);
+
+    // Glass chromatic aberration - RGB split
+    float chromaStrength = mFactor * 0.025; // Chromatic aberration amount
+    vec2 chromaDir = distortionDirection / uResolution;
+
+    // Offset each color channel differently for prismatic glass effect
+    vec2 redOffset = chromaDir * chromaStrength * uResolution.x * 1.2;
+    vec2 greenOffset = chromaDir * chromaStrength * uResolution.x * 0.0;
+    vec2 blueOffset = chromaDir * chromaStrength * uResolution.x * -1.2;
+
+    vec2 uvRed = getDistortedUv(vUv, distortionDirection / uResolution, (distortionFactor + chromaStrength * 0.8) * uResolution.x);
+    vec2 uvGreen = baseDistortedUV;
+    vec2 uvBlue = getDistortedUv(vUv, distortionDirection / uResolution, (distortionFactor - chromaStrength * 0.8) * uResolution.x);
+
+    // Clamp UVs to prevent edge artifacts
+    uvRed = clamp(uvRed, 0.001, 0.999);
+    uvGreen = clamp(uvGreen, 0.001, 0.999);
+    uvBlue = clamp(uvBlue, 0.001, 0.999);
+
+    // Sample new image with chromatic aberration
+    float newR = texture2D(uTexture2, uvRed).r;
+    float newG = texture2D(uTexture2, uvGreen).g;
+    float newB = texture2D(uTexture2, uvBlue).b;
+    vec4 newImg = vec4(newR, newG, newB, 1.0);
 
     // Mask for circle reveal
     float mask = step(bubbleRadius, dist);
 
     vec4 currentImg = texture2D(uTexture1, vUv);
-    vec4 newImg = texture2D(uTexture2, distortedUV);
 
     float finalMask = max(mask, 1.0 - inside);
     vec4 color = mix(newImg, currentImg, finalMask);
+
+    // Add subtle edge glow at the lens boundary
+    float edgeDist = abs(dist - bubbleRadius);
+    float edgeGlow = smoothstep(bubbleRadius * 0.08, 0.0, edgeDist) * inside * (1.0 - finalMask);
+    color.rgb += vec3(0.15, 0.18, 0.22) * edgeGlow * 0.5;
 
     gl_FragColor = color;
   }
